@@ -12,30 +12,87 @@ use Illuminate\Support\Str;
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'username' => fake()->unique()->userName(),
+            'nim' => fake()->unique()->numerify('###########'),
+            'nama_depan' => fake()->firstName(),
+            'nama_belakang' => fake()->lastName(),
+            'prodi' => fake()->randomElement(['Teknik Informatika', 'Teknik Elektro', 'Manajemen Informatika', 'Sistem Informasi']),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
+            'role' => 'Mahasiswa',
+            'is_active' => true,
             'remember_token' => Str::random(10),
+            'ormawa_type' => null,
+            'ormawa_name' => null,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Super Admin',
+        ]);
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Kemahasiswaan',
+        ]);
+    }
+
+    public function ormawa(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Ormawa',
+        ]);
+    }
+
+    public function ormawaInstitusi(string $name = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Ormawa',
+            'ormawa_type' => 'institusi',
+            'ormawa_name' => $name ?? fake()->company(),
+        ]);
+    }
+
+    public function ormawaProdi(string $name = null): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Ormawa',
+            'ormawa_type' => 'prodi',
+            'ormawa_name' => $name ?? fake()->word(),
+        ]);
+    }
+
+    public function mahasiswa(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'Mahasiswa',
+        ]);
+    }
+
+    public function dpmbem(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'DPMBEM',
+        ]);
+    }
+
+    public function inactive(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_active' => false,
+        ]);
+    }
+
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
