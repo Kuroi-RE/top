@@ -48,6 +48,24 @@ Route::middleware("guest")->group(function () {
             $request->session()->put("dummy_user", $matched);
             $request->session()->regenerate();
 
+            if ($matched["role"] === "kemahasiswaan") {
+                return redirect()
+                    ->route("admin.beranda_ormawa")
+                    ->with(
+                        "success",
+                        "Selamat datang kembali, " . $matched["username"] . "!",
+                    );
+            }
+
+            if ($matched["role"] === "admin") {
+                return redirect()
+                    ->route("admin.form_verifikasi")
+                    ->with(
+                        "success",
+                        "Selamat datang kembali, " . $matched["username"] . "!",
+                    );
+            }
+
             return redirect()
                 ->route("organisasi.index")
                 ->with(
@@ -72,6 +90,87 @@ Route::post("/logout", function (\Illuminate\Http\Request $request) {
 })->name("logout");
 
 Route::get("/logout", fn() => redirect()->route("login"));
+
+// ── Admin ────────────────────────────────────────────────────────────────────
+Route::get("/admin/form_verifikasi", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.form_verifikasi");
+})->name("admin.form_verifikasi");
+
+Route::get("/admin/input_template_dokumen", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.input_template_dokumen");
+})->name("admin.input_template_dokumen");
+
+Route::get("/admin/template_proposal", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.template_proposal");
+})->name("admin.template_proposal");
+
+Route::get("/admin/kontrol_akun", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.kontrol_akun");
+})->name("admin.kontrol_akun");
+
+Route::get("/admin/beranda_ormawa", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.beranda_ormawa");
+})->name("admin.beranda_ormawa");
+
+Route::get("/admin/prestasi_mahasiswa", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.prestasi_mahasiswa");
+})->name("admin.prestasi_mahasiswa");
+
+Route::get("/admin/detail_prestasi", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.detail_prestasi");
+})->name("admin.detail_prestasi");
+
+Route::get("/admin/prestasi_ormawa", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    return view("admin.prestasi_ormawa");
+})->name("admin.prestasi_ormawa");
 
 // ── Organisasi Mahasiswa ──────────────────────────────────────────────────────
 Route::prefix("organisasi")
@@ -149,3 +248,4 @@ Route::prefix("prestasi")
                 ->with("success", "Prestasi berhasil dihapus."),
         )->name("destroy");
     });
+
