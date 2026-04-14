@@ -1,4 +1,4 @@
-@extends('layouts.kema')
+@extends('layouts.app')
 
 @section('title', 'Input Template Dokumen')
 
