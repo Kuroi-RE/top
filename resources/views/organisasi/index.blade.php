@@ -44,7 +44,7 @@ $statusConfig = [
         <span class="text-sm text-gray-600">Record per page</span>
     </div>
 
-    <div class="relative">
+    <div class="relative w-full sm:w-auto">
         <svg class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
              fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -55,7 +55,7 @@ $statusConfig = [
             type="text"
             placeholder="Search..."
             oninput="filterTable()"
-            class="w-64 rounded-lg border border-gray-300 bg-white py-1.5 pl-9 pr-4
+            class="w-full sm:w-64 rounded-lg border border-gray-300 bg-white py-1.5 pl-9 pr-4
                    text-sm text-gray-700 placeholder-gray-400 shadow-sm
                    focus:border-red-400 focus:outline-none focus:ring-1 focus:ring-red-200
                    transition-all"
@@ -136,7 +136,11 @@ $statusConfig = [
                     <td class="px-4 py-3 text-center">
                         <span class="font-semibold text-gray-700">{{ $item['tw'] }}</span>
                     </td>
-                    <td class="px-4 py-3 font-medium text-gray-800">{{ $item['nama_kegiatan'] }}</td>
+                    <td class="px-4 py-3 font-medium text-gray-800">
+                        <a href="{{ url('/organisasi/' . $item['no'] . '/edit') }}" class="transition-colors hover:text-blue-600 hover:underline" title="Klik untuk revisi kegiatan">
+                            {{ $item['nama_kegiatan'] }}
+                        </a>
+                    </td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['pelaksanaan'] }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['ajuan_dana'] }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['anggaran'] }}</td>

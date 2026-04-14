@@ -64,6 +64,10 @@
         outline: none;
     }
 
+    input[type="radio"] {
+        accent-color: #dc2626;
+    }
+
     ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -269,6 +273,35 @@
     }
 }
 
+
+@media (max-width: 767px) {
+    /* Keep horizontal form rows usable on mobile by stacking label and control. */
+    form .flex.flex-row.w-full {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+
+    form .flex.flex-row.w-full > label[style*="width"],
+    form .flex.flex-row.w-full > label[style*="min-width"] {
+        width: 100% !important;
+        min-width: 0 !important;
+    }
+
+    form .flex.flex-row.w-full > .flex-1 {
+        width: 100%;
+    }
+
+    form .flex.flex-row.w-full .flex.items-center.gap-6 {
+        flex-wrap: wrap;
+        padding-left: 0;
+        gap: 0.875rem;
+    }
+
+    main .overflow-x-auto {
+        -webkit-overflow-scrolling: touch;
+    }
+}
 @layer utilities {
     .animate-fade-in {
         animation: fadeIn 0.25s ease-out both;

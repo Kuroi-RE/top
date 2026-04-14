@@ -56,28 +56,7 @@
     <div class="flex w-full max-w-sm flex-col items-center">
 
         <div class="mb-5 flex flex-col items-center select-none">
-            <svg width="120" height="96" viewBox="0 0 120 96" fill="none"
-                 xmlns="http://www.w3.org/2000/svg" aria-label="TOP Logo">
-                <defs>
-                    <filter id="doc-drop" x="-15%" y="-10%" width="140%" height="135%">
-                        <feDropShadow dx="1" dy="3" stdDeviation="3" flood-color="rgba(0,0,0,0.18)"/>
-                    </filter>
-                </defs>
-                <rect x="18" y="8" width="68" height="80" rx="5" fill="white" filter="url(#doc-drop)"/>
-                <rect x="36" y="4"   width="32" height="11" rx="3.5" fill="#d1d5db"/>
-                <rect x="39" y="5.5" width="26" height="8"  rx="2.5" fill="#e9ebee"/>
-                <rect x="28" y="34" width="48" height="4" rx="2" fill="#e5e7eb"/>
-                <rect x="28" y="46" width="48" height="4" rx="2" fill="#e5e7eb"/>
-                <rect x="28" y="58" width="36" height="4" rx="2" fill="#e5e7eb"/>
-                <circle cx="80" cy="22" r="17" fill="#b91c1c"/>
-                <path d="M72 22 L78 28 L90 14"
-                      stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-
-            <div class="relative mt-1">
-                <span class="block text-4xl font-black italic leading-none tracking-wider text-red-700">TOP</span>
-                <span class="absolute -bottom-1 left-0 right-0 block h-1 w-full rounded-full bg-red-700"></span>
-            </div>
+            <img src="{{ asset('top_logo.png') }}" alt="TOP Logo" class="h-16 w-auto object-contain sm:h-20" />
         </div>
 
         <p class="mt-3 text-center text-base text-gray-700 leading-snug">Hallo! Selamat Datang di</p>
@@ -181,8 +160,8 @@
                 <button
                     type="submit"
                     id="login-btn"
-                    class="flex w-full items-center justify-center rounded-full bg-red-700 py-3.5
-                           text-base font-semibold lowercase tracking-wide text-white shadow-md
+                      class="flex w-full items-center justify-center rounded-full bg-red-700 py-2.5
+                          text-sm font-semibold lowercase tracking-wide text-white shadow-md
                            hover:bg-red-800 active:bg-red-900 focus:outline-none focus:ring-2
                            focus:ring-red-500 focus:ring-offset-2 transition-all duration-200
                            disabled:opacity-60 disabled:cursor-not-allowed"

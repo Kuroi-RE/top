@@ -2,7 +2,8 @@
 
 use Illuminate\Support\Facades\Route;
 
-Route::get("/", fn() => redirect()->route("login"));
+Route::get("/", fn() => view("landing"))->name("landing");
+Route::get("/home", fn() => redirect()->route("login"));
 
 // ── Guest ─────────────────────────────────────────────────────────────────────
 Route::middleware("guest")->group(function () {
@@ -25,7 +26,7 @@ Route::middleware("guest")->group(function () {
             [
                 "username" => "manggala",
                 "password" => "password",
-                "role" => "admin",
+                "role" => "ormawa",
             ],
             [
                 "username" => "admin",
@@ -57,9 +58,9 @@ Route::middleware("guest")->group(function () {
                     );
             }
 
-            if ($matched["role"] === "admin") {
+            if ($matched["role"] === "ormawa") {
                 return redirect()
-                    ->route("admin.form_verifikasi")
+                    ->route("organisasi.index")
                     ->with(
                         "success",
                         "Selamat datang kembali, " . $matched["username"] . "!",
@@ -179,10 +180,20 @@ Route::prefix("organisasi")
         Route::get("/", fn() => view("organisasi.index"))->name("index");
         Route::get(
             "/create",
-            fn() => redirect()
-                ->route("organisasi.index")
-                ->with("error", "Halaman belum tersedia."),
+            fn() => view("organisasi.create"),
         )->name("create");
+        Route::get(
+            "/create_lpj",
+            fn() => view("organisasi.create_lpj"),
+        )->name("create_lpj");
+        Route::get(
+            "/publikasi",
+            fn() => view("organisasi.publikasi"),
+        )->name("publikasi");
+        Route::get(
+            "/template-dokumen",
+            fn() => view("organisasi.template_dokumen"),
+        )->name("template_dokumen");
         Route::post(
             "/",
             fn() => redirect()
@@ -195,7 +206,7 @@ Route::prefix("organisasi")
         )->name("show");
         Route::get(
             "/{id}/edit",
-            fn() => redirect()->route("organisasi.index"),
+            fn($id) => view("organisasi.revisi", ["id" => $id]),
         )->name("edit");
         Route::put(
             "/{id}",
@@ -216,6 +227,14 @@ Route::prefix("prestasi")
     ->name("prestasi.")
     ->group(function () {
         Route::get("/", fn() => view("prestasi.index"))->name("index");
+        Route::get("/input-proposal", fn() => view("prestasi.input_proposal"))->name("input_proposal");
+        Route::get("/upload-lpj", fn() => view("prestasi.upload_lpj"))->name("upload_lpj");
+        Route::get("/template-dokumen", fn() => view("prestasi.template_dokumen"))->name("template_dokumen");
+        Route::get("/laporan-prestasi/biodata", fn() => view("prestasi.laporan_prestasi.biodata"))->name("laporan_prestasi.biodata");
+        Route::get("/laporan-prestasi/detail-kompetisi", fn() => view("prestasi.laporan_prestasi.detail_kompetisi"))->name("laporan_prestasi.detail_kompetisi");
+        Route::get("/laporan-prestasi/capaian-prestasi", fn() => view("prestasi.laporan_prestasi.capaian_prestasi"))->name("laporan_prestasi.capaian_prestasi");
+        Route::get("/laporan-prestasi/informasi-dosen-pembimbing", fn() => view("prestasi.laporan_prestasi.informasi_dosen_pembimbing"))->name("laporan_prestasi.informasi_dosen_pembimbing");
+        Route::get("/laporan-prestasi/evidance", fn() => view("prestasi.laporan_prestasi.evidance"))->name("laporan_prestasi.evidance");
         Route::get(
             "/create",
             fn() => redirect()
