@@ -14,17 +14,32 @@
 		align-items: center;
 		justify-content: space-between;
 		gap: 20px;
-		margin-bottom: 26px;
-		flex-wrap: wrap;
+		margin-bottom: 18px;
+		flex-wrap: nowrap;
+	}
+
+	.proposal-left {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 0;
+	}
+
+	.proposal-right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		min-width: 0;
 	}
 
 	.proposal-search {
-		width: 150px;
+		width: 320px;
+		max-width: 40vw;
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		border-bottom: 1px solid rgba(55, 65, 81, 0.2);
-		padding-bottom: 8px;
+		border-bottom: 1px solid rgba(55, 65, 81, 0.12);
+		padding-bottom: 6px;
 	}
 
 	.proposal-search input {
@@ -141,14 +156,7 @@
 
 <div class="proposal-shell">
 	<div class="proposal-toolbar">
-		<div>
-			<div class="proposal-search">
-				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-gray-700">
-					<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z" />
-				</svg>
-				<input type="text" placeholder="Search...">
-			</div>
-
+		<div class="proposal-left">
 			<div class="proposal-perpage">
 				<select>
 					<option>5</option>
@@ -159,12 +167,21 @@
 			</div>
 		</div>
 
-		<a href="{{ route('admin.input_template_dokumen') }}" class="proposal-add-btn">
-			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
-				<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
-			</svg>
-			<span>Tambah Data</span>
-		</a>
+		<div class="proposal-right">
+			<div class="proposal-search">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-gray-700">
+					<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z" />
+				</svg>
+				<input type="text" placeholder="Search...">
+			</div>
+
+			<a href="{{ route('admin.input_template_dokumen') }}" class="proposal-add-btn">
+				<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-5 w-5">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M12 5v14m7-7H5" />
+				</svg>
+				<span>Tambah Data</span>
+			</a>
+		</div>
 	</div>
 
 	<div class="proposal-card">

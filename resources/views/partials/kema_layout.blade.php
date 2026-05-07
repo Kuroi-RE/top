@@ -10,6 +10,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet"/>
 
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" />
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('styles')
 
@@ -59,9 +60,7 @@
                     href="{{ route('admin.beranda_ormawa') }}"
                     class="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors {{ $isOrganisasiActive ? 'bg-red-600 text-white hover:bg-red-700' : 'text-gray-700 hover:bg-slate-300' }}"
                 >
-                    <svg class="h-5 w-5 flex-shrink-0 {{ $isOrganisasiActive ? 'text-white' : 'text-gray-500' }}" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
-                    </svg>
+                    <span class="material-symbols-outlined {{ $isOrganisasiActive ? 'text-white' : 'text-gray-500' }}" style="font-size: 20px;">groups</span>
                     <span class="flex-1 whitespace-nowrap text-left">Organisasi Mahasiswa</span>
                 </a>
 
@@ -70,16 +69,9 @@
                         onclick="toggleAcc('acc-prestasi')"
                         class="flex w-full items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors {{ $isPrestasiOrmawaActive || $isPrestasiActive ? 'bg-red-600 text-white hover:bg-red-700' : 'text-gray-700 hover:bg-slate-300' }}"
                     >
-                        <svg class="h-5 w-5 flex-shrink-0 {{ $isPrestasiOrmawaActive || $isPrestasiActive ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                  d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/>
-                        </svg>
+                        <span class="material-symbols-outlined {{ $isPrestasiOrmawaActive || $isPrestasiActive ? 'text-white' : 'text-gray-500' }}" style="font-size: 20px;">verified</span>
                         <span class="flex-1 whitespace-nowrap text-left">Prestasi Mahasiswa</span>
-                        <svg id="chevron-acc-prestasi"
-                             class="h-4 w-4 flex-shrink-0 transition-transform duration-200"
-                             fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
-                        </svg>
+                        <span id="chevron-acc-prestasi" class="material-symbols-outlined transition-transform duration-200" style="font-size: 18px;">expand_more</span>
                     </button>
 
                     <div id="acc-prestasi" class="acc-panel" style="max-height: 0;" data-open="false">
@@ -99,9 +91,7 @@
                     href="{{ route('admin.template_proposal') }}"
                     class="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors {{ $isTemplateActive ? 'bg-red-600 text-white hover:bg-red-700' : 'text-gray-700 hover:bg-slate-300' }}"
                 >
-                    <svg class="h-5 w-5 flex-shrink-0 {{ $isTemplateActive ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/>
-                    </svg>
+                    <span class="material-symbols-outlined {{ $isTemplateActive ? 'text-white' : 'text-gray-500' }}" style="font-size: 20px;">description</span>
                     <span class="flex-1 whitespace-nowrap text-left">Template Dokumen</span>
                 </a>
 
@@ -109,9 +99,7 @@
                     href="{{ route('admin.kontrol_akun') }}"
                     class="flex items-center gap-3 px-4 py-3 text-sm font-semibold transition-colors {{ $isKontrolActive ? 'bg-red-600 text-white hover:bg-red-700' : 'text-gray-700 hover:bg-slate-300' }}"
                 >
-                    <svg class="h-5 w-5 flex-shrink-0 {{ $isKontrolActive ? 'text-white' : 'text-gray-500' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A9 9 0 1118.88 6.196M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                    </svg>
+                    <span class="material-symbols-outlined {{ $isKontrolActive ? 'text-white' : 'text-gray-500' }}" style="font-size: 20px;">manage_accounts</span>
                     <span class="flex-1 whitespace-nowrap text-left">Kontrol Akun</span>
                 </a>
 

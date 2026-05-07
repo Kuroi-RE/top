@@ -12,7 +12,7 @@
 
         <!-- Header -->
         <div class="mb-6">
-            <h1 class="text-3xl font-semibold text-gray-800">Upload LPJ Kegiatan</h1>
+            <h1 class="text-2xl font-semibold text-gray-800">Upload LPJ Kegiatan</h1>
         </div>
 
         <form method="POST" enctype="multipart/form-data" class="mt-4 space-y-6 sm:mt-6">
@@ -35,11 +35,11 @@
             <!-- Nama Kegiatan -->
             <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-center gap-3 md:gap-6">
                 <label for="nama_kegiatan" class="text-sm font-medium text-gray-700">Nama Kegiatan</label>
-                <input
-                    id="nama_kegiatan"
-                    type="text"
-                    name="nama_kegiatan"
-                    class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                    <input
+                        id="nama_kegiatan"
+                        type="text"
+                        name="nama_kegiatan"
+                        class="w-full h-10 md:h-11 rounded-full border border-gray-400 bg-white px-4 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
             </div>
 
             <!-- Laporan -->

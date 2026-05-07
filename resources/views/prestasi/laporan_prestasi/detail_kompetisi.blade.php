@@ -102,7 +102,7 @@
             </div>
 
             <!-- Klaster -->
-            <div class="flex flex-row items-center w-full mb-6 gap-2">
+            <div id="klaster-container" class="flex flex-row items-center w-full mb-6 gap-2" style="display: none;">
                 <label for="klaster" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Klaster</label>
                 <div class="flex-1 min-w-0 w-full">
                     <select
@@ -111,15 +111,12 @@
                         class="w-full h-11 md:h-12 appearance-none rounded-full border border-gray-400 bg-[#f9f9f9] px-5 text-sm text-gray-700 outline-none cursor-pointer transition focus:border-red-500 focus:ring-2 focus:ring-red-200 shadow-sm"
                         style="-webkit-appearance: none; -moz-appearance: none; appearance: none; padding-right: 3rem; background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%236b7280'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E&quot;); background-position: right 1.25rem center; background-repeat: no-repeat; background-size: 1rem;">
                         <option value="" disabled selected>---- Pilih Klaster ----</option>
-                        <option value="Klaster I Minimal 4 Provinsi" class="text-gray-700">Klaster I Minimal 4 Provinsi</option>
-                        <option value="Klaster II minimal 2 provinsi" class="text-gray-700">Klaster II minimal 2 provinsi</option>
-                        <option value="Klaster III minimal 4 PT di 1 provinsi" class="text-gray-700">Klaster III minimal 4 PT di 1 provinsi</option>
                     </select>
                 </div>
             </div>
 
             <!-- Jumlah Negara -->
-            <div class="flex flex-row items-center w-full mb-6 gap-2">
+            <div id="negara-container" class="flex flex-row items-center w-full mb-6 gap-2" style="display: none;">
                 <label for="jumlah_negara" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Jumlah Negara</label>
                 <div class="flex-1 min-w-0 w-full">
                     <select
@@ -154,6 +151,85 @@
                 </a>
             </div>
         </form>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const tingkatKompetisiRadios = document.querySelectorAll('input[name="tingkat_kompetisi"]');
+                const klasterContainer = document.getElementById('klaster-container');
+                const negaraContainer = document.getElementById('negara-container');
+                const klasterSelect = document.getElementById('klaster');
+
+                const optionsNasional = [
+                    { value: 'Klaster I Minimal 4 Provinsi', text: 'Klaster I Minimal 4 Provinsi' },
+                    { value: 'Klaster II minimal 2 provinsi', text: 'Klaster II minimal 2 provinsi' },
+                    { value: 'Klaster III minimal 4 PT di 1 provinsi', text: 'Klaster III minimal 4 PT di 1 provinsi' }
+                ];
+
+                const optionsRegional = [
+                    { value: 'Klaster I < 31 PT', text: 'Klaster I < 31 PT' },
+                    { value: 'Klaster II 31-50 PT', text: 'Klaster II 31-50 PT' },
+                    { value: 'Klaster III > 50 PT', text: 'Klaster III > 50 PT' }
+                ];
+
+                const optionsInternasional = [
+                    { value: 'Klaster I minimal 3 negara regional (ASEAN, Asia Pasifik...)', text: 'Klaster I minimal 3 negara regional (ASEAN, Asia Pasifik...)' },
+                    { value: 'Klaster II minimal 2 negara', text: 'Klaster II minimal 2 negara' },
+                    { value: 'Klaster III tidak keduanya', text: 'Klaster III tidak keduanya' }
+                ];
+
+                function updateVisibility() {
+                    const selectedValue = document.querySelector('input[name="tingkat_kompetisi"]:checked')?.value;
+                    
+                    // Clear current options except placeholder
+                    klasterSelect.innerHTML = '<option value="" disabled selected>---- Pilih Klaster ----</option>';
+
+                    if (selectedValue === 'Internasional') {
+                        klasterContainer.style.display = 'flex';
+                        negaraContainer.style.display = 'flex';
+                        
+                        optionsInternasional.forEach(opt => {
+                            const el = document.createElement('option');
+                            el.value = opt.value;
+                            el.textContent = opt.text;
+                            el.className = 'text-gray-700';
+                            klasterSelect.appendChild(el);
+                        });
+                    } else if (selectedValue === 'Nasional') {
+                        klasterContainer.style.display = 'flex';
+                        negaraContainer.style.display = 'none';
+
+                        optionsNasional.forEach(opt => {
+                            const el = document.createElement('option');
+                            el.value = opt.value;
+                            el.textContent = opt.text;
+                            el.className = 'text-gray-700';
+                            klasterSelect.appendChild(el);
+                        });
+                    } else if (selectedValue === 'Regional') {
+                        klasterContainer.style.display = 'flex';
+                        negaraContainer.style.display = 'none';
+
+                        optionsRegional.forEach(opt => {
+                            const el = document.createElement('option');
+                            el.value = opt.value;
+                            el.textContent = opt.text;
+                            el.className = 'text-gray-700';
+                            klasterSelect.appendChild(el);
+                        });
+                    } else {
+                        klasterContainer.style.display = 'none';
+                        negaraContainer.style.display = 'none';
+                    }
+                }
+
+                tingkatKompetisiRadios.forEach(radio => {
+                    radio.addEventListener('change', updateVisibility);
+                });
+
+                // Initial check
+                updateVisibility();
+            });
+        </script>
     </div>
 </div>
 @endsection

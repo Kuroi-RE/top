@@ -9,7 +9,7 @@
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-3xl font-semibold text-gray-800">Input Proposal Kegiatan</h1>
+        <h1 class="text-2xl font-semibold text-gray-800">Input Proposal Kegiatan</h1>
     </div>
 
     @php
@@ -40,7 +40,7 @@
                     id="{{ $field['name'] }}"
                     type="{{ $field['type'] }}"
                     name="{{ $field['name'] }}"
-                    class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                    class="w-full h-10 md:h-11 rounded-full border border-gray-400 bg-white px-4 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
             </div>
         @endforeach
 
@@ -63,7 +63,7 @@
 
         <!-- Button -->
         <div class="flex justify-end pt-4">
-            <button type="submit"
+            <button type="button" id="btn-kirim"
                 class="inline-flex min-w-[140px] items-center justify-center rounded-full bg-red-700 px-6 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-red-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200 focus:ring-2 focus:ring-red-200">
                 Kirim
                 <svg class="ml-1 h-4 w-4 -rotate-12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -76,3 +76,67 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const form = document.querySelector('form');
+    if (!form) return;
+
+    // Disable all inputs/selects/textareas so frontend can test submit button only
+    form.querySelectorAll('input, textarea, select').forEach(el => {
+        if (el.type === 'submit' || el.type === 'button') return;
+        el.disabled = true;
+        el.classList.add('opacity-60');
+    });
+
+    // Intercept actual submit to avoid sending POST
+    form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        showClientSuccess('Yeayy! Berhasil Terkirim');
+    });
+
+    // Ensure the visible Kirim button doesn't perform a native POST
+    const submitBtn = document.getElementById('btn-kirim');
+    if (submitBtn) {
+        submitBtn.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            showClientSuccess('Yeayy! Berhasil Terkirim');
+        });
+    }
+
+    function showClientSuccess(message) {
+        const existing = document.getElementById('flash-success');
+        if (existing) existing.remove();
+
+        const el = document.createElement('div');
+        el.id = 'flash-success';
+        el.setAttribute('role', 'status');
+        el.setAttribute('aria-live', 'polite');
+        el.className = 'mb-4';
+        el.innerHTML = `
+            <div class="flash-icon" aria-hidden="true">
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 12l2 2 4-4"></path>
+                </svg>
+            </div>
+            <div class="toast-text">${message}</div>
+        `;
+
+        document.body.appendChild(el);
+
+        const AUTO_HIDE_MS = 1500;
+        const FADE_MS = 260;
+        setTimeout(function() {
+            el.style.transition = `opacity ${FADE_MS}ms ease, transform ${FADE_MS}ms ease`;
+            el.style.opacity = '0';
+            el.style.transform = 'translate(-50%, -50%) scale(0.96)';
+            setTimeout(function() { if (el.parentNode) el.remove(); }, FADE_MS + 10);
+        }, AUTO_HIDE_MS);
+
+        // Redirect after popup finishes
+        setTimeout(function() { window.location.href = '{{ route("prestasi.index") }}'; }, AUTO_HIDE_MS + FADE_MS + 220);
+    }
+});
+</script>
+@endpush

@@ -363,12 +363,60 @@
         </div>
     </footer>
 
+    <a
+        href="https://wa.me/6281222003380?text=Halo%20admin%2C%20saya%20ingin%20bertanya%20tentang%20TOP."
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label="Hubungi via WhatsApp"
+        onmouseenter="animateWaHoverIn(this)"
+        onmouseleave="animateWaHoverOut(this)"
+        ontouchstart="animateWaHoverIn(this)"
+        ontouchend="animateWaHoverOut(this)"
+        onclick="animateWaClick(this)"
+        style="position: fixed; right: 20px; bottom: 20px; z-index: 9999; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 9999px; background: #2CB100; color: #fff; text-decoration: none; box-shadow: 0 12px 26px rgba(44, 177, 0, 0.32);"
+    >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 30px; height: 30px;">
+            <path d="M12.04 2C6.49 2 2 6.49 2 12.04c0 1.78.47 3.52 1.35 5.04L2 22l5.06-1.33a9.99 9.99 0 0 0 4.98 1.35H12c5.55 0 10.04-4.49 10.04-10.04C22.04 6.49 17.55 2 12.04 2zm5.83 14.16c-.24.67-1.39 1.28-1.93 1.36-.49.07-1.11.1-1.79-.12-.41-.13-.94-.31-1.63-.61-2.87-1.24-4.74-4.14-4.88-4.33-.13-.18-1.17-1.56-1.17-2.97 0-1.41.74-2.11 1-2.4.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.65.49.24.58.82 2.01.89 2.15.07.14.12.31.02.49-.1.18-.15.29-.3.45-.15.17-.32.37-.45.49-.15.15-.31.31-.13.6.18.29.79 1.3 1.7 2.11 1.16 1.03 2.15 1.35 2.44 1.5.29.15.46.13.63-.08.17-.21.73-.85.93-1.14.2-.29.4-.24.67-.15.27.09 1.72.81 2.01.95.29.15.49.22.56.34.07.12.07.72-.17 1.39z"/>
+        </svg>
+    </a>
+
     <script>
         let currentSlide = 0;
         const slides = document.querySelectorAll('[data-slide]');
         const dots = document.querySelectorAll('.dot');
         const totalSlides = slides.length;
         let slideInterval;
+
+        function animateWaHoverIn(el) {
+            if (!el) return;
+            el.style.transform = 'translateY(-4px) scale(1.06)';
+            el.style.boxShadow = '0 18px 34px rgba(44, 177, 0, 0.42)';
+            el.style.transition = 'transform 180ms ease, box-shadow 180ms ease';
+        }
+
+        function animateWaHoverOut(el) {
+            if (!el) return;
+            el.style.transform = 'translateY(0) scale(1)';
+            el.style.boxShadow = '0 12px 28px rgba(44, 177, 0, 0.34)';
+            el.style.transition = 'transform 180ms ease, box-shadow 180ms ease';
+        }
+
+        function animateWaClick(el) {
+            if (!el || !el.animate) return;
+
+            el.animate(
+                [
+                    { transform: 'scale(1)' },
+                    { transform: 'scale(0.88)' },
+                    { transform: 'scale(1.08)' },
+                    { transform: 'scale(1)' }
+                ],
+                {
+                    duration: 420,
+                    easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+                }
+            );
+        }
 
         function initCarousel() {
             showSlide(currentSlide);
