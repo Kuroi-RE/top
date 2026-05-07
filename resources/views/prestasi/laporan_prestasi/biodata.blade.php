@@ -14,14 +14,14 @@
         <form method="POST" action="#" class="mt-4 space-y-6 sm:mt-8">
             @csrf
 
-            <!-- Gmail -->
+            <!-- Email -->
             <div class="flex flex-row items-center w-full mb-6 gap-2">
-                <label for="gmail" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Gmail</label>
-                <div class="flex-1 min-w-0 w-full">
+                <label for="email" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Email</label>
+                <div class="flex-1 min-w-0 w-full md:max-w-[640px]">
                     <input
-                        id="gmail"
+                        id="email"
                         type="email"
-                        name="gmail"
+                        name="email"
                         class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-[#f9f9f9] px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200 shadow-sm">
                 </div>
             </div>
@@ -29,7 +29,7 @@
             <!-- Nama -->
             <div class="flex flex-row items-center w-full mb-6 gap-2">
                 <label for="nama" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Nama</label>
-                <div class="flex-1 min-w-0 w-full">
+                <div class="flex-1 min-w-0 w-full md:max-w-[640px]">
                     <input
                         id="nama"
                         type="text"
@@ -41,7 +41,7 @@
             <!-- NIM -->
             <div class="flex flex-row items-center w-full mb-6 gap-2">
                 <label for="nim" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">NIM</label>
-                <div class="flex-1 min-w-0 w-full">
+                <div class="flex-1 min-w-0 w-full md:max-w-[640px]">
                     <input
                         id="nim"
                         type="text"
@@ -53,7 +53,7 @@
             <!-- Program Studi -->
             <div class="flex flex-row items-center w-full mb-6 gap-2">
                 <label for="program_studi" style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Program Studi</label>
-                <div class="flex-1 min-w-0 w-full">
+                <div class="flex-1 min-w-0 w-full md:max-w-[640px]">
                     <select
                         id="program_studi"
                         name="program_studi"
@@ -75,6 +75,23 @@
                         <option value="S1 Teknik Industri" class="text-gray-700">S1 Teknik Industri</option>
                         <option value="S1 Bisnis Digital" class="text-gray-700">S1 Bisnis Digital</option>
                     </select>
+                </div>
+            </div>
+
+            <!-- Mewakili Ormawa -->
+            <div class="flex flex-row items-center w-full mb-6 gap-2">
+                <label style="width: 160px; min-width: 160px;" class="text-sm font-medium text-gray-700">Mewakili Ormawa</label>
+                <div class="flex-1 min-w-0 w-full md:max-w-[640px] flex items-center gap-6 pl-2">
+                    <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="radio" name="mewakili_ormawa" value="ya"
+                            class="h-[18px] w-[18px] border-gray-400 accent-[#B30000]">
+                        <span>Ya</span>
+                    </label>
+                    <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                        <input type="radio" name="mewakili_ormawa" value="tidak"
+                            class="h-[18px] w-[18px] border-gray-400 accent-[#B30000]">
+                        <span>Tidak</span>
+                    </label>
                 </div>
             </div>
 

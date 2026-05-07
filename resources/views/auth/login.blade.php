@@ -8,14 +8,406 @@
     <title>Login &mdash; TOP Telkom Ormawa &amp; Prestasi</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
-    <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800,900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,600,1,0&icon_names=emoji_events,visibility,visibility_off" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <style>
-        body { font-family: 'Inter', sans-serif; }
+        :root {
+            --brand-red: #c1121f;
+            --line: #dbe1ea;
+        }
 
-        /* Prevent Chrome autofill from overriding background */
+        body {
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 8% 12%, rgba(255, 214, 214, 0.8) 0, rgba(255, 214, 214, 0) 38%),
+                radial-gradient(circle at 92% 84%, rgba(252, 211, 77, 0.35) 0, rgba(252, 211, 77, 0) 36%),
+                linear-gradient(145deg, #f8fafc 0%, #eef2ff 48%, #fef2f2 100%);
+        }
+
+        .login-shell {
+            width: min(860px, 100%);
+            border-radius: 22px;
+            border: 1px solid rgba(148, 163, 184, 0.22);
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(8px);
+            box-shadow: 0 22px 56px rgba(15, 23, 42, 0.13);
+            overflow: hidden;
+        }
+
+        .login-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+        }
+
+        .login-hero {
+            display: none;
+            position: relative;
+            padding: 2.5rem;
+            background: linear-gradient(160deg, #850b15 0%, #b91c1c 46%, #e11d48 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        .hero-main {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .hero-header {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .hero-logo {
+            width: auto;
+            height: 48px;
+            max-width: 160px;
+            object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+        }
+
+        .login-hero::before,
+        .login-hero::after {
+            content: "";
+            position: absolute;
+            border-radius: 9999px;
+            pointer-events: none;
+        }
+
+        .login-hero::before {
+            width: 210px;
+            height: 210px;
+            top: -100px;
+            right: -70px;
+            background: rgba(255, 255, 255, 0.16);
+        }
+
+        .login-hero::after {
+            width: 130px;
+            height: 130px;
+            bottom: -70px;
+            left: -48px;
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.45rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.16);
+            padding: 0.32rem 0.72rem;
+            font-size: 0.68rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+        }
+
+        .hero-point {
+            height: 6px;
+            width: 6px;
+            border-radius: 9999px;
+            background: #fff;
+        }
+
+        /* ── Illustration two-panel layout ── */
+        .hero-illustration-wrap {
+            margin-top: 1.2rem;
+            border-radius: 22px;
+            background: linear-gradient(145deg, rgba(255,255,255,0.22), rgba(255,255,255,0.08));
+            padding: 0.65rem;
+            backdrop-filter: blur(8px);
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.28),
+                0 20px 40px rgba(63,11,15,0.3);
+            animation: illus-float 4s ease-in-out infinite;
+            display: flex;
+            gap: 0.55rem;
+            align-items: stretch;
+            height: 160px;
+        }
+
+        /* Left: bar chart card */
+        .illus-chart-card {
+            flex: 1;
+            border-radius: 16px;
+            background: linear-gradient(160deg, #fff8f8 0%, #ffeef2 100%);
+            box-shadow:
+                0 2px 0 rgba(255,255,255,0.9) inset,
+                0 6px 16px rgba(190,18,60,0.14);
+            padding: 0.75rem 0.8rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* subtle gloss on chart card */
+        .illus-chart-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: 16px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.45) 0%, rgba(255,255,255,0) 55%);
+            pointer-events: none;
+        }
+
+        /* baseline grid line */
+        .illus-bars-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-top: 1px dashed rgba(251,161,183,0.5);
+            position: relative;
+        }
+
+        .illus-lines { display: flex; flex-direction: column; gap: 0.28rem; }
+        .illus-line {
+            height: 6px;
+            border-radius: 99px;
+            background: #ffd0db;
+        }
+        .illus-line:nth-child(1) { width: 75%; animation: shimmer-in 0.5s 0.8s ease both; }
+        .illus-line:nth-child(2) { width: 50%; background: #fbcad7; opacity: 0.85; animation: shimmer-in 0.5s 1.0s ease both; }
+        .illus-line:nth-child(3) { width: 62%; background: #fbcad7; opacity: 0.65; animation: shimmer-in 0.5s 1.2s ease both; }
+
+        .illus-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 7px;
+            flex: 1;
+            padding: 0.35rem 0 0;
+        }
+
+        .illus-bar {
+            flex: 1;
+            border-radius: 5px 5px 0 0;
+            background: linear-gradient(175deg, #fb7185 0%, #e11d48 55%, #9f1239 100%);
+            box-shadow: 0 -2px 6px rgba(225,29,72,0.25);
+        }
+        .illus-bar:nth-child(1) { height: 42%; opacity: 0.80; animation: bar-grow 0.6s 0.2s  cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
+        .illus-bar:nth-child(2) { height: 62%; opacity: 0.88; animation: bar-grow 0.6s 0.35s cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
+        .illus-bar:nth-child(3) { height: 90%;               animation: bar-grow 0.6s 0.5s  cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
+        .illus-bar:nth-child(4) { height: 55%; opacity: 0.85; animation: bar-grow 0.6s 0.65s cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
+
+        /* Right: trophy panel */
+        .illus-trophy-panel {
+            width: 102px;
+            flex-shrink: 0;
+            border-radius: 18px;
+            background: linear-gradient(145deg, #7c2d12 0%, #7f1d1d 60%, #450a0a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: visible;
+            box-shadow:
+                inset 0 1px 0 rgba(255,255,255,0.12),
+                0 8px 24px rgba(80,10,10,0.45);
+        }
+
+        /* gloss on trophy panel */
+        .illus-trophy-panel::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 50%;
+            border-radius: 18px 18px 0 0;
+            background: linear-gradient(180deg, rgba(255,255,255,0.13) 0%, rgba(255,255,255,0) 100%);
+            pointer-events: none;
+        }
+
+        .illus-trophy-icon {
+            font-family: 'Material Symbols Rounded';
+            font-size: 58px;
+            color: #FBBF24;
+            line-height: 1;
+            animation: trophy-sway 2.8s 1s ease-in-out infinite;
+            filter:
+                drop-shadow(0 0 10px rgba(251,191,36,0.55))
+                drop-shadow(0 4px 8px rgba(0,0,0,0.35));
+            user-select: none;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* "1st" ribbon badge */
+        .illus-badge {
+            position: absolute;
+            bottom: -6px;
+            font-size: 0.5rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            color: #7f1d1d;
+            background: linear-gradient(135deg, #fde68a, #fbbf24);
+            border-radius: 99px;
+            padding: 2px 7px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+
+        .illus-bubble-big {
+            position: absolute;
+            top: -12px;
+            right: -10px;
+            width: 26px;
+            height: 26px;
+            border-radius: 9999px;
+            background: radial-gradient(circle at 35% 35%, #fff3b0, #fde68a);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+            opacity: 0.96;
+            animation: bubble-pulse 2.6s 0.8s ease-in-out infinite;
+        }
+        .illus-bubble-small {
+            position: absolute;
+            top: 9px;
+            right: 10px;
+            width: 13px;
+            height: 13px;
+            border-radius: 9999px;
+            background: radial-gradient(circle at 35% 35%, #ffffff, #fff3b0);
+            opacity: 0.9;
+            animation: bubble-pulse 2.6s 1.3s ease-in-out infinite;
+        }
+
+
+        /* ── Hero text fade-in ── */
+        .hero-main {
+            animation: hero-fadein 0.7s ease both;
+        }
+
+        /* ── Keyframes ── */
+        @keyframes illus-float {
+            0%, 100% { transform: translateY(0px);    }
+            50%       { transform: translateY(-7px); }
+        }
+
+        @keyframes hero-fadein {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bar-grow {
+            from { transform: scaleY(0); }
+            to   { transform: scaleY(1); }
+        }
+
+        @keyframes trophy-sway {
+            0%, 100% { transform: rotate(-4deg); }
+            50%       { transform: rotate(4deg); }
+        }
+
+        @keyframes bubble-pulse {
+            0%, 100% { opacity: 0.95; transform: scale(1);    }
+            50%       { opacity: 0.7;  transform: scale(1.12); }
+        }
+
+        @keyframes shimmer-in {
+            from { opacity: 0; transform: translateX(-8px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+
+        /* ── SVG element animations (unused, keep for compat) ── */
+        .trophy-group { animation: trophy-sway 2.8s 1s ease-in-out infinite; transform-origin: 299px 109px; }
+        .bubble-big   { animation: bubble-pulse 2.6s 0.8s ease-in-out infinite; transform-origin: 318px 36px; }
+        .bubble-small { animation: bubble-pulse 2.6s 1.3s ease-in-out infinite; transform-origin: 335px 44px; }
+        .line-1 { animation: shimmer-in 0.5s 0.8s ease both; }
+        .line-2 { animation: shimmer-in 0.5s 1.0s ease both; }
+        .line-3 { animation: shimmer-in 0.5s 1.2s ease both; }
+
+        .hero-tag-row {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 0.42rem;
+            margin-top: 0.7rem;
+        }
+
+        .credential-tag {
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.35);
+            background: rgba(255, 255, 255, 0.16);
+            padding: 0.18rem 0.62rem;
+            font-size: 0.66rem;
+            line-height: 1.35;
+            color: #fff;
+        }
+
+        .login-form-panel {
+            width: 100%;
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 1.55rem 1.6rem;
+        }
+
+        .input-modern {
+            width: 100%;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            background: #fff;
+            padding: 0.62rem 2.6rem 0.62rem 0.9rem;
+            font-size: 0.92rem;
+            color: #111827;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .input-modern::placeholder {
+            color: #9ca3af;
+        }
+
+        .input-modern:focus {
+            outline: none;
+            border-color: rgba(193, 18, 31, 0.65);
+            box-shadow: 0 0 0 3px rgba(193, 18, 31, 0.13);
+        }
+
+        .field-icon {
+            position: absolute;
+            right: 0.78rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748b;
+        }
+
+        .form-action {
+            width: 100%;
+            border: 0;
+            border-radius: 9999px;
+            background: linear-gradient(90deg, var(--brand-red) 0%, #ef4444 100%);
+            color: #fff;
+            padding: 0.68rem 1rem;
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.03em;
+            box-shadow: 0 10px 20px rgba(193, 18, 31, 0.23);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+        }
+
+        .form-action:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.02);
+            box-shadow: 0 12px 22px rgba(193, 18, 31, 0.28);
+        }
+
+        .form-action:active {
+            transform: translateY(0);
+        }
+
         input:-webkit-autofill,
         input:-webkit-autofill:hover,
         input:-webkit-autofill:focus {
@@ -25,48 +417,90 @@
             transition: background-color 9999s ease-in-out 0s;
         }
 
-        .input-underline {
-            background: transparent;
-            border: none;
-            border-bottom: 1.5px solid #1f2937;
-            border-radius: 0;
-            outline: none;
-            width: 100%;
-            padding: 0.375rem 0;
-            font-size: 0.9375rem;
-            color: #111827;
-            transition: border-color 0.2s ease;
-        }
-        .input-underline::placeholder { color: #9ca3af; }
-        .input-underline:focus { border-bottom-color: #b91c1c; }
-
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            20%       { transform: translateX(-8px); }
-            40%       { transform: translateX(8px); }
-            60%       { transform: translateX(-5px); }
-            80%       { transform: translateX(5px); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-5px); }
+            80% { transform: translateX(5px); }
         }
+
         .shake { animation: shake 0.4s ease; }
+
+        @media (min-width: 1024px) {
+            .login-grid {
+                grid-template-columns: 0.9fr 1.1fr;
+            }
+
+            .login-hero {
+                display: flex;
+                flex-direction: column;
+                justify-content: space-between;
+            }
+        }
     </style>
 </head>
 
-<body class="flex min-h-screen items-center justify-center bg-gray-100 px-4 py-10">
+<body class="flex min-h-screen items-center justify-center px-4 py-8 sm:py-10">
 
-    <div class="flex w-full max-w-sm flex-col items-center">
+    <div class="login-shell login-grid w-full">
 
-        <div class="mb-5 flex flex-col items-center select-none">
-            <img src="{{ asset('top_logo.png') }}" alt="TOP Logo" class="h-16 w-auto object-contain sm:h-20" />
-        </div>
+        <section class="login-hero">
+            <div class="hero-main">
 
-        <p class="mt-3 text-center text-base text-gray-700 leading-snug">Hallo! Selamat Datang di</p>
-        <p class="text-center text-lg font-extrabold text-gray-900 leading-snug">Telkom Ormawa &amp; Prestasi</p>
 
-        <div class="mt-7 w-full rounded-3xl bg-white px-9 py-9 shadow-lg" id="login-card">
+                <div class="mt-6">
+                    <h2 class="text-3xl font-bold leading-tight tracking-tight">Selamat Datang<br>di TOPKEMA</h2>
+                    <p class="mt-3 max-w-sm text-xs leading-relaxed text-red-50/90">
+                        Kelola kegiatan organisasi, laporan, dan prestasi mahasiswa dari satu dashboard yang terintegrasi
+                    </p>
 
-            <h1 class="mb-8 text-center text-2xl font-extrabold uppercase tracking-widest text-gray-900">
-                SSO LOGIN
-            </h1>
+                    <div class="hero-illustration-wrap">
+
+                        <!-- Bar chart panel -->
+                        <div class="illus-chart-card">
+                            <div class="illus-lines">
+                                <div class="illus-line"></div>
+                                <div class="illus-line"></div>
+                                <div class="illus-line"></div>
+                            </div>
+                            <div class="illus-bars">
+                                <div class="illus-bar"></div>
+                                <div class="illus-bar"></div>
+                                <div class="illus-bar"></div>
+                                <div class="illus-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Trophy panel -->
+                        <div class="illus-trophy-panel">
+                            <span class="illus-bubble-big"></span>
+                            <span class="illus-bubble-small"></span>
+                            <span class="illus-trophy-icon">emoji_events</span>
+                            <span class="illus-badge">JUARA</span>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <div class="hero-tag-row">
+                <span class="credential-tag">UI Modern</span>
+                <span class="credential-tag">Responsif</span>
+                <span class="credential-tag">Akses Cepat</span>
+            </div>
+        </section>
+
+        <section class="login-form-panel" id="login-card">
+            <div class="mb-4 flex items-center justify-between lg:hidden">
+                <img src="{{ asset('top_logo.png') }}" alt="TOP Logo" class="w-auto object-contain" style="height: 44px; max-width: 140px;" />
+                <span class="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">TOPKEMA</span>
+            </div>
+
+            <div class="mb-5">
+                <h1 class="text-[1.75rem] font-extrabold leading-tight text-gray-900">Masuk ke Akun</h1>
+                <p class="mt-1.5 text-sm text-slate-500">Gunakan username dan password yang sudah terdaftar</p>
+            </div>
 
             @if ($errors->any())
                 <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -87,84 +521,56 @@
             <form method="POST" action="{{ url('/login') }}" id="login-form" novalidate>
                 @csrf
 
-                <div class="mb-7">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-5 w-5 flex-shrink-0 text-gray-800" fill="currentColor"
-                             viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12
-                                     12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-                        </svg>
+                <div class="mb-4">
+                    <label for="username" class="mb-2 block text-sm font-semibold text-slate-700">Username</label>
+                    <div class="relative">
                         <input
                             id="username"
                             name="username"
                             type="text"
-                            class="input-underline"
+                            class="input-modern"
                             placeholder="manggala"
                             value="{{ old('username') }}"
                             autocomplete="username"
                             autofocus
                             required
                         />
+                        <span class="field-icon">
+                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+                            </svg>
+                        </span>
                     </div>
                 </div>
 
-                <div class="mb-9">
-                    <div class="flex items-center gap-3">
-                        <svg class="h-5 w-5 flex-shrink-0 text-gray-800" fill="currentColor"
-                             viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9
-                                     2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2
-                                     2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39
-                                     3.1 3.1v2z"/>
-                        </svg>
-                        <div class="relative flex-1">
-                            <input
-                                id="password"
-                                name="password"
-                                type="password"
-                                class="input-underline pr-8"
-                                placeholder="Password"
-                                autocomplete="current-password"
-                                required
-                            />
-                            <button
-                                type="button"
-                                onclick="togglePasswordVisibility()"
-                                class="absolute right-0 top-1/2 -translate-y-1/2 text-gray-400
-                                       hover:text-gray-600 transition-colors focus:outline-none"
-                                aria-label="Tampilkan / sembunyikan password"
-                                tabindex="-1"
-                            >
-                                <svg id="icon-eye-slash" class="h-5 w-5"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97
-                                             9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242
-                                             4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0
-                                             0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0
-                                             01-4.132 5.411m0 0L21 21"/>
-                                </svg>
-                                <svg id="icon-eye" class="h-5 w-5 hidden"
-                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542
-                                             7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                </svg>
-                            </button>
-                        </div>
+                <div class="mb-5">
+                    <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+                    <div class="relative">
+                        <input
+                            id="password"
+                            name="password"
+                            type="password"
+                            class="input-modern"
+                            placeholder="Password"
+                            autocomplete="current-password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onclick="togglePasswordVisibility()"
+                            class="field-icon bg-transparent border-0 p-0 cursor-pointer hover:text-slate-600 transition-colors focus:outline-none"
+                            aria-label="Tampilkan / sembunyikan password"
+                            tabindex="-1"
+                        >
+                            <span id="icon-eye-toggle" class="material-symbols-rounded" style="font-size:20px;">visibility_off</span>
+                        </button>
                     </div>
                 </div>
 
                 <button
                     type="submit"
                     id="login-btn"
-                      class="flex w-full items-center justify-center rounded-full bg-red-700 py-2.5
-                          text-sm font-semibold lowercase tracking-wide text-white shadow-md
-                           hover:bg-red-800 active:bg-red-900 focus:outline-none focus:ring-2
-                           focus:ring-red-500 focus:ring-offset-2 transition-all duration-200
-                           disabled:opacity-60 disabled:cursor-not-allowed"
+                    class="form-action disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     <svg id="btn-spinner" class="mr-2 h-4 w-4 animate-spin hidden"
                          fill="none" viewBox="0 0 24 24">
@@ -173,29 +579,29 @@
                         <path class="opacity-75" fill="currentColor"
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
-                    <span id="btn-label">login</span>
+                    <span id="btn-label">Masuk</span>
                 </button>
 
+                <p class="mt-3 text-center text-xs text-slate-500">
+                    Bukan ormawa?
+                    <a href="{{ url('/register') }}" class="font-semibold text-red-700 hover:text-red-800 transition-colors">Daftar Sekarang</a>
+                </p>
+
             </form>
-
-        </div>
-
+        </section>
     </div>
 
     <script>
         function togglePasswordVisibility() {
-            const input     = document.getElementById('password');
-            const iconSlash = document.getElementById('icon-eye-slash');
-            const iconEye   = document.getElementById('icon-eye');
+            const input  = document.getElementById('password');
+            const icon   = document.getElementById('icon-eye-toggle');
 
             if (input.type === 'password') {
-                input.type = 'text';
-                iconSlash.classList.add('hidden');
-                iconEye.classList.remove('hidden');
+                input.type  = 'text';
+                icon.textContent = 'visibility';
             } else {
-                input.type = 'password';
-                iconSlash.classList.remove('hidden');
-                iconEye.classList.add('hidden');
+                input.type  = 'password';
+                icon.textContent = 'visibility_off';
             }
         }
 
@@ -217,7 +623,7 @@
             const label   = document.getElementById('btn-label');
             btn.disabled      = true;
             spinner.classList.remove('hidden');
-            label.textContent = 'memproses...';
+            label.textContent = 'Memproses...';
         });
 
         document.getElementById('login-card').addEventListener('animationend', function () {

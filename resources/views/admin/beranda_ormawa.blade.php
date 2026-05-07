@@ -5,15 +5,30 @@
 @section('content')
 
 <style>
-	.dashboard-shell {
-		width: 100%;
-	}
+		.dashboard-shell {
+			width: 100%;
+		}
 
-	.dashboard-summary-grid {
-		display: grid;
-		grid-template-columns: repeat(3, minmax(0, 1fr));
-		gap: 24px;
-	}
+		.dashboard-summary-grid {
+			display: grid;
+			/* make cards responsive and more proportional */
+			grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+			gap: 20px;
+			align-items: stretch;
+		}
+
+		.page-hero {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: 12px;
+			padding: 6px 0 2px;
+		}
+
+		.page-hero .title h1 {
+			margin: 0; font-size: 1.25rem; font-weight: 700; color: #0f172a;
+		}
+		.page-hero .title p { margin: 0; color: #64748b; font-size: 0.95rem; }
 
 	.dashboard-filter-grid {
 		display: grid;
@@ -22,16 +37,27 @@
 		align-items: stretch;
 	}
 
-	.dashboard-card {
-		box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-		border: 0;
-	}
+		/* main white content area that holds filters + table */
+		.content-card {
+			background: #ffffff;
+			border-radius: 12px;
+			padding: 18px;
+			box-shadow: 0 12px 30px rgba(15,23,42,0.06);
+		}
+
+		.dashboard-card {
+			box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
+			border: 0;
+			border-radius: 12px;
+			padding: 12px;
+			background: #ffffff;
+		}
 
 	.dashboard-filter-card {
 		min-height: 86px;
 		display: flex;
 		flex-direction: column;
-		justify-content: center;
+		justify-content: flex-start;
 	}
 
 	.dashboard-filter-surface {
@@ -41,9 +67,11 @@
 		padding: 0;
 	}
 
-	.dashboard-table-wrap {
-		scrollbar-width: thin;
-	}
+		.dashboard-table-wrap {
+			scrollbar-width: thin;
+			overflow: auto;
+			max-width: 100%;
+		}
 
 	.dashboard-table-wrap::-webkit-scrollbar {
 		height: 10px;
@@ -132,7 +160,18 @@
 @endphp
 
 	<div class="dashboard-shell flex flex-col gap-8">
-	<div class="dashboard-summary-grid">
+		<div class="page-hero">
+			<div class="title">
+				<h1>Beranda Ormawa</h1>
+				<p>Ringkasan kegiatan dan status terbaru</p>
+			</div>
+			<div class="actions">
+				<!-- actions can go here (filter, eksport cepat) -->
+			</div>
+		</div>
+
+		<div class="content-card">
+		<div class="dashboard-summary-grid">
 		@foreach ($summaryCards as $card)
 			<div class="dashboard-card min-h-[112px] rounded-2xl bg-white px-5 py-4">
 				<div class="flex items-center justify-between gap-3">
@@ -156,7 +195,7 @@
     </br>
 
 	<div class="dashboard-filter-grid">
-		<div class="dashboard-filter-card dashboard-filter-surface">
+		<div class="dashboard-filter-card dashboard-filter-surface pt-1">
 			<label class="mb-3 block text-base font-medium leading-none text-slate-700">Jenis Ormawa</label>
 			<button type="button" class="flex w-full items-center justify-between border-b border-slate-300 pb-4 pt-1 text-left text-slate-900">
 				<span>Ormawa Institusi</span>
@@ -166,7 +205,7 @@
 			</button>
 		</div>
 
-		<div class="dashboard-filter-card dashboard-filter-surface">
+		<div class="dashboard-filter-card dashboard-filter-surface pt-1">
 			<label class="mb-3 block text-base font-medium leading-none text-slate-700">Nama Ormawa</label>
 			<button type="button" class="flex w-full items-center justify-between border-b border-slate-300 pb-4 pt-1 text-left text-slate-900">
 				<span>Manggala</span>
@@ -174,6 +213,15 @@
 					<path stroke-linecap="round" stroke-linejoin="round" d="m6 9 6 6 6-6" />
 				</svg>
 			</button>
+			</br>
+			<div class="mt-8 flex justify-end">
+				<a href="{{ route('admin.beranda_ormawa.export_pdf') }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+					<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 -960 960 960" class="h-5 w-5 shrink-0">
+						<path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
+					</svg>
+					Export Data
+				</a>
+			</div>
 		</div>
 	</div>
 
@@ -181,7 +229,7 @@
 
 	<div class="dashboard-card overflow-hidden rounded-2xl bg-white">
 		<div class="dashboard-table-wrap overflow-x-auto">
-			<table class="min-w-[1350px] w-full border-separate border-spacing-y-3 border-spacing-x-0 text-left text-sm text-slate-700">
+			<table class="min-w-full w-full border-separate border-spacing-y-3 border-spacing-x-0 text-left text-sm text-slate-700">
 				<thead class="bg-slate-100 text-slate-700">
 					<tr>
 						<th class="px-4 py-3 font-semibold">TW</th>

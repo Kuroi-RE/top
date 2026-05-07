@@ -11,10 +11,11 @@
 
 	.prestasi-filters-top {
 		display: flex;
-		align-items: flex-end;
+		align-items: center;
 		justify-content: space-between;
-		gap: 40px;
-		margin-bottom: 20px;
+		gap: 24px;
+		margin-bottom: 18px;
+		flex-wrap: wrap;
 	}
 
 	.prestasi-filter-left {
@@ -25,8 +26,9 @@
 
 	.prestasi-filter-right {
 		display: flex;
-		align-items: flex-end;
-		gap: 24px;
+		align-items: center;
+		gap: 16px;
+		flex-wrap: wrap;
 	}
 
 	.prestasi-filter-item {
@@ -76,9 +78,16 @@
 	}
 
 	.prestasi-search-wrapper {
+	.prestasi-search-wrapper {
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
+	}
+
+	.prestasi-search-right {
+		margin-left: auto;
+		width: 320px;
+		min-width: 200px;
 	}
 
 	.prestasi-search-label {
@@ -93,7 +102,8 @@
 		gap: 8px;
 		border-bottom: 1px solid rgba(55, 65, 81, 0.2);
 		padding-bottom: 6px;
-		min-width: 250px;
+		width: 100%;
+		min-width: 0;
 	}
 
 	.prestasi-search input {
@@ -105,29 +115,24 @@
 		color: #111827;
 	}
 
-	.prestasi-filters-bottom {
-		display: flex;
-		align-items: center;
-		gap: 20px;
-		margin-bottom: 26px;
-	}
-
 	.prestasi-perpage {
 		display: inline-flex;
 		align-items: center;
-		gap: 10px;
-		font-size: 0.92rem;
+		gap: 8px;
+		font-size: 0.9rem;
 		color: #374151;
 	}
 
 	.prestasi-perpage select {
-		width: 60px;
-		border: 1px solid rgba(55, 65, 81, 0.2);
-		border-radius: 6px;
-		background: #f3f4f6;
-		padding: 4px 8px;
+		width: 64px;
+		min-width: 64px;
+		border: 1px solid rgba(55, 65, 81, 0.12);
+		border-radius: 8px;
+		background: #ffffff;
+		padding: 6px 8px;
 		color: #111827;
 		outline: none;
+		box-shadow: 0 1px 2px rgba(2,6,23,0.04);
 	}
 
 	.prestasi-table {
@@ -229,6 +234,14 @@
 		</div>
 
 		<div class="prestasi-filter-right">
+			<div class="prestasi-perpage">
+				<select>
+					<option>5</option>
+					<option>10</option>
+					<option>20</option>
+				</select>
+				<span>Record per page</span>
+			</div>
 			<div class="prestasi-filter-item">
 				<label class="prestasi-filter-label">Tingkat</label>
 				<div class="prestasi-filter-control">
@@ -241,30 +254,30 @@
 					</select>
 				</div>
 			</div>
+		</div>
 
+		<div class="prestasi-search-right">
 			<div class="prestasi-search-wrapper">
 				<label class="prestasi-search-label">Search</label>
 				<div class="prestasi-search">
 					<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 text-gray-700">
 						<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z" />
 					</svg>
-					<input type="text" placeholder="">
+					<input type="text" placeholder="Search...">
 				</div>
 			</div>
-		</div>
 	</div>
 
-	<!-- Bottom Filter Row: Record per page (left) -->
-	<div class="prestasi-filters-bottom">
-		<div class="prestasi-perpage">
-			<select>
-				<option>5</option>
-				<option>10</option>
-				<option>20</option>
-			</select>
-			<span>Record per page</span>
-		</div>
+	<div class="mb-6 flex justify-end">
+		<a href="{{ route('admin.prestasi_mahasiswa.export_pdf') }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 shrink-0">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v10m0 0 3-3m-3 3-3-3m-3 5.25V19.5A2.25 2.25 0 008.25 21h7.5A2.25 2.25 0 0018 19.5v-1.25" />
+			</svg>
+			Export Data
+		</a>
 	</div>
+
+	<!-- Per-page moved to top row so it shares a line with search -->
 
 	<div class="prestasi-card">
 		<table class="prestasi-table">

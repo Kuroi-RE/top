@@ -177,6 +177,15 @@
 		</div>
 	</div>
 
+	<div class="mb-6 flex justify-end">
+		<a href="{{ route('admin.prestasi_ormawa.export_pdf') }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-2 rounded-xl bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md">
+			<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4 shrink-0">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M12 3v10m0 0 3-3m-3 3-3-3m-3 5.25V19.5A2.25 2.25 0 008.25 21h7.5A2.25 2.25 0 0018 19.5v-1.25" />
+			</svg>
+			Export Data
+		</a>
+	</div>
+
     </br>
 
 	<div class="dashboard-card overflow-hidden rounded-2xl bg-white">

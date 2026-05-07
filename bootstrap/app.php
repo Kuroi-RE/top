@@ -14,6 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
+            'check.dummy_user' => \App\Http\Middleware\CheckDummyUser::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

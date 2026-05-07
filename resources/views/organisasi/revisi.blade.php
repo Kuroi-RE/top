@@ -56,7 +56,7 @@
                     type="text"
                     name="nama_kegiatan"
                     value="Buka Bersama Manggala"
-                    class="w-full h-14 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                    class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
             </div>
 
             <!-- Waktu Kegiatan -->
@@ -67,7 +67,7 @@
                     type="text"
                     name="waktu_kegiatan"
                     value="27/03/2026"
-                    class="w-full h-14 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                    class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
             </div>
 
             <!-- Besar Ajuan -->
@@ -78,7 +78,7 @@
                     type="text"
                     name="besar_ajuan"
                     value="Rp. 200.000"
-                    class="w-full h-14 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                    class="w-full h-11 md:h-12 rounded-full border border-gray-400 bg-white px-5 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
             </div>
 
             <!-- Honor Pelatih -->
@@ -138,10 +138,13 @@
             </div>
 
             <!-- Submit Button -->
-            <div class="pt-4">
+            <div class="flex justify-end pt-4">
                 <button type="submit"
-                        class="w-full rounded-full bg-red-700 py-4 text-lg font-semibold text-white transition hover:bg-red-800">
+                    class="inline-flex min-w-[140px] items-center justify-center rounded-full bg-red-700 px-6 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-red-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200 focus:ring-2 focus:ring-red-200">
                     Kirim
+                    <svg class="ml-1 h-4 w-4 -rotate-12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5" />
+                    </svg>
                 </button>
             </div>
 
