@@ -332,7 +332,8 @@ Route::get("/admin/beranda_ormawa/export-pdf", function () {
         'Ajuan baru' => 'new',
     ];
 
-    return view("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles"));
+    $pdf = Pdf::loadView("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles"));
+    return $pdf->download("beranda_ormawa_" . now()->format('YmdHis') . ".pdf");
 })->name("admin.beranda_ormawa.export_pdf");
 
 Route::get("/admin/prestasi_mahasiswa", function () {
@@ -373,7 +374,8 @@ Route::get("/admin/prestasi_mahasiswa/export-pdf", function () {
         ],
     ];
 
-    return view("admin.prestasi_mahasiswa_export_pdf", compact("prestasi"));
+    $pdf = Pdf::loadView("admin.prestasi_mahasiswa_export_pdf", compact("prestasi"));
+    return $pdf->download("prestasi_mahasiswa_" . now()->format('YmdHis') . ".pdf");
 })->name("admin.prestasi_mahasiswa.export_pdf");
 
 Route::get("/admin/detail_prestasi", function () {
@@ -395,6 +397,53 @@ Route::get("/admin/prestasi_ormawa", function () {
 
     return view("admin.prestasi_ormawa");
 })->name("admin.prestasi_ormawa");
+
+Route::get("/admin/atur-deadline", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    $deadline = \App\Models\Deadline::where('is_active', true)->latest()->first();
+    return view("admin.atur_deadline", compact('deadline'));
+})->name("admin.atur_deadline");
+
+Route::post("/admin/atur-deadline", function (\Illuminate\Http\Request $request) {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    $request->validate([
+        'title' => 'required|string|max:255',
+        'deadline_at' => 'required|date',
+    ]);
+
+    // Deactivate previous deadlines
+    \App\Models\Deadline::where('is_active', true)->update(['is_active' => false]);
+
+    \App\Models\Deadline::create([
+        'title' => $request->title,
+        'deadline_at' => $request->deadline_at,
+        'is_active' => true,
+    ]);
+
+    return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil diperbarui.");
+})->name("admin.atur_deadline.post");
+
+Route::delete("/admin/atur-deadline", function () {
+    $user = session("dummy_user");
+
+    if (!$user || $user["role"] !== "kemahasiswaan") {
+        return redirect()->route("login");
+    }
+
+    \App\Models\Deadline::where('is_active', true)->delete();
+
+    return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil dihapus.");
+})->name("admin.atur_deadline.delete");
 
 Route::get("/admin/prestasi_ormawa/export-pdf", function () {
     $user = session("dummy_user");
@@ -478,12 +527,14 @@ Route::prefix("organisasi")
                 $revisi = \App\Models\ProposalKegiatan::where('status', 'Revisi')->count();
                 $disetujui = \App\Models\ProposalKegiatan::where('status', 'Disetujui')->count();
                 $ditolak = \App\Models\ProposalKegiatan::where('status', 'Ditolak')->count();
+                $deadline = \App\Models\Deadline::where('is_active', true)->latest()->first();
             } catch (\Throwable $e) {
                 $total = $revisi = $disetujui = $ditolak = 0;
-                \Log::warning('Proposal counts unavailable: ' . $e->getMessage());
+                $deadline = null;
+                \Log::warning('Proposal counts or deadline unavailable: ' . $e->getMessage());
             }
 
-            return view('organisasi.index', compact('total', 'revisi', 'disetujui', 'ditolak'));
+            return view('organisasi.index', compact('total', 'revisi', 'disetujui', 'ditolak', 'deadline'));
         })->name('index');
         Route::get('/beranda-mahasiswa', fn() => view('organisasi.beranda_mahasiswa'))->name('beranda_mahasiswa');
         Route::get('/proposal/export', function () {

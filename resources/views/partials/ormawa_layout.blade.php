@@ -902,10 +902,6 @@
                             <img src="{{ asset('top_logo.png') }}" alt="TOP" class="logo-img" />
                         </div>
                     </a>
-                    <div class="sidebar-user hidden md:flex flex-col">
-                        <span class="name">{{ session('dummy_user.name', 'Ormawa') }}</span>
-                        <span class="role">Organisasi Mahasiswa</span>
-                    </div>
                 </div>
 
                 <div class="sidebar-block">

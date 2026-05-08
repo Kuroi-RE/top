@@ -2,38 +2,149 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export PDF Prestasi Mahasiswa</title>
+    <title>Export PDF — Prestasi Mahasiswa</title>
     <style>
-        * { box-sizing: border-box; }
-        body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #0f172a; background: #f8fafc; }
-        .page { max-width: 1180px; margin: 0 auto; padding: 32px 24px 40px; }
-        .header { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; margin-bottom: 24px; }
-        h1 { margin: 0; font-size: 26px; }
-        p { margin: 8px 0 0; color: #64748b; }
-        .chip { padding: 10px 14px; border-radius: 9999px; background: #fee2e2; color: #b91c1c; font-weight: 700; font-size: 13px; white-space: nowrap; }
-        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 18px; overflow: hidden; box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08); }
-        thead { background: #f1f5f9; }
-        th, td { padding: 14px 12px; text-align: left; border-bottom: 1px solid #e2e8f0; vertical-align: top; font-size: 13px; }
-        th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: #334155; }
-        .footer { margin-top: 18px; color: #64748b; font-size: 12px; text-align: right; }
-        @media print { body { background: #fff; } .page { padding: 0; } .footer { display: none; } }
+        @page {
+            margin: 1cm;
+        }
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            color: #1e293b;
+            line-height: 1.4;
+            margin: 0;
+            padding: 0;
+        }
+        .header-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 22pt;
+            font-weight: bold;
+            margin: 0;
+            color: #0f172a;
+        }
+        .subtitle {
+            font-size: 10pt;
+            color: #64748b;
+            margin-top: 5px;
+        }
+        .summary-wrapper {
+            width: 100%;
+            margin-bottom: 30px;
+        }
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin-left: -10px;
+            margin-right: -10px;
+        }
+        .summary-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            width: 33.33%;
+            vertical-align: top;
+        }
+        .sc-label {
+            font-size: 8pt;
+            font-weight: bold;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
+        }
+        .sc-value {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 5px 0;
+        }
+        .section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .main-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        .main-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 9pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        .main-table td {
+            padding: 10px;
+            font-size: 8pt;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: top;
+        }
+        .pill {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 7pt;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .pill-amber { background-color: #fef3c7; color: #b45309; }
+        .pill-sky { background-color: #e0f2fe; color: #0369a1; }
+        .text-center { text-align: center; }
+        .footer {
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 8pt;
+            color: #94a3b8;
+            text-align: center;
+            padding-bottom: 10px;
+        }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="header">
-            <div>
-                <h1>Export Prestasi Mahasiswa</h1>
-                <p>Rekap data prestasi mahasiswa aktif</p>
-            </div>
-            <div class="chip">Siap disimpan sebagai PDF</div>
-        </div>
+    <div class="header-table">
+        <h1 class="title">Export Prestasi Mahasiswa</h1>
+        <p class="subtitle">Rekap data prestasi mahasiswa aktif &mdash; {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+    </div>
 
-        <table>
+    <div class="section-title">Filter Pencarian</div>
+    <table class="summary-table">
+        <tr>
+            <td class="summary-card">
+                <div class="sc-label">Prestasi</div>
+                <div class="sc-value">Semua Prestasi</div>
+            </td>
+            <td class="summary-card">
+                <div class="sc-label">Tingkat</div>
+                <div class="sc-value">Semua Tingkat</div>
+            </td>
+            <td class="summary-card">
+                <div class="sc-label">Pencarian</div>
+                <div class="sc-value">-</div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="margin-top: 30px;">
+        <div class="section-title">Daftar Prestasi</div>
+        <table class="main-table">
             <thead>
                 <tr>
-                    <th>NIM</th>
+                    <th style="width: 70px;">NIM</th>
                     <th>Nama</th>
                     <th>Prodi</th>
                     <th>Prestasi</th>
@@ -43,25 +154,31 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach ($prestasi as $item)
+                @forelse ($prestasi as $item)
                     <tr>
                         <td>{{ $item['nim'] }}</td>
-                        <td>{{ $item['nama'] }}</td>
+                        <td style="font-weight: bold;">{{ $item['nama'] }}</td>
                         <td>{{ $item['prodi'] }}</td>
-                        <td>{{ $item['prestasi'] }}</td>
+                        <td>
+                            <span class="pill pill-amber">{{ $item['prestasi'] }}</span>
+                        </td>
                         <td>{{ $item['nama_event'] }}</td>
                         <td>{{ $item['penyelenggara'] }}</td>
-                        <td>{{ $item['tingkat'] }}</td>
+                        <td>
+                            <span class="pill pill-sky">{{ $item['tingkat'] }}</span>
+                        </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="7" class="text-center" style="padding: 30px; color: #94a3b8;">Belum ada data prestasi.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
-
-        <div class="footer">TOP © 2026 Kemahasiswaan Telkom University Purwokerto</div>
     </div>
 
-    <script>
-        window.addEventListener('load', () => window.print());
-    </script>
+    <div class="footer">
+        TOP &copy; {{ date('Y') }} &mdash; Kemahasiswaan Telkom University Purwokerto
+    </div>
 </body>
 </html>

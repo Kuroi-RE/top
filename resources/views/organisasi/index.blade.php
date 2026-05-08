@@ -69,12 +69,27 @@
 
     @keyframes greeting-wiggle {
         0% { transform: rotate(0deg); }
-        20% { transform: rotate(8deg); }
-        40% { transform: rotate(-6deg); }
-        60% { transform: rotate(6deg); }
+        20% { transform: rotate(14deg); }
+        40% { transform: rotate(-8deg); }
+        60% { transform: rotate(14deg); }
         80% { transform: rotate(-4deg); }
         100% { transform: rotate(0deg); }
     }
+
+    @keyframes content-fade-in {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .animate-content {
+        animation: content-fade-in 0.6s ease-out both;
+    }
+
+    /* Stagger card animations */
+    .summary-card:nth-child(1) { animation-delay: 0.1s; }
+    .summary-card:nth-child(2) { animation-delay: 0.2s; }
+    .summary-card:nth-child(3) { animation-delay: 0.3s; }
+    .main-content-card { animation-delay: 0.4s; }
 
     .dark .greeting-hero {
         border-color: rgba(249, 115, 22, 0.25);
@@ -122,7 +137,7 @@ $statusConfig = [
 <div class="mb-6">
     <div class="greeting-hero mb-4">
         <div class="greeting-wave" aria-hidden="true">
-            <span class="greeting-wave-icon">waving_hand</span>
+            <span class="greeting-wave-icon">👋</span>
         </div>
         <div>
             <div class="greeting-title">Halo, {{ $displayName }}! Selamat datang kembali di TOPKEMA</div>
@@ -131,7 +146,7 @@ $statusConfig = [
     </div>
 
     <div class="flex gap-4 items-stretch overflow-x-auto pb-2">
-        <div class="flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
+        <div class="summary-card animate-content flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
             <div class="min-w-0">
                 <p class="text-xs text-gray-500 uppercase">Total Proposal</p>
                 <p class="mt-1 text-2xl font-extrabold text-gray-900">{{ $total ?? 0 }}</p>
@@ -141,7 +156,7 @@ $statusConfig = [
             </div>
         </div>
 
-        <div class="flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
+        <div class="summary-card animate-content flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
             <div class="min-w-0">
                 <p class="text-xs text-gray-500 uppercase">Revisi</p>
                 <p class="mt-1 text-2xl font-extrabold text-gray-900">{{ $revisi ?? 0 }}</p>
@@ -151,7 +166,7 @@ $statusConfig = [
             </div>
         </div>
 
-        <div class="flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
+        <div class="summary-card animate-content flex-1 min-w-[260px] rounded-2xl bg-white border border-gray-100 p-4 shadow h-28 flex items-center justify-between">
             <div class="min-w-0">
                 <p class="text-xs text-gray-500 uppercase">Disetujui</p>
                 <p class="mt-1 text-2xl font-extrabold text-gray-900">{{ $disetujui ?? 0 }}</p>
@@ -205,7 +220,7 @@ $statusConfig = [
     </div>
 </div>
 
-<div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
+<div class="main-content-card animate-content overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100">
     <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100">
         <h2 class="text-base font-semibold text-gray-800">Daftar Proposal</h2>
         <div class="flex items-center gap-2">
@@ -548,6 +563,7 @@ $statusConfig = [
     }
 </style>
 
+@if($deadline)
 <div id="deadline-card" class="deadline-card" aria-live="polite">
     <button id="deadline-close" class="deadline-close" type="button" aria-label="Tutup notifikasi">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: 14px; height: 14px;">
@@ -562,20 +578,20 @@ $statusConfig = [
             <path d="M15 2v2"></path>
             <path d="M9 2v2"></path>
         </svg>
-        DEADLINE TW
+        {{ strtoupper($deadline->title) }}
     </div>
     <p class="deadline-text">Pengumpulan proposal ditutup dalam:</p>
     <div class="deadline-grid">
         <div class="deadline-box">
-            <div class="deadline-value">02</div>
+            <div id="cd-days" class="deadline-value">00</div>
             <div class="deadline-label">HARI</div>
         </div>
         <div class="deadline-box">
-            <div class="deadline-value">14</div>
+            <div id="cd-hours" class="deadline-value">00</div>
             <div class="deadline-label">JAM</div>
         </div>
         <div class="deadline-box">
-            <div class="deadline-value">23</div>
+            <div id="cd-mins" class="deadline-value">00</div>
             <div class="deadline-label">MENIT</div>
         </div>
     </div>
@@ -591,6 +607,7 @@ $statusConfig = [
     </svg>
     Deadline
 </button>
+@endif
 
 <a
     id="wa-button"
@@ -603,7 +620,7 @@ $statusConfig = [
     ontouchstart="animateWaHoverIn(this)"
     ontouchend="animateWaHoverOut(this)"
     onclick="animateWaClick(this)"
-    style="position: fixed; right: 20px; bottom: 188px; z-index: 9999; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 9999px; background: #2CB100; color: #fff; text-decoration: none; box-shadow: 0 12px 26px rgba(44, 177, 0, 0.32);"
+    style="position: fixed; right: 20px; bottom: 20px; z-index: 9999; display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 9999px; background: #2CB100; color: #fff; text-decoration: none; box-shadow: 0 12px 26px rgba(44, 177, 0, 0.32);"
 >
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width: 30px; height: 30px;">
         <path d="M12.04 2C6.49 2 2 6.49 2 12.04c0 1.78.47 3.52 1.35 5.04L2 22l5.06-1.33a9.99 9.99 0 0 0 4.98 1.35H12c5.55 0 10.04-4.49 10.04-10.04C22.04 6.49 17.55 2 12.04 2zm5.83 14.16c-.24.67-1.39 1.28-1.93 1.36-.49.07-1.11.1-1.79-.12-.41-.13-.94-.31-1.63-.61-2.87-1.24-4.74-4.14-4.88-4.33-.13-.18-1.17-1.56-1.17-2.97 0-1.41.74-2.11 1-2.4.26-.29.57-.36.76-.36h.55c.18 0 .42-.07.65.49.24.58.82 2.01.89 2.15.07.14.12.31.02.49-.1.18-.15.29-.3.45-.15.17-.32.37-.45.49-.15.15-.31.31-.13.6.18.29.79 1.3 1.7 2.11 1.16 1.03 2.15 1.35 2.44 1.5.29.15.46.13.63-.08.17-.21.73-.85.93-1.14.2-.29.4-.24.67-.15.27.09 1.72.81 2.01.95.29.15.49.22.56.34.07.12.07.72-.17 1.39z"/>
@@ -646,6 +663,34 @@ window.animateWaClick = function (el) {
     );
 };
 
+@if($deadline)
+(function() {
+    const deadlineTime = new Date("{{ $deadline->deadline_at->toIso8601String() }}").getTime();
+    
+    function updateCountdown() {
+        const now = new Date().getTime();
+        const diff = deadlineTime - now;
+        
+        if (diff <= 0) {
+            document.getElementById('deadline-card').classList.add('hide');
+            if(document.getElementById('deadline-toggle')) document.getElementById('deadline-toggle').style.display = 'none';
+            return;
+        }
+        
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const mins = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        
+        document.getElementById('cd-days').textContent = days.toString().padStart(2, '0');
+        document.getElementById('cd-hours').textContent = hours.toString().padStart(2, '0');
+        document.getElementById('cd-mins').textContent = mins.toString().padStart(2, '0');
+    }
+    
+    setInterval(updateCountdown, 1000);
+    updateCountdown();
+})();
+@endif
+
 (function () {
     'use strict';
 
@@ -667,7 +712,7 @@ window.animateWaClick = function (el) {
     function updateWaPosition() {
         if (!waButton) return;
         if (!deadlineCard) {
-            waButton.style.bottom = '188px';
+            waButton.style.bottom = `${DEADLINE_BOTTOM}px`;
             return;
         }
 
