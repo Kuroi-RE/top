@@ -2,214 +2,173 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Export PDF Beranda Ormawa</title>
+    <title>Export PDF — Beranda Ormawa</title>
     <style>
-        :root {
-            color-scheme: light;
+        @page {
+            margin: 1cm;
         }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11pt;
+            color: #1e293b;
+            line-height: 1.4;
             margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #0f172a;
-            background: #f8fafc;
+            padding: 0;
         }
-
-        .page {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 32px 24px 40px;
+        .header-table {
+            width: 100%;
+            margin-bottom: 20px;
         }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            gap: 16px;
-            margin-bottom: 24px;
-        }
-
         .title {
+            font-size: 22pt;
+            font-weight: bold;
             margin: 0;
-            font-size: 26px;
-            line-height: 1.2;
+            color: #0f172a;
         }
-
         .subtitle {
-            margin: 8px 0 0;
+            font-size: 10pt;
             color: #64748b;
-            font-size: 14px;
+            margin-top: 5px;
         }
-
-        .chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 14px;
-            border-radius: 9999px;
-            background: #fee2e2;
-            color: #b91c1c;
-            font-weight: 700;
-            font-size: 13px;
-            white-space: nowrap;
+        .summary-wrapper {
+            width: 100%;
+            margin-bottom: 30px;
         }
-
-        .meta {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 16px;
-            margin-bottom: 24px;
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 10px 0;
+            margin-left: -10px;
+            margin-right: -10px;
         }
-
-        .meta-card {
-            background: white;
+        .summary-card {
+            background: #ffffff;
             border: 1px solid #e2e8f0;
-            border-radius: 18px;
-            padding: 16px 18px;
+            padding: 15px;
+            width: 50%;
+            vertical-align: top;
         }
-
-        .meta-label {
-            display: block;
-            margin-bottom: 6px;
+        .sc-label {
+            font-size: 8pt;
+            font-weight: bold;
             color: #64748b;
-            font-size: 12px;
             text-transform: uppercase;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
-
-        .meta-value {
-            font-size: 16px;
-            font-weight: 700;
+        .sc-value {
+            font-size: 16pt;
+            font-weight: bold;
+            color: #0f172a;
+            margin: 5px 0;
         }
-
-        table {
+        .sc-caption {
+            font-size: 8pt;
+            color: #94a3b8;
+        }
+        .section-title {
+            font-size: 10pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #64748b;
+            margin-bottom: 10px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 5px;
+        }
+        .main-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
-            border-radius: 18px;
-            overflow: hidden;
-            box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
+            margin-top: 10px;
         }
-
-        thead {
-            background: #f1f5f9;
-        }
-
-        th, td {
-            padding: 14px 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-            vertical-align: top;
-            font-size: 13px;
-        }
-
-        th {
-            font-size: 12px;
+        .main-table th {
+            background-color: #f8fafc;
+            color: #475569;
+            font-size: 9pt;
+            font-weight: bold;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #334155;
+            padding: 10px;
+            text-align: left;
+            border-bottom: 2px solid #e2e8f0;
         }
-
-        .status {
-            display: inline-flex;
-            min-width: 96px;
-            justify-content: center;
-            padding: 6px 12px;
-            border-radius: 9999px;
-            font-weight: 700;
-            font-size: 12px;
+        .main-table td {
+            padding: 10px;
+            font-size: 9pt;
+            border-bottom: 1px solid #f1f5f9;
+            vertical-align: middle;
         }
-
-        .done { background: #dcfce7; color: #15803d; }
-        .pending { background: #fef3c7; color: #b45309; }
-        .info { background: #e0f2fe; color: #0369a1; }
-        .revisi { background: #ffe4e6; color: #be123c; }
-        .new { background: #e2e8f0; color: #334155; }
-
+        .pill {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 10px;
+            font-size: 8pt;
+            font-weight: bold;
+            text-align: center;
+            white-space: nowrap;
+        }
+        .pill-done    { background-color: #dcfce7; color: #15803d; }
+        .pill-pending { background-color: #fef3c7; color: #b45309; }
+        .pill-info    { background-color: #e0f2fe; color: #0369a1; }
+        .pill-revisi  { background-color: #ffe4e6; color: #be123c; }
+        .pill-default { background-color: #f1f5f9; color: #475569; }
+        .text-center { text-align: center; }
         .footer {
-            margin-top: 18px;
-            color: #64748b;
-            font-size: 12px;
-            text-align: right;
-        }
-
-        @media print {
-            body {
-                background: white;
-            }
-
-            .page {
-                padding: 0;
-            }
-
-            .chip {
-                border: 1px solid #fecaca;
-            }
-
-            .footer {
-                display: none;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .header,
-            .meta {
-                grid-template-columns: 1fr;
-                display: grid;
-            }
-
-            .header {
-                align-items: start;
-            }
-
-            table {
-                display: block;
-                overflow-x: auto;
-            }
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+            font-size: 8pt;
+            color: #94a3b8;
+            text-align: center;
+            padding-bottom: 10px;
         }
     </style>
 </head>
 <body>
-    <div class="page">
-        <div class="header">
-            <div>
-                <h1 class="title">Export Beranda Ormawa</h1>
-                <p class="subtitle">Data Ormawa Institusi - Manggala</p>
-            </div>
-            <div class="chip">Siap disimpan sebagai PDF</div>
-        </div>
+    <div class="header-table">
+        <h1 class="title">Export Beranda Ormawa</h1>
+        <p class="subtitle">Ringkasan kegiatan dan status terbaru &mdash; {{ now()->translatedFormat('d F Y, H:i') }} WIB</p>
+    </div>
 
-        <div class="meta">
-            <div class="meta-card">
-                <span class="meta-label">Jenis Ormawa</span>
-                <div class="meta-value">Ormawa Institusi</div>
-            </div>
-            <div class="meta-card">
-                <span class="meta-label">Nama Ormawa</span>
-                <div class="meta-value">Manggala</div>
-            </div>
-        </div>
+    <div class="section-title">Informasi Ormawa</div>
+    <table class="summary-table">
+        <tr>
+            <td class="summary-card">
+                <div class="sc-label">Jenis Ormawa</div>
+                <div class="sc-value">Ormawa Institusi</div>
+            </td>
+            <td class="summary-card">
+                <div class="sc-label">Nama Ormawa</div>
+                <div class="sc-value">Manggala</div>
+            </td>
+        </tr>
+    </table>
 
-        <table>
+    <div style="margin-top: 30px;">
+        <div class="section-title">Daftar Kegiatan</div>
+        <table class="main-table">
             <thead>
                 <tr>
-                    <th>TW</th>
+                    <th style="width: 30px;">TW</th>
                     <th>Ormawa</th>
                     <th>Nama Kegiatan</th>
                     <th>Resiko</th>
                     <th>Waktu Kegiatan</th>
                     <th>Besar Ajuan</th>
                     <th>Besar Anggaran</th>
-                    <th>Status</th>
+                    <th style="width: 80px;" class="text-center">Status</th>
                 </tr>
             </thead>
             <tbody>
-                @foreach ($activities as $activity)
+                @forelse ($activities as $activity)
+                    @php
+                        $statusStr = strtolower($activity['status'] ?? '');
+                        $pillClass = match(true) {
+                            $statusStr === 'selesai' || $statusStr === 'disetujui'  => 'pill-done',
+                            $statusStr === 'pencairan'                              => 'pill-info',
+                            str_contains($statusStr, 'revisi')                      => 'pill-revisi',
+                            str_contains($statusStr, 'menunggu')                    => 'pill-pending',
+                            default                                                 => 'pill-default',
+                        };
+                    @endphp
                     <tr>
                         <td>{{ $activity['tw'] }}</td>
                         <td>{{ $activity['ormawa'] }}</td>
@@ -218,15 +177,21 @@
                         <td>{{ $activity['waktu'] }}</td>
                         <td>{{ $activity['ajuan'] }}</td>
                         <td>{{ $activity['anggaran'] }}</td>
-                        <td>
-                            <span class="status {{ $statusStyles[$activity['status']] ?? 'new' }}">{{ $activity['status'] }}</span>
+                        <td class="text-center">
+                            <span class="pill {{ $pillClass }}">{{ $activity['status'] }}</span>
                         </td>
                     </tr>
-                @endforeach
+                @empty
+                    <tr>
+                        <td colspan="8" class="text-center" style="padding: 30px; color: #94a3b8;">Belum ada data kegiatan.</td>
+                    </tr>
+                @endforelse
             </tbody>
         </table>
+    </div>
 
-        <div class="footer">TOP © 2026 Kemahasiswaan Telkom University Purwokerto</div>
+    <div class="footer">
+        TOP &copy; {{ date('Y') }} &mdash; Kemahasiswaan Telkom University Purwokerto
     </div>
 
     <script>
