@@ -15,19 +15,30 @@ class StoreDosenRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_dosen' => 'required|string|max:150',
-            'nidn' => 'nullable|string|char:10',
-            'nip' => 'nullable|string|char:18',
+            'nama' => 'required|string|max:150',
+            'nip' => 'nullable|string|digits:18',
+            'nidn' => 'nullable|string|digits:10',
             'prodi' => 'required|string|max:100',
             'surat_tugas' => 'nullable|file|mimes:pdf|max:5120',
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'nama_dosen.required' => 'Nama dosen wajib diisi',
-            'prodi.required' => 'Program studi wajib diisi',
+            'nama.required' => 'Nama wajib diisi',
+            'nama.string' => 'Nama harus berupa teks',
+            'nama.max' => 'Nama maksimal 150 karakter',
+            'nip.string' => 'Nip harus berupa teks',
+            'nip.digits' => 'Nip harus 18 digit',
+            'nidn.string' => 'Nidn harus berupa teks',
+            'nidn.digits' => 'Nidn harus 10 digit',
+            'prodi.required' => 'Prodi wajib diisi',
+            'prodi.string' => 'Prodi harus berupa teks',
+            'prodi.max' => 'Prodi maksimal 100 karakter',
+            'surat_tugas.file' => 'Surat Tugas harus berupa file',
+            'surat_tugas.mimes' => 'Format Surat Tugas harus berupa pdf',
+            'surat_tugas.max' => 'Surat Tugas maksimal 5120 KB',
         ];
     }
 }

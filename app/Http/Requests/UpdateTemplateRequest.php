@@ -20,4 +20,18 @@ class UpdateTemplateRequest extends FormRequest
             'file' => 'nullable|file|mimes:pdf|max:5120',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'nama_template.string' => 'Nama Template harus berupa teks',
+            'nama_template.max' => 'Nama Template maksimal 100 karakter',
+            'nama_template.unique' => 'Nama Template sudah terdaftar',
+            'jenis_template.string' => 'Jenis Template harus berupa teks',
+            'jenis_template.max' => 'Jenis Template maksimal 50 karakter',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf',
+            'file.max' => 'File maksimal 5120 KB',
+        ];
+    }
 }

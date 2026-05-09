@@ -20,11 +20,20 @@ class StoreTemplateRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'nama_template.unique' => 'Template dengan nama tersebut sudah ada',
-            'file.required' => 'File template wajib diupload',
+            'nama_template.required' => 'Nama Template wajib diisi',
+            'nama_template.string' => 'Nama Template harus berupa teks',
+            'nama_template.max' => 'Nama Template maksimal 100 karakter',
+            'nama_template.unique' => 'Nama Template sudah terdaftar',
+            'jenis_template.required' => 'Jenis Template wajib diisi',
+            'jenis_template.string' => 'Jenis Template harus berupa teks',
+            'jenis_template.max' => 'Jenis Template maksimal 50 karakter',
+            'file.required' => 'File wajib diisi',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf',
+            'file.max' => 'File maksimal 5120 KB',
         ];
     }
 }

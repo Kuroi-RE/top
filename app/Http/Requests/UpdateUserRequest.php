@@ -31,4 +31,19 @@ class UpdateUserRequest extends FormRequest
             'role' => 'sometimes|in:Ormawa,Mahasiswa,Kemahasiswaan,DPMBEM',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'username.string' => 'Username harus berupa teks',
+            'username.max' => 'Username maksimal 50 karakter',
+            'username.unique' => 'Username sudah terdaftar',
+            'email.email' => 'Format Email tidak valid',
+            'email.unique' => 'Email sudah terdaftar',
+            'password.string' => 'Password harus berupa teks',
+            'password.min' => 'Password minimal 8 karakter',
+            'password.confirmed' => 'Konfirmasi Password tidak cocok',
+            'role.in' => 'Role yang dipilih tidak valid',
+        ];
+    }
 }

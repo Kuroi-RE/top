@@ -23,7 +23,6 @@ class DosenPendamping extends Model
         'surat_tugas',
     ];
 
-    // Relationships
     public function prestasi(): BelongsTo
     {
         return $this->belongsTo(Prestasi::class, 'id_prestasi', 'id_prestasi');

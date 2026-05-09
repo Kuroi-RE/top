@@ -20,14 +20,16 @@ class StoreLpjRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'id_proposal.required' => 'Proposal wajib dipilih',
-            'id_proposal.exists' => 'Proposal tidak ditemukan',
-            'file_lpj.required' => 'File LPJ wajib diupload',
-            'file_lpj.mimes' => 'File harus berformat PDF',
-            'file_lpj.max' => 'Ukuran file maksimal 5MB',
+            'id_proposal.required' => 'Id Proposal wajib diisi',
+            'file_lpj.required' => 'File Lpj wajib diisi',
+            'file_lpj.file' => 'File Lpj harus berupa file',
+            'file_lpj.mimes' => 'Format File Lpj harus berupa pdf',
+            'file_lpj.max' => 'File Lpj maksimal 5120 KB',
+            'tanggal_upload.required' => 'Tanggal Upload wajib diisi',
+            'tanggal_upload.date' => 'Tanggal Upload harus berupa tanggal yang valid',
         ];
     }
 }

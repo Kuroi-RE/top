@@ -29,14 +29,42 @@ class StoreProposalRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'ajuan_triwulan.required' => 'Ajuan triwulan wajib diisi',
-            'file.required' => 'File proposal wajib diupload',
-            'file.mimes' => 'File harus berformat PDF',
-            'file.max' => 'Ukuran file maksimal 5MB',
-            'besar_ajuan.min' => 'Besar ajuan minimal Rp 100.000',
+            'ajuan_triwulan.required' => 'Ajuan Triwulan wajib diisi',
+            'ajuan_triwulan.in' => 'Ajuan Triwulan yang dipilih tidak valid',
+            'risiko_proposal.required' => 'Risiko Proposal wajib diisi',
+            'risiko_proposal.in' => 'Risiko Proposal yang dipilih tidak valid',
+            'no_telepon.required' => 'No Telepon wajib diisi',
+            'no_telepon.string' => 'No Telepon harus berupa teks',
+            'no_telepon.max' => 'No Telepon maksimal 15 karakter',
+            'nama_kegiatan.required' => 'Nama Kegiatan wajib diisi',
+            'nama_kegiatan.string' => 'Nama Kegiatan harus berupa teks',
+            'nama_kegiatan.max' => 'Nama Kegiatan maksimal 150 karakter',
+            'waktu_kegiatan.required' => 'Waktu Kegiatan wajib diisi',
+            'waktu_kegiatan.date' => 'Waktu Kegiatan harus berupa tanggal yang valid',
+            'tempat_kegiatan.required' => 'Tempat Kegiatan wajib diisi',
+            'tempat_kegiatan.string' => 'Tempat Kegiatan harus berupa teks',
+            'tempat_kegiatan.max' => 'Tempat Kegiatan maksimal 150 karakter',
+            'besar_ajuan.required' => 'Besar Ajuan wajib diisi',
+            'besar_ajuan.numeric' => 'Besar Ajuan harus berupa angka',
+            'besar_ajuan.min' => 'Besar Ajuan minimal 100000',
+            'nomor_rekening.required' => 'Nomor Rekening wajib diisi',
+            'nomor_rekening.string' => 'Nomor Rekening harus berupa teks',
+            'nomor_rekening.max' => 'Nomor Rekening maksimal 30 karakter',
+            'nama_rekening.required' => 'Nama Rekening wajib diisi',
+            'nama_rekening.string' => 'Nama Rekening harus berupa teks',
+            'nama_rekening.max' => 'Nama Rekening maksimal 100 karakter',
+            'nama_bank.required' => 'Nama Bank wajib diisi',
+            'nama_bank.string' => 'Nama Bank harus berupa teks',
+            'nama_bank.max' => 'Nama Bank maksimal 100 karakter',
+            'honor_pelatih.required' => 'Honor Pelatih wajib diisi',
+            'honor_pelatih.in' => 'Honor Pelatih yang dipilih tidak valid',
+            'file.required' => 'File wajib diisi',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf',
+            'file.max' => 'File maksimal 5120 KB',
         ];
     }
 }

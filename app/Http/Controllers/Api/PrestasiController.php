@@ -14,7 +14,10 @@ use App\Models\AnggotaPrestasi;
 use App\Models\DosenPendamping;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Http\Requests\UpdatePrestasiRequest;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+
 
 /**
  * @group Prestasi Mahasiswa
@@ -36,6 +39,8 @@ class PrestasiController
      *   "data": [...]
      * }
      */
+
+
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -234,6 +239,150 @@ class PrestasiController
         ], 201);
     }
 
+        /**
+     * Update data prestasi
+     *
+     * Mahasiswa hanya bisa update jika status masih Menunggu atau Revisi.
+     */
+    public function update(UpdatePrestasiRequest $request, Prestasi $prestasi): JsonResponse
+    {
+        // Authorization: hanya pemilik yang bisa update
+        if ($request->user()->id_user !== $prestasi->id_user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses untuk mengubah prestasi ini',
+            ], 403);
+        }
+
+        $prestasi->update($request->only([
+            'nama_kompetisi',
+            'penyelenggara',
+            'tingkat',
+            'capaian',
+            'kategori',
+        ]));
+
+        // Refresh data dari database untuk menampilkan nilai terbaru
+        $prestasi->refresh();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Prestasi berhasil diperbarui',
+            'data'    => new PrestasiResource($prestasi->load('user', 'dokumen', 'anggota', 'dosen')),
+        ], 200);
+    }
+
+    /**
+     * Hapus prestasi
+     *
+     * Mahasiswa hanya bisa hapus jika status masih Menunggu.
+     * File dokumen ikut terhapus dari storage.
+     */
+    public function destroy(Request $request, Prestasi $prestasi): JsonResponse
+    {
+        // Hanya pemilik yang bisa hapus
+        if ($request->user()->id_user !== $prestasi->id_user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses untuk menghapus prestasi ini',
+            ], 403);
+        }
+
+        // Tidak bisa hapus jika sudah Valid
+        if ($prestasi->status_verifikasi === 'Valid') {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Prestasi yang sudah diverifikasi tidak dapat dihapus',
+            ], 422);
+        }
+
+        // Hapus semua file dokumen dari storage
+        foreach ($prestasi->dokumen as $dokumen) {
+            if (Storage::disk('public')->exists($dokumen->file)) {
+                Storage::disk('public')->delete($dokumen->file);
+            }
+        }
+
+        // Hapus file surat tugas dosen dari storage
+        foreach ($prestasi->dosen as $dosen) {
+            if ($dosen->surat_tugas && Storage::disk('public')->exists($dosen->surat_tugas)) {
+                Storage::disk('public')->delete($dosen->surat_tugas);
+            }
+        }
+
+        $prestasi->delete(); // Cascade delete anggota, dokumen, dosen via DB
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Prestasi berhasil dihapus',
+        ], 200);
+    }
+
+    /**
+     * Hapus anggota tim prestasi
+     */
+    public function deleteAnggota(Request $request, Prestasi $prestasi, AnggotaPrestasi $anggota): JsonResponse
+    {
+        // Validasi kepemilikan
+        if ($request->user()->id_user !== $prestasi->id_user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses ke prestasi ini',
+            ], 403);
+        }
+
+        // Pastikan anggota milik prestasi ini
+        if ($anggota->id_prestasi !== $prestasi->id_prestasi) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anggota tidak ditemukan dalam prestasi ini',
+            ], 404);
+        }
+
+        $anggota->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Anggota tim berhasil dihapus',
+        ], 200);
+    }
+
+    /**
+     * Hapus dosen pendamping
+     */
+    public function deleteDosen(Request $request, Prestasi $prestasi, DosenPendamping $dosen): JsonResponse
+    {
+        // Validasi kepemilikan
+        if ($request->user()->id_user !== $prestasi->id_user) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Anda tidak memiliki akses ke prestasi ini',
+            ], 403);
+        }
+
+        // Pastikan dosen milik prestasi ini
+        if ($dosen->id_prestasi !== $prestasi->id_prestasi) {
+            return response()->json([
+                'status'  => 'error',
+                'message' => 'Dosen tidak ditemukan dalam prestasi ini',
+            ], 404);
+        }
+
+        // Hapus file surat tugas jika ada
+        if ($dosen->surat_tugas && Storage::disk('public')->exists($dosen->surat_tugas)) {
+            Storage::disk('public')->delete($dosen->surat_tugas);
+        }
+
+        $dosen->delete();
+
+        return response()->json([
+            'status'  => 'success',
+            'message' => 'Dosen pendamping berhasil dihapus',
+        ], 200);
+    }
+
+
+
     /**
      * Tambah dosen pendamping
      * 
@@ -254,9 +403,17 @@ class PrestasiController
      */
     public function addDosen(StoreDosenRequest $request, Prestasi $prestasi): JsonResponse
     {
+        // Validasi kepemilikan
+        if ($request->user()->id_user !== $prestasi->id_user) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Anda tidak memiliki akses ke prestasi ini',
+            ], 403);
+        }
+
         $data = [
             'id_prestasi' => $prestasi->id_prestasi,
-            'nama_dosen' => $request->nama_dosen,
+            'nama_dosen' => $request->nama,  // Map 'nama' dari request ke 'nama_dosen' di database
             'nidn' => $request->nidn,
             'nip' => $request->nip,
             'prodi' => $request->prodi,

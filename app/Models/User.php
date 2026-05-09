@@ -8,12 +8,15 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, HasApiTokens;
+    use HasFactory, Notifiable, HasApiTokens, HasRoles;
 
     protected $primaryKey = 'id_user';
+
+    protected string $guard_name = 'api';
 
     protected $fillable = [
         'username',
@@ -58,45 +61,45 @@ class User extends Authenticatable
         return $this->hasMany(InformasiKegiatan::class, 'id_user', 'id_user');
     }
 
-    // Check if user is admin
+    // Check if user is admin (Kemahasiswaan role)
     public function isAdmin(): bool
     {
-        return $this->role === 'Kemahasiswaan';
+        return $this->hasRole('Admin / Kemahasiswaan') || $this->hasRole('Kemahasiswaan') || $this->role === 'Kemahasiswaan';
     }
 
     // Check if user is Super Admin
     public function isSuperAdmin(): bool
     {
-        return $this->role === 'Super Admin';
+        return $this->hasRole('Super Admin') || $this->role === 'Super Admin';
     }
 
     // Check if user is DPMBEM
     public function isDpmbem(): bool
     {
-        return $this->role === 'DPMBEM';
+        return $this->hasRole('DPMBEM') || $this->role === 'DPMBEM';
     }
 
     // Check if user is Ormawa
     public function isOrmawa(): bool
     {
-        return $this->role === 'Ormawa';
+        return $this->hasRole('Ormawa') || $this->role === 'Ormawa';
     }
 
     // Check if user is Ormawa Institusi (UKM)
     public function isOrmawaInstitusi(): bool
     {
-        return $this->role === 'Ormawa' && $this->ormawa_type === 'institusi';
+        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'institusi';
     }
 
     // Check if user is Ormawa Prodi (Himpunan)
     public function isOrmawaProdi(): bool
     {
-        return $this->role === 'Ormawa' && $this->ormawa_type === 'prodi';
+        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'prodi';
     }
 
     // Check if user is Mahasiswa
     public function isMahasiswa(): bool
     {
-        return $this->role === 'Mahasiswa';
+        return $this->hasRole('Mahasiswa') || $this->role === 'Mahasiswa';
     }
 }

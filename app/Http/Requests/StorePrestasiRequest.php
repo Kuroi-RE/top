@@ -25,12 +25,32 @@ class StorePrestasiRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'nama_kompetisi.required' => 'Nama kompetisi wajib diisi',
-            'dokumen.required' => 'Minimal 1 dokumen harus diupload',
-            'dokumen.*.file.required' => 'File dokumen wajib diupload',
+            'nama_kompetisi.required' => 'Nama Kompetisi wajib diisi',
+            'nama_kompetisi.string' => 'Nama Kompetisi harus berupa teks',
+            'nama_kompetisi.max' => 'Nama Kompetisi maksimal 150 karakter',
+            'penyelenggara.required' => 'Penyelenggara wajib diisi',
+            'penyelenggara.string' => 'Penyelenggara harus berupa teks',
+            'penyelenggara.max' => 'Penyelenggara maksimal 150 karakter',
+            'tingkat.required' => 'Tingkat wajib diisi',
+            'tingkat.in' => 'Tingkat yang dipilih tidak valid',
+            'capaian.required' => 'Capaian wajib diisi',
+            'capaian.string' => 'Capaian harus berupa teks',
+            'capaian.max' => 'Capaian maksimal 100 karakter',
+            'kategori.required' => 'Kategori wajib diisi',
+            'kategori.in' => 'Kategori yang dipilih tidak valid',
+            'dokumen.required' => 'Dokumen wajib diisi',
+            'dokumen.array' => 'Dokumen harus berupa array',
+            'dokumen.min' => 'Dokumen minimal 1',
+            'dokumen.*.jenis_dokumen.required' => 'Jenis Dokumen wajib diisi',
+            'dokumen.*.jenis_dokumen.string' => 'Jenis Dokumen harus berupa teks',
+            'dokumen.*.jenis_dokumen.max' => 'Jenis Dokumen maksimal 100 karakter',
+            'dokumen.*.file.required' => 'File wajib diisi',
+            'dokumen.*.file.file' => 'File harus berupa file',
+            'dokumen.*.file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png',
+            'dokumen.*.file.max' => 'File maksimal 5120 KB',
         ];
     }
 }

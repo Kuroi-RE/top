@@ -18,10 +18,11 @@ class VerifyLpjRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'status_lpj.required' => 'Status LPJ wajib diisi',
+            'status_lpj.required' => 'Status Lpj wajib diisi',
+            'status_lpj.in' => 'Status Lpj yang dipilih tidak valid',
         ];
     }
 }

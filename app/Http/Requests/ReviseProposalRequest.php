@@ -24,4 +24,28 @@ class ReviseProposalRequest extends FormRequest
             'file' => 'required|file|mimes:pdf|max:5120',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'ajuan_triwulan.required' => 'Ajuan Triwulan wajib diisi',
+            'ajuan_triwulan.in' => 'Ajuan Triwulan yang dipilih tidak valid',
+            'risiko_proposal.required' => 'Risiko Proposal wajib diisi',
+            'risiko_proposal.in' => 'Risiko Proposal yang dipilih tidak valid',
+            'nama_kegiatan.required' => 'Nama Kegiatan wajib diisi',
+            'nama_kegiatan.string' => 'Nama Kegiatan harus berupa teks',
+            'nama_kegiatan.max' => 'Nama Kegiatan maksimal 150 karakter',
+            'waktu_kegiatan.required' => 'Waktu Kegiatan wajib diisi',
+            'waktu_kegiatan.date' => 'Waktu Kegiatan harus berupa tanggal yang valid',
+            'besar_ajuan.required' => 'Besar Ajuan wajib diisi',
+            'besar_ajuan.numeric' => 'Besar Ajuan harus berupa angka',
+            'besar_ajuan.min' => 'Besar Ajuan minimal 100000',
+            'catatan_revisi.required' => 'Catatan Revisi wajib diisi',
+            'catatan_revisi.string' => 'Catatan Revisi harus berupa teks',
+            'file.required' => 'File wajib diisi',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf',
+            'file.max' => 'File maksimal 5120 KB',
+        ];
+    }
 }
