@@ -19,12 +19,13 @@ class LoginRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
             'username.required' => 'Username wajib diisi',
-            'username.exists' => 'Username tidak ditemukan',
+            'username.string' => 'Username harus berupa teks',
             'password.required' => 'Password wajib diisi',
+            'password.string' => 'Password harus berupa teks',
             'password.min' => 'Password minimal 6 karakter',
         ];
     }

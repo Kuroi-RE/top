@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2b203a2d984b8d76940501dff9c2f6c0",
+    "content-hash": "75f40f689907aa7e28a5552e6cc6d477",
     "packages": [
         {
             "name": "barryvdh/laravel-dompdf",
@@ -3658,53 +3658,35 @@
             "time": "2025-12-14T04:43:48+00:00"
         },
         {
-            "name": "sabberworm/php-css-parser",
-            "version": "v9.3.0",
+            "name": "spatie/laravel-package-tools",
+            "version": "1.93.0",
             "source": {
                 "type": "git",
-                "url": "https://github.com/MyIntervals/PHP-CSS-Parser.git",
-                "reference": "88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949"
+                "url": "https://github.com/spatie/laravel-package-tools.git",
+                "reference": "0d097bce95b2bf6802fb1d83e1e753b0f5a948e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/MyIntervals/PHP-CSS-Parser/zipball/88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949",
-                "reference": "88dbd0f7f91abbfe4402d0a3071e9ff4d81ed949",
+                "url": "https://api.github.com/repos/spatie/laravel-package-tools/zipball/0d097bce95b2bf6802fb1d83e1e753b0f5a948e7",
+                "reference": "0d097bce95b2bf6802fb1d83e1e753b0f5a948e7",
                 "shasum": ""
             },
             "require": {
-                "ext-iconv": "*",
-                "php": "^7.2.0 || ~8.0.0 || ~8.1.0 || ~8.2.0 || ~8.3.0 || ~8.4.0 || ~8.5.0",
-                "thecodingmachine/safe": "^1.3 || ^2.5 || ^3.4"
+                "illuminate/contracts": "^10.0|^11.0|^12.0|^13.0",
+                "php": "^8.1"
             },
             "require-dev": {
-                "php-parallel-lint/php-parallel-lint": "1.4.0",
-                "phpstan/extension-installer": "1.4.3",
-                "phpstan/phpstan": "1.12.32 || 2.1.32",
-                "phpstan/phpstan-phpunit": "1.4.2 || 2.0.8",
-                "phpstan/phpstan-strict-rules": "1.6.2 || 2.0.7",
-                "phpunit/phpunit": "8.5.52",
-                "rawr/phpunit-data-provider": "3.3.1",
-                "rector/rector": "1.2.10 || 2.2.8",
-                "rector/type-perfect": "1.0.0 || 2.1.0",
-                "squizlabs/php_codesniffer": "4.0.1",
-                "thecodingmachine/phpstan-safe-rule": "1.2.0 || 1.4.1"
-            },
-            "suggest": {
-                "ext-mbstring": "for parsing UTF-8 CSS"
+                "mockery/mockery": "^1.5",
+                "orchestra/testbench": "^8.0|^9.2|^10.0|^11.0",
+                "pestphp/pest": "^2.1|^3.1|^4.0",
+                "phpunit/php-code-coverage": "^10.0|^11.0|^12.0",
+                "phpunit/phpunit": "^10.5|^11.5|^12.5",
+                "spatie/pest-plugin-test-time": "^2.2|^3.0"
             },
             "type": "library",
-            "extra": {
-                "branch-alias": {
-                    "dev-main": "9.4.x-dev"
-                }
-            },
             "autoload": {
-                "files": [
-                    "src/Rule/Rule.php",
-                    "src/RuleSet/RuleContainer.php"
-                ],
                 "psr-4": {
-                    "Sabberworm\\CSS\\": "src/"
+                    "Spatie\\LaravelPackageTools\\": "src"
                 }
             },
             "notification-url": "https://packagist.org/downloads/",
@@ -3713,29 +3695,115 @@
             ],
             "authors": [
                 {
-                    "name": "Raphael Schweikert"
-                },
-                {
-                    "name": "Oliver Klee",
-                    "email": "github@oliverklee.de"
-                },
-                {
-                    "name": "Jake Hotson",
-                    "email": "jake.github@qzdesign.co.uk"
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "role": "Developer"
                 }
             ],
-            "description": "Parser for CSS Files written in PHP",
-            "homepage": "https://www.sabberworm.com/blog/2010/6/10/php-css-parser",
+            "description": "Tools for creating Laravel packages",
+            "homepage": "https://github.com/spatie/laravel-package-tools",
             "keywords": [
-                "css",
-                "parser",
-                "stylesheet"
+                "laravel-package-tools",
+                "spatie"
             ],
             "support": {
-                "issues": "https://github.com/MyIntervals/PHP-CSS-Parser/issues",
-                "source": "https://github.com/MyIntervals/PHP-CSS-Parser/tree/v9.3.0"
+                "issues": "https://github.com/spatie/laravel-package-tools/issues",
+                "source": "https://github.com/spatie/laravel-package-tools/tree/1.93.0"
             },
-            "time": "2026-03-03T17:31:43+00:00"
+            "funding": [
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-02-21T12:49:54+00:00"
+        },
+        {
+            "name": "spatie/laravel-permission",
+            "version": "7.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-permission.git",
+                "reference": "5272955119759cd217e84e8bbac19443c305ebc3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-permission/zipball/5272955119759cd217e84e8bbac19443c305ebc3",
+                "reference": "5272955119759cd217e84e8bbac19443c305ebc3",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/auth": "^12.0|^13.0",
+                "illuminate/container": "^12.0|^13.0",
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/database": "^12.0|^13.0",
+                "php": "^8.3",
+                "spatie/laravel-package-tools": "^1.0"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.9",
+                "laravel/passport": "^13.0",
+                "laravel/pint": "^1.0",
+                "orchestra/testbench": "^10.0|^11.0",
+                "pestphp/pest": "^3.0|^4.0",
+                "pestphp/pest-plugin-laravel": "^3.0|^4.1",
+                "phpstan/phpstan": "^2.1"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Spatie\\Permission\\PermissionServiceProvider"
+                    ]
+                },
+                "branch-alias": {
+                    "dev-main": "7.x-dev",
+                    "dev-master": "7.x-dev"
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Spatie\\Permission\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Permission handling for Laravel 12 and up",
+            "homepage": "https://github.com/spatie/laravel-permission",
+            "keywords": [
+                "acl",
+                "laravel",
+                "permission",
+                "permissions",
+                "rbac",
+                "roles",
+                "security",
+                "spatie"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-permission/issues",
+                "source": "https://github.com/spatie/laravel-permission/tree/7.3.0"
+            },
+            "funding": [
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-04-07T15:19:42+00:00"
         },
         {
             "name": "symfony/clock",

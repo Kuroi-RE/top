@@ -22,17 +22,17 @@ class CheckRole
         if (!$user) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthenticated',
+                'message' => 'Tidak terautentikasi',
             ], 401);
         }
 
         if (!in_array($user->role, $roles)) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized - Insufficient permissions',
+                'message' => 'Akses ditolak - Izin tidak mencukupi',
                 'data' => null,
                 'errors' => [
-                    'role' => 'User role is not authorized to access this resource'
+                    'role' => 'Role pengguna tidak diizinkan untuk mengakses sumber daya ini'
                 ]
             ], 403);
         }

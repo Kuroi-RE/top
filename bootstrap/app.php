@@ -14,7 +14,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
-            'check.dummy_user' => \App\Http\Middleware\CheckDummyUser::class,
+            'permission' => \Spatie\Permission\Middleware\PermissionMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
@@ -22,9 +22,27 @@ return Application::configure(basePath: dirname(__DIR__))
             if ($request->expectsJson()) {
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Validation failed',
+                    'message' => 'Validasi gagal',
                     'errors' => $e->errors(),
                 ], 422);
+            }
+        });
+
+        $exceptions->renderable(function (\Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tidak terautentikasi',
+                ], 401);
+            }
+        });
+
+        $exceptions->renderable(function (\Symfony\Component\HttpKernel\Exception\NotFoundHttpException $e, $request) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Data tidak ditemukan',
+                ], 404);
             }
         });
     })->create();

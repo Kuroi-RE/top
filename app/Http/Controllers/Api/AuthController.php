@@ -131,6 +131,13 @@ class AuthController
                 'is_active' => true,
             ]);
 
+            // Assign Spatie role
+            $user->assignRole('Mahasiswa');
+            
+            // Assign default direct permissions
+            $defaultPerms = config('permissions.role_defaults.Mahasiswa', []);
+            $user->syncPermissions($defaultPerms);
+
             \Log::info('User created successfully', ['user_id' => $user->id_user, 'username' => $username]);
 
             $token = $user->createToken('api-token', ['*'])->plainTextToken;
@@ -200,7 +207,7 @@ class AuthController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized - Hanya Admin yang dapat membuat API Key',
+                'message' => 'Akses ditolak - Hanya Admin yang dapat membuat API Key',
             ], 403);
         }
 

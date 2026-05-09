@@ -1,0 +1,17 @@
+site_name: TOP KEMA Telkom API Docs
+site_description: REST API Documentation for TOP KEMA Telkom
+theme:
+  name: material
+  palette:
+    primary: indigo
+    accent: blue
+nav:
+  - Home & Setup: index.md
+  - Authentication: authentication.md
+  - User Management: user-management.md
+  - Alur Register: alur-register.md
+  - Mahasiswa Endpoints: mahasiswa-endpoints.md
+  - Proposal Kegiatan: proposal.md
+  - LPJ Kegiatan: lpj.md
+  - Monitoring Anggaran: monitoring.md
+  - Error Handling & Schema: error-handling.md

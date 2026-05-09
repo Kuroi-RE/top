@@ -21,11 +21,19 @@ class StoreInformasiRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'judul.required' => 'Judul informasi wajib diisi',
-            'caption.required' => 'Caption/deskripsi wajib diisi',
+            'judul.required' => 'Judul wajib diisi',
+            'judul.string' => 'Judul harus berupa teks',
+            'judul.max' => 'Judul maksimal 150 karakter',
+            'role.required' => 'Role wajib diisi',
+            'role.in' => 'Role yang dipilih tidak valid',
+            'caption.required' => 'Caption wajib diisi',
+            'caption.string' => 'Caption harus berupa teks',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png,doc,docx',
+            'file.max' => 'File maksimal 5120 KB',
         ];
     }
 }

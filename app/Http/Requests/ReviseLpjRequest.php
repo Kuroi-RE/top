@@ -19,4 +19,16 @@ class ReviseLpjRequest extends FormRequest
             'tanggal_upload' => 'required|date',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'file_lpj.required' => 'File Lpj wajib diisi',
+            'file_lpj.file' => 'File Lpj harus berupa file',
+            'file_lpj.mimes' => 'Format File Lpj harus berupa pdf',
+            'file_lpj.max' => 'File Lpj maksimal 5120 KB',
+            'tanggal_upload.required' => 'Tanggal Upload wajib diisi',
+            'tanggal_upload.date' => 'Tanggal Upload harus berupa tanggal yang valid',
+        ];
+    }
 }

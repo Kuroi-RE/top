@@ -18,10 +18,11 @@ class VerifyPrestasiRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'status_verifikasi.required' => 'Status verifikasi wajib diisi',
+            'status_verifikasi.required' => 'Status Verifikasi wajib diisi',
+            'status_verifikasi.in' => 'Status Verifikasi yang dipilih tidak valid',
         ];
     }
 }

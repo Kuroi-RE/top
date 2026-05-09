@@ -21,11 +21,19 @@ class StoreAnggotaRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'nama.required' => 'Nama anggota wajib diisi',
-            'nim.unique' => 'NIM sudah terdaftar sebagai anggota',
+            'nama.required' => 'Nama wajib diisi',
+            'nama.string' => 'Nama harus berupa teks',
+            'nama.max' => 'Nama maksimal 100 karakter',
+            'nim.required' => 'Nim wajib diisi',
+            'nim.string' => 'Nim harus berupa teks',
+            'nim.max' => 'Nim maksimal 12 karakter',
+            'nim.unique' => 'Nim sudah terdaftar',
+            'prodi.required' => 'Prodi wajib diisi',
+            'prodi.string' => 'Prodi harus berupa teks',
+            'prodi.max' => 'Prodi maksimal 100 karakter',
         ];
     }
 }

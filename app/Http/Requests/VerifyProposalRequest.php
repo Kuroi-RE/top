@@ -20,11 +20,15 @@ class VerifyProposalRequest extends FormRequest
         ];
     }
 
-    public function messages(): array
+        public function messages(): array
     {
         return [
-            'status.required' => 'Status verifikasi wajib diisi',
-            'anggaran_disetujui.required_if' => 'Anggaran yang disetujui wajib diisi jika status Disetujui',
+            'status.required' => 'Status wajib diisi',
+            'status.in' => 'Status yang dipilih tidak valid',
+            'catatan_admin.string' => 'Catatan Admin harus berupa teks',
+            'anggaran_disetujui.required_if' => 'Anggaran Disetujui wajib diisi jika status,Disetujui',
+            'anggaran_disetujui.numeric' => 'Anggaran Disetujui harus berupa angka',
+            'anggaran_disetujui.min' => 'Anggaran Disetujui minimal 0',
         ];
     }
 }

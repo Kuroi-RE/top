@@ -30,4 +30,31 @@ class UpdateProposalRequest extends FormRequest
             'file' => 'nullable|file|mimes:pdf|max:5120',
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'ajuan_triwulan.in' => 'Ajuan Triwulan yang dipilih tidak valid',
+            'risiko_proposal.in' => 'Risiko Proposal yang dipilih tidak valid',
+            'no_telepon.string' => 'No Telepon harus berupa teks',
+            'no_telepon.max' => 'No Telepon maksimal 15 karakter',
+            'nama_kegiatan.string' => 'Nama Kegiatan harus berupa teks',
+            'nama_kegiatan.max' => 'Nama Kegiatan maksimal 150 karakter',
+            'waktu_kegiatan.date' => 'Waktu Kegiatan harus berupa tanggal yang valid',
+            'tempat_kegiatan.string' => 'Tempat Kegiatan harus berupa teks',
+            'tempat_kegiatan.max' => 'Tempat Kegiatan maksimal 150 karakter',
+            'besar_ajuan.numeric' => 'Besar Ajuan harus berupa angka',
+            'besar_ajuan.min' => 'Besar Ajuan minimal 100000',
+            'nomor_rekening.string' => 'Nomor Rekening harus berupa teks',
+            'nomor_rekening.max' => 'Nomor Rekening maksimal 30 karakter',
+            'nama_rekening.string' => 'Nama Rekening harus berupa teks',
+            'nama_rekening.max' => 'Nama Rekening maksimal 100 karakter',
+            'nama_bank.string' => 'Nama Bank harus berupa teks',
+            'nama_bank.max' => 'Nama Bank maksimal 100 karakter',
+            'honor_pelatih.in' => 'Honor Pelatih yang dipilih tidak valid',
+            'file.file' => 'File harus berupa file',
+            'file.mimes' => 'Format File harus berupa pdf',
+            'file.max' => 'File maksimal 5120 KB',
+        ];
+    }
 }

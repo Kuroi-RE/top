@@ -41,7 +41,7 @@ class UserController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
+                'message' => 'Akses ditolak',
             ], 403);
         }
 
@@ -102,6 +102,12 @@ class UserController
             'is_active' => true,
         ]);
 
+        if (isset($request->role)) {
+            $user->assignRole($request->role);
+            $defaultPerms = config('permissions.role_defaults.' . $request->role, []);
+            $user->syncPermissions($defaultPerms);
+        }
+
         return response()->json([
             'status' => 'success',
             'message' => 'Pengguna berhasil dibuat',
@@ -127,7 +133,7 @@ class UserController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
+                'message' => 'Akses ditolak',
             ], 403);
         }
 
@@ -161,7 +167,7 @@ class UserController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
+                'message' => 'Akses ditolak',
             ], 403);
         }
 
@@ -197,7 +203,7 @@ class UserController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
+                'message' => 'Akses ditolak',
             ], 403);
         }
 
@@ -227,7 +233,7 @@ class UserController
         if (!$request->user()->isAdmin()) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized',
+                'message' => 'Akses ditolak',
             ], 403);
         }
 
@@ -277,6 +283,13 @@ class UserController
         }
 
         $user->update($data);
+
+        // Sync Spatie role & direct permissions based on role
+        if (isset($data['role'])) {
+            $user->syncRoles([$data['role']]);
+            $defaultPerms = config('permissions.role_defaults.' . $data['role'], []);
+            $user->syncPermissions($defaultPerms);
+        }
 
         return response()->json([
             'status' => 'success',
