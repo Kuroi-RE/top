@@ -7,6 +7,10 @@
 <div class="min-h-screen bg-gray-100 flex justify-center px-4 py-8">
     <div class="w-full max-w-5xl space-y-6">
         <!-- Kuota Informasi -->
+        @php
+            $maxQuota = 3;
+            $remaining = max(0, $maxQuota - $weekCount);
+        @endphp
         <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -14,15 +18,19 @@
                     <p class="mt-1 text-sm text-gray-500">Kegiatan Mingguan</p>
                 </div>
                 <div class="text-base font-semibold text-red-600">
-                    <span id="quota-used">0</span>/<span id="quota-total">3</span>
+                    <span>{{ $weekCount }}</span>/<span>{{ $maxQuota }}</span>
                 </div>
             </div>
             <div class="mt-3">
                 <div class="h-2 w-full rounded-full bg-gray-200">
-                    <div id="quota-bar" class="h-2 rounded-full bg-red-600" style="width: 0%"></div>
+                    <div class="h-2 rounded-full bg-red-600" style="width: {{ ($weekCount / $maxQuota) * 100 }}%"></div>
                 </div>
-                <p id="quota-desc" class="mt-3 text-xs text-gray-500">Tersisa 3 slot pengunggahan poster kegiatan minggu ini.</p>
-                <p id="quota-warn" class="mt-1 text-xs font-semibold text-red-600 hidden">Kuota minggu ini sudah habis.</p>
+                <p class="mt-3 text-xs text-gray-500">
+                    {{ $remaining > 0 ? "Tersisa $remaining slot pengunggahan poster kegiatan minggu ini." : "Kuota minggu ini sudah habis." }}
+                </p>
+                @if($remaining <= 0)
+                    <p class="mt-1 text-xs font-semibold text-red-600">Kuota minggu ini sudah habis.</p>
+                @endif
             </div>
         </div>
 
@@ -37,7 +45,7 @@
                     ['label' => 'Judul', 'name' => 'judul', 'type' => 'text'],
                     ['label' => 'Ormawa', 'name' => 'ormawa', 'type' => 'text'],
                     ['label' => 'Caption', 'name' => 'caption', 'type' => 'text'],
-                    ['label' => 'Link', 'name' => 'link', 'type' => 'url'],
+                    ['label' => 'Link', 'name' => 'link', 'type' => 'text'],
                 ];
             @endphp
 
@@ -94,110 +102,45 @@
 @push('scripts')
 <script>
     (function () {
-        const MAX = 3;
-        const key = 'publikasi_quota_v1';
-        const statusKey = 'publikasi_status_counts_v1';
         const form = document.getElementById('publikasi-form');
         const submitBtn = document.getElementById('publikasi-submit');
         const posterInput = document.getElementById('publikasi-poster');
-        const usedEl = document.getElementById('quota-used');
-        const totalEl = document.getElementById('quota-total');
-        const barEl = document.getElementById('quota-bar');
-        const descEl = document.getElementById('quota-desc');
-        const warnEl = document.getElementById('quota-warn');
 
-        function getWeekKey(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-        }
-
-        const weekKey = getWeekKey(new Date());
-
-        function getStore(storeKey) {
-            try {
-                return JSON.parse(localStorage.getItem(storeKey) || '{}');
-            } catch (e) {
-                return {};
-            }
-        }
-
-        function setStore(storeKey, value) {
-            localStorage.setItem(storeKey, JSON.stringify(value));
-        }
-
-        function getCount() {
-            const store = getStore(key);
-            return Number(store[weekKey] || 0);
-        }
-
-        function setCount(count) {
-            const store = getStore(key);
-            store[weekKey] = count;
-            setStore(key, store);
-        }
-
-        function getStatusCounts() {
-            const store = getStore(statusKey);
-            return {
-                published: Number(store.published || 0),
-                pending: Number(store.pending || 0),
-                rejected: Number(store.rejected || 0),
-            };
-        }
-
-        function setStatusCounts(counts) {
-            setStore(statusKey, {
-                published: counts.published || 0,
-                pending: counts.pending || 0,
-                rejected: counts.rejected || 0,
+        if (posterInput) {
+            posterInput.addEventListener('change', function() {
+                const file = this.files[0];
+                const container = this.nextElementSibling;
+                const textSpan = container.querySelector('span');
+                const svgIcon = container.querySelector('svg');
+                
+                if (file) {
+                    textSpan.textContent = 'Terpilih: ' + file.name;
+                    container.style.borderColor = '#c1121f';
+                    container.style.backgroundColor = '#fef2f2';
+                    if (svgIcon) svgIcon.classList.add('text-red-500');
+                    textSpan.classList.add('text-red-600', 'font-bold');
+                } else {
+                    textSpan.textContent = 'Upload gambar disini';
+                    container.style.borderColor = '#9ca3af';
+                    container.style.backgroundColor = '#fcfcfc';
+                    if (svgIcon) svgIcon.classList.remove('text-red-500');
+                    textSpan.classList.remove('text-red-600', 'font-bold');
+                }
             });
         }
 
-        function updateUI(count) {
-            const used = Math.min(count, MAX);
-            const remaining = Math.max(0, MAX - used);
-            if (usedEl) usedEl.textContent = used;
-            if (totalEl) totalEl.textContent = MAX;
-            if (barEl) barEl.style.width = `${(used / MAX) * 100}%`;
-            if (descEl) {
-                descEl.textContent = remaining > 0
-                    ? `Tersisa ${remaining} slot pengunggahan poster kegiatan minggu ini.`
-                    : 'Kuota minggu ini sudah habis.';
-            }
-            if (warnEl) warnEl.classList.toggle('hidden', remaining > 0);
-
-            const blocked = used >= MAX;
-            if (submitBtn) {
-                submitBtn.disabled = blocked;
-                submitBtn.classList.toggle('opacity-60', blocked);
-                submitBtn.classList.toggle('cursor-not-allowed', blocked);
-            }
-            if (posterInput) {
-                posterInput.disabled = blocked;
-            }
-        }
-
-        updateUI(getCount());
-
         if (form) {
             form.addEventListener('submit', function (e) {
-                const current = getCount();
-                if (current >= MAX) {
-                    e.preventDefault();
-                    updateUI(current);
-                    return;
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = `
+                        <svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Mengirim...
+                    `;
                 }
-
-                setCount(current + 1);
-                updateUI(current + 1);
-
-                const statusCounts = getStatusCounts();
-                statusCounts.pending += 1;
-                setStatusCounts(statusCounts);
             });
         }
     })();

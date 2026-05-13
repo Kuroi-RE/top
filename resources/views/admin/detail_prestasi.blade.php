@@ -109,87 +109,72 @@
 </style>
 
 @php
+    $id = request()->route('id');
+    $prestasi = \App\Models\Prestasi::with(['user', 'dokumen', 'anggota', 'dosen'])->find($id);
+    
+    if (!$prestasi) {
+        // Fallback or redirect if not found
+        $prestasi = new \App\Models\Prestasi();
+    }
+
+    $user = $prestasi->user;
+    
 	$leftSections = [
 		[
 			'title' => 'Biodata',
 			'rows' => [
-				['label' => 'Email', 'value' => 'Rendah'],
-				['label' => 'NIM', 'value' => 'Rendah'],
-				['label' => 'Nama', 'value' => 'Rendah'],
-				['label' => 'Program Studi', 'value' => 'Rendah'],
-				['label' => 'Mewakili Ormawa HIMA/ Institusi?', 'value' => 'Rendah'],
-				['label' => '.', 'value' => '.'],
-				['label' => '.', 'value' => '.'],
+				['label' => 'Email', 'value' => $user->email ?? '-'],
+				['label' => 'NIM', 'value' => $user->username ?? '-'],
+				['label' => 'Nama', 'value' => ($user->nama_depan ?? '') . ' ' . ($user->nama_belakang ?? '')],
+				['label' => 'Program Studi', 'value' => $user->prodi ?? '-'],
 			],
 		],
 		[
 			'title' => 'Capaian Prestasi',
 			'rows' => [
-				['label' => 'Juara', 'value' => 'Rendah'],
-				['label' => 'Kategori', 'value' => 'Rendah'],
-				['label' => 'Nim Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Nama Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Prodi Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Nim Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Nama Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Prodi Anggota 1', 'value' => 'Rendah'],
-			],
-		],
-		[
-			'title' => 'Evidence',
-			'rows' => [
-				['label' => 'Surat Tugas Mahasiswa', 'value' => 'Rendah'],
-				['label' => 'Sertifikat Juara', 'value' => 'Rendah'],
-				['label' => 'Foto Penyerahan Penghargaan', 'value' => 'Rendah'],
-				['label' => 'Bukti Keikutsertaan Peserta', 'value' => 'Rendah'],
-				['label' => 'URL Informasi Kompetisi', 'value' => 'Rendah'],
-				['label' => 'Foto Formal', 'value' => 'Rendah'],
-				['label' => 'Nama Anggota 1', 'value' => 'Rendah'],
-				['label' => 'Prodi Anggota 1', 'value' => 'Rendah'],
+				['label' => 'Juara', 'value' => $prestasi->capaian ?? '-'],
+				['label' => 'Kategori', 'value' => $prestasi->kategori ?? '-'],
 			],
 		],
 	];
+
+    // Add members if any
+    if ($prestasi->anggota && $prestasi->anggota->count() > 0) {
+        $memberRows = [];
+        foreach($prestasi->anggota as $idx => $m) {
+            $memberRows[] = ['label' => "NIM Anggota ".($idx+1), 'value' => $m->nim];
+            $memberRows[] = ['label' => "Nama Anggota ".($idx+1), 'value' => $m->nama];
+        }
+        $leftSections[] = [
+            'title' => 'Anggota Tim',
+            'rows' => $memberRows
+        ];
+    }
 
 	$rightSections = [
 		[
 			'title' => 'Detail Kompetisi',
 			'rows' => [
-				['label' => 'Nama Kompetisi', 'value' => 'Rendah'],
-				['label' => 'Penyelenggara', 'value' => 'Rendah'],
-				['label' => 'Pelaksanaan', 'value' => 'Rendah'],
-				['label' => 'Waktu Kompetisi', 'value' => 'Rendah'],
-				['label' => 'Tanggal Pengumuman', 'value' => 'Rendah'],
-				['label' => 'Tingkat Kompetisi', 'value' => 'Rendah'],
-				['label' => 'Klaster', 'value' => 'Rendah'],
-			],
-		],
-		[
-			'title' => 'Informasi Dosen Pembimbing',
-			'rows' => [
-				['label' => 'Apakah ada dosen pembimbing?', 'value' => 'Rendah'],
-				['label' => 'Nama Dosen Pembimbing', 'value' => 'Rendah'],
-				['label' => 'NIDN', 'value' => 'Rendah'],
-				['label' => 'NIP', 'value' => 'Rendah'],
-				['label' => 'Prodi Dosen', 'value' => 'Rendah'],
-				['label' => 'Surat Tugas Pembimbing', 'value' => 'Rendah'],
-				['label' => 'Waktu Kompetisi', 'value' => 'Rendah'],
-				['label' => '.', 'value' => '.'],
-			],
-		],
-		[
-			'title' => 'Informasi Rekening',
-			'rows' => [
-				['label' => 'Nomor Rekening', 'value' => 'Rendah'],
-				['label' => 'Pemilik Bank', 'value' => 'Rendah'],
-				['label' => 'Nama Bank', 'value' => 'Rendah'],
-				['label' => 'Scan Buku Tabungan', 'value' => 'Rendah'],
-				['label' => 'Scan KTP', 'value' => 'Rendah'],
-				['label' => 'Scan KTM', 'value' => 'Rendah'],
-				['label' => 'Data yang saya unggah adalah benar jika dikemudian hari ditemukan kekeliruan atau data yang di inputkan keliru saya seiap mnerima sanki', 'value' => null],
-				['label' => '.', 'value' => '.'],
+				['label' => 'Nama Kompetisi', 'value' => $prestasi->nama_kompetisi ?? '-'],
+				['label' => 'Penyelenggara', 'value' => $prestasi->penyelenggara ?? '-'],
+				['label' => 'Tingkat Kompetisi', 'value' => $prestasi->tingkat ?? '-'],
+                ['label' => 'Status Verifikasi', 'value' => $prestasi->status_verifikasi ?? 'Menunggu'],
 			],
 		],
 	];
+
+    // Add mentors if any
+    if ($prestasi->dosen && $prestasi->dosen->count() > 0) {
+        $mentorRows = [];
+        foreach($prestasi->dosen as $idx => $d) {
+            $mentorRows[] = ['label' => "Nama Dosen", 'value' => $d->nama_dosen];
+            $mentorRows[] = ['label' => "NIDN/NIP", 'value' => $d->nidn_nip];
+        }
+        $rightSections[] = [
+            'title' => 'Dosen Pendamping',
+            'rows' => $mentorRows
+        ];
+    }
 @endphp
 
 <div class="detail-shell">
@@ -227,6 +212,81 @@
 				@endforeach
 			</div>
 		</div>
+
+        @if($prestasi->dokumen && $prestasi->dokumen->count() > 0)
+        <div class="mt-10 border-t border-gray-100 pt-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-4">Evidence / Dokumen Pendukung</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                @foreach($prestasi->dokumen as $doc)
+                <a href="{{ asset('storage/' . $doc->file_path) }}" target="_blank" class="flex items-center gap-3 p-4 rounded-xl border border-gray-200 hover:bg-gray-50 transition">
+                    <div class="h-10 w-10 flex items-center justify-center rounded-lg bg-red-50 text-red-600">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                    <div class="overflow-hidden">
+                        <p class="text-sm font-medium text-gray-700 truncate">{{ $doc->nama_dokumen }}</p>
+                        <p class="text-[11px] text-gray-400">Klik untuk melihat</p>
+                    </div>
+                </a>
+                @endforeach
+            </div>
+        </div>
+        @endif
+
+        {{-- Verification Actions --}}
+        <div class="mt-12 flex items-center justify-end gap-4 border-t border-gray-100 pt-8">
+            <a href="{{ route('admin.prestasi_mahasiswa') }}" class="px-6 py-2.5 text-sm font-medium text-gray-500 hover:text-gray-700">Kembali</a>
+            
+            @if($prestasi->status_verifikasi == 'Menunggu')
+            <button type="button" onclick="openRevisionModal()" class="px-6 py-2.5 rounded-full border border-red-200 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition shadow-sm">
+                Minta Revisi
+            </button>
+            <form action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
+                @csrf
+                <input type="hidden" name="status" value="Disetujui">
+                <button type="submit" class="px-8 py-2.5 rounded-full bg-green-600 text-white text-sm font-bold hover:bg-green-700 transition shadow-lg shadow-green-100">
+                    Setujui & Verifikasi
+                </button>
+            </form>
+            @else
+            <div class="px-6 py-2.5 rounded-full bg-gray-100 text-gray-500 text-sm font-bold">
+                Sudah Diproses: {{ $prestasi->status_verifikasi }}
+            </div>
+            @endif
+        </div>
 	</div>
 </div>
+
+{{-- Revision Modal --}}
+<div id="revisionModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <h3 class="text-lg font-bold text-gray-800 mb-2">Catatan Revisi</h3>
+        <p class="text-sm text-gray-500 mb-4">Berikan alasan mengapa data ini perlu direvisi oleh mahasiswa.</p>
+        
+        <form action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
+            @csrf
+            <input type="hidden" name="status" value="Revisi">
+            <textarea name="catatan" rows="4" class="w-full rounded-xl border border-gray-300 p-4 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100" placeholder="Contoh: Sertifikat juara tidak terbaca, mohon upload ulang..."></textarea>
+            
+            <div class="mt-6 flex justify-end gap-3">
+                <button type="button" onclick="closeRevisionModal()" class="px-4 py-2 text-sm font-medium text-gray-500">Batal</button>
+                <button type="submit" class="px-6 py-2 rounded-full bg-red-600 text-white text-sm font-bold hover:bg-red-700 transition">
+                    Kirim Revisi
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openRevisionModal() {
+        document.getElementById('revisionModal').classList.remove('hidden');
+        document.getElementById('revisionModal').classList.add('flex');
+    }
+    function closeRevisionModal() {
+        document.getElementById('revisionModal').classList.add('hidden');
+        document.getElementById('revisionModal').classList.remove('flex');
+    }
+</script>
 @endsection

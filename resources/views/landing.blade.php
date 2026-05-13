@@ -272,55 +272,41 @@
 
     <section id="events" class="bg-gray-50 py-16">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="mb-10 text-center">
+                <h2 class="text-3xl font-extrabold text-gray-900 sm:text-4xl">Informasi Kegiatan Ormawa</h2>
+                <p class="mt-4 text-xl text-gray-500">Temukan berbagai kegiatan seru dari organisasi mahasiswa kami.</p>
+            </div>
             <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" data-date="11 Maret 2026" data-author="Admin TOP Kema" data-description="Webinar ini membahas strategi membangun usaha sejak kuliah, termasuk validasi ide, pemasaran digital, dan pengelolaan tim. Peserta akan mendapatkan materi dan e-sertifikat." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.1s;" data-date="14 Maret 2026" data-author="Admin TOP Kema" data-description="Sesi inspiratif bersama praktisi startup untuk membahas cara merintis usaha dari nol, studi kasus kegagalan, dan strategi scale-up bisnis mahasiswa." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.2s;" data-date="18 Maret 2026" data-author="Admin TOP Kema" data-description="Materi webinar mencakup penyusunan model bisnis, validasi pelanggan, dan langkah menyiapkan pitching deck untuk kompetisi kewirausahaan kampus." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.3s;" data-date="21 Maret 2026" data-author="Admin TOP Kema" data-description="Diskusi interaktif dengan mentor inkubator untuk membantu peserta menentukan produk unggulan dan menyusun rencana eksekusi selama 90 hari." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.4s;" data-date="25 Maret 2026" data-author="Admin TOP Kema" data-description="Pelatihan dasar branding dan social media untuk usaha mahasiswa, lengkap dengan contoh konten promosi yang bisa langsung diterapkan." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.5s;" data-date="28 Maret 2026" data-author="Admin TOP Kema" data-description="Kelas praktis financial planning untuk bisnis pemula: menghitung biaya, menentukan harga jual, dan mengelola arus kas agar usaha tetap sehat." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.6s;" data-date="2 April 2026" data-author="Admin TOP Kema" data-description="Peserta akan belajar menyusun proposal kolaborasi sponsor, negosiasi nilai kerja sama, dan strategi membangun relasi jangka panjang dengan mitra." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
-                <div class="event-card rounded-lg bg-white p-6 shadow-md transition hover:shadow-lg fade-in" style="animation-delay: 0.7s;" data-date="7 April 2026" data-author="Admin TOP Kema" data-description="Penutup serial webinar kewirausahaan dengan sesi tanya jawab langsung, evaluasi ide bisnis peserta, dan rekomendasi pengembangan berikutnya." data-category="WEBINAR">
-                    <div class="placeholder-box mb-4 h-48 w-full"><span class="text-gray-500">Foto Event</span></div>
-                    <h3 class="text-lg font-bold text-gray-900 mb-1">Webinar Kewirausahaan</h3>
-                    <p class="text-sm text-gray-600 mb-4">UKM Manggala</p>
-                    <a href="#" class="read-more-btn text-red-700 font-medium text-sm hover:underline">Read More →</a>
-                </div>
+                @forelse ($publikasis as $index => $p)
+                    <div class="event-card rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-xl fade-in" 
+                        style="animation-delay: {{ $index * 0.1 }}s;" 
+                        data-date="{{ $p->created_at->format('d M Y') }}" 
+                        data-author="Admin TOP" 
+                        data-description="{{ $p->caption }}" 
+                        data-category="KEGIATAN"
+                        data-link="{{ $p->link }}">
+                        <div class="mb-4 h-52 w-full overflow-hidden rounded-lg bg-gray-100">
+                            <img src="{{ asset('storage/' . $p->poster) }}" class="h-full w-full object-cover transition duration-500 hover:scale-110" alt="{{ $p->judul }}">
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-900 mb-1 line-clamp-1">{{ $p->judul }}</h3>
+                        <p class="text-sm text-gray-500 mb-4">{{ $p->ormawa }}</p>
+                        <div class="flex items-center justify-between">
+                            <button class="read-more-btn text-red-600 font-bold text-xs hover:text-red-800 transition uppercase tracking-wider">Detail Informasi</button>
+                            @if($p->link)
+                                <a href="{{ Str::startsWith($p->link, 'http') ? $p->link : 'https://' . $p->link }}" target="_blank" class="text-gray-400 hover:text-red-600 transition">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                                </a>
+                            @endif
+                        </div>
+                    </div>
+                @empty
+                    <div class="col-span-full py-16 text-center">
+                        <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mb-4">
+                            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 01-2 2z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 2v4M8 2v4M3 10h16"/></svg>
+                        </div>
+                        <p class="text-gray-500 italic">Belum ada informasi kegiatan terbaru saat ini.</p>
+                    </div>
+                @endforelse
             </div>
         </div>
     </section>
@@ -514,16 +500,25 @@
                 const description = card.dataset.description || 'Detail berita belum tersedia.';
                 const date = card.dataset.date || '-';
                 const author = card.dataset.author || organizer;
+                const link = card.dataset.link || '';
 
-                const cardImage = card.querySelector('.placeholder-box');
+                const cardImage = card.querySelector('img');
                 if (cardImage && imageEl) {
-                    imageEl.innerHTML = cardImage.innerHTML;
+                    imageEl.innerHTML = `<img src="${cardImage.src}" class="h-full w-full object-cover">`;
+                } else {
+                    imageEl.innerHTML = `<div class="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400 font-bold">NO IMAGE</div>`;
                 }
 
                 categoryEl.textContent = category;
                 titleEl.textContent = title;
                 organizerEl.textContent = organizer;
-                metaEl.textContent = `${date}, oleh ${author}`;
+                
+                let metaText = `${date}, oleh ${author}`;
+                if (link) {
+                    metaText += ` | Link: ${link}`;
+                }
+                metaEl.textContent = metaText;
+                
                 descriptionEl.textContent = description;
 
                 modal.classList.add('is-open');

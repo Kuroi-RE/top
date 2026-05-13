@@ -26,22 +26,27 @@
         <div class="flex flex-wrap gap-6">
             <div class="flex-1 min-w-[220px] rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                 <p class="text-xs text-gray-500 uppercase">Tampil di Beranda</p>
-                <p id="stat-published" class="mt-2 text-2xl font-bold text-gray-800">0</p>
+                <p class="mt-2 text-2xl font-bold text-gray-800">{{ $publikasiItems->where('status', 'Disetujui')->count() }}</p>
                 <p class="mt-1 text-xs text-gray-500">Poster sudah tayang</p>
             </div>
             <div class="flex-1 min-w-[220px] rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                 <p class="text-xs text-gray-500 uppercase">Pending</p>
-                <p id="stat-pending" class="mt-2 text-2xl font-bold text-gray-800">0</p>
+                <p class="mt-2 text-2xl font-bold text-gray-800">{{ $publikasiItems->where('status', 'Menunggu')->count() }}</p>
                 <p class="mt-1 text-xs text-gray-500">Menunggu verifikasi</p>
             </div>
             <div class="flex-1 min-w-[220px] rounded-2xl border border-gray-100 bg-white p-4 shadow-sm">
                 <p class="text-xs text-gray-500 uppercase">Ditolak</p>
-                <p id="stat-rejected" class="mt-2 text-2xl font-bold text-gray-800">0</p>
+                <p class="mt-2 text-2xl font-bold text-gray-800">{{ $publikasiItems->where('status', 'Ditolak')->count() }}</p>
                 <p class="mt-1 text-xs text-gray-500">Perlu perbaikan</p>
             </div>
         </div>
 
         <!-- Kuota Informasi -->
+        @php
+            $weekCount = $publikasiItems->where('created_at', '>=', now()->startOfWeek())->count();
+            $maxQuota = 3;
+            $remaining = max(0, $maxQuota - $weekCount);
+        @endphp
         <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -49,15 +54,16 @@
                     <p class="mt-1 text-sm text-gray-500">Kegiatan Mingguan</p>
                 </div>
                 <div class="text-base font-semibold text-red-600">
-                    <span id="quota-used">0</span>/<span id="quota-total">3</span>
+                    <span>{{ $weekCount }}</span>/<span>{{ $maxQuota }}</span>
                 </div>
             </div>
             <div class="mt-3">
                 <div class="h-2 w-full rounded-full bg-gray-200">
-                    <div id="quota-bar" class="h-2 rounded-full bg-red-600" style="width: 0%"></div>
+                    <div class="h-2 rounded-full bg-red-600" style="width: {{ ($weekCount / $maxQuota) * 100 }}%"></div>
                 </div>
-                <p id="quota-desc" class="mt-3 text-xs text-gray-500">Tersisa 3 slot pengunggahan poster kegiatan minggu ini.</p>
-                <p id="quota-warn" class="mt-1 text-xs font-semibold text-red-600 hidden">Kuota minggu ini sudah habis.</p>
+                <p class="mt-3 text-xs text-gray-500">
+                    {{ $remaining > 0 ? "Tersisa $remaining slot pengunggahan poster kegiatan minggu ini." : "Kuota minggu ini sudah habis." }}
+                </p>
             </div>
         </div>
         <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
@@ -108,12 +114,12 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-3">
-                                    <span class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500">
+                                    <a href="{{ asset('storage/' . $item->poster) }}" target="_blank" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-100 transition-colors">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
-                                                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                         </svg>
-                                    </span>
+                                    </a>
                                 </td>
                                 <td class="px-4 py-3">
                                     <div class="flex flex-wrap items-center gap-2">
@@ -140,83 +146,6 @@
 
 @push('scripts')
 <script>
-    (function () {
-        const MAX = 3;
-        const key = 'publikasi_quota_v1';
-        const statusKey = 'publikasi_status_counts_v1';
-        const usedEl = document.getElementById('quota-used');
-        const totalEl = document.getElementById('quota-total');
-        const barEl = document.getElementById('quota-bar');
-        const descEl = document.getElementById('quota-desc');
-        const warnEl = document.getElementById('quota-warn');
-        const publishedEl = document.getElementById('stat-published');
-        const pendingEl = document.getElementById('stat-pending');
-        const rejectedEl = document.getElementById('stat-rejected');
-
-        function getWeekKey(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
-        }
-
-        const weekKey = getWeekKey(new Date());
-
-        function getStore() {
-            try {
-                return JSON.parse(localStorage.getItem(key) || '{}');
-            } catch (e) {
-                return {};
-            }
-        }
-
-        function getStatusStore() {
-            try {
-                return JSON.parse(localStorage.getItem(statusKey) || '{}');
-            } catch (e) {
-                return {};
-            }
-        }
-
-        function getStatusCounts() {
-            const store = getStatusStore();
-            return {
-                published: Number(store.published || 0),
-                pending: Number(store.pending || 0),
-                rejected: Number(store.rejected || 0),
-            };
-        }
-
-        function getCount() {
-            const store = getStore();
-            return Number(store[weekKey] || 0);
-        }
-
-        function updateUI(count) {
-            const used = Math.min(count, MAX);
-            const remaining = Math.max(0, MAX - used);
-            if (usedEl) usedEl.textContent = used;
-            if (totalEl) totalEl.textContent = MAX;
-            if (barEl) barEl.style.width = `${(used / MAX) * 100}%`;
-            if (descEl) {
-                descEl.textContent = remaining > 0
-                    ? `Tersisa ${remaining} slot pengunggahan poster kegiatan minggu ini.`
-                    : 'Kuota minggu ini sudah habis.';
-            }
-            if (warnEl) warnEl.classList.toggle('hidden', remaining > 0);
-        }
-
-        function updateStatusUI() {
-            const counts = getStatusCounts();
-            if (publishedEl) publishedEl.textContent = counts.published;
-            if (pendingEl) pendingEl.textContent = counts.pending;
-            if (rejectedEl) rejectedEl.textContent = counts.rejected;
-        }
-
-        updateUI(getCount());
-        updateStatusUI();
-    })();
+    // No JS quota logic needed as it is handled by PHP now.
 </script>
 @endpush

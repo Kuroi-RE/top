@@ -74,26 +74,14 @@
 </style>
 
 @php
-	$prestasi = [
-		[
-			'nim' => '23110401',
-			'nama' => 'Melani',
-			'prodi' => 'Rekayasa Perangkat Lunak',
-			'prestasi' => 'Juara 3',
-			'nama_event' => 'Sevent',
-			'penyelenggara' => 'HMSE',
-			'tingkat' => 'Nasional'
-		],
-		[
-			'nim' => '23110401',
-			'nama' => 'Melani',
-			'prodi' => 'Rekayasa Perangkat Lunak',
-			'prestasi' => 'Juara 3',
-			'nama_event' => 'Sevent',
-			'penyelenggara' => 'HMSE',
-			'tingkat' => 'Nasional'
-		],
-	];
+    $prestasis = \App\Models\Prestasi::with('user')->latest()->get();
+    
+    $studentProposals = \App\Models\ProposalKegiatan::with('user')
+        ->whereHas('user', function($q) {
+            $q->where('role', 'Mahasiswa');
+        })
+        ->latest()
+        ->get();
 @endphp
 
 <div class="dashboard-shell flex flex-col gap-6">
@@ -191,45 +179,117 @@
 						<th class="px-4 py-3 font-semibold">Prodi</th>
 						<th class="px-4 py-3 font-semibold">Prestasi</th>
 						<th class="px-4 py-3 font-semibold">Nama Event</th>
-						<th class="px-4 py-3 font-semibold">Penyelenggara</th>
-						<th class="px-4 py-3 font-semibold">Tingkat</th>
+						<th class="px-4 py-3 font-semibold text-center">Status</th>
 						<th class="px-4 py-3 font-semibold rounded-r-lg text-center">Aksi</th>
 					</tr>
 				</thead>
 				<tbody>
-					@foreach ($prestasi as $item)
+					@forelse ($prestasis as $item)
 						<tr class="group transition-colors hover:bg-slate-50">
-							<td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50 text-slate-600">{{ $item['nim'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-900">{{ $item['nama'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">{{ $item['prodi'] }}</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50 text-slate-600">{{ $item->user->username }}</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-900">{{ $item->user->nama_depan }} {{ $item->user->nama_belakang }}</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">{{ $item->user->prodi ?? '-' }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50">
-								<span class="inline-flex items-center rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">{{ $item['prestasi'] }}</span>
+								<span class="inline-flex items-center rounded-md bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-600/20">{{ $item->capaian }}</span>
 							</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 leading-5 text-slate-600">{{ $item['nama_event'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">{{ $item['penyelenggara'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50">
-								<span class="inline-flex items-center rounded-md bg-sky-50 px-2.5 py-1 text-xs font-semibold text-sky-700 ring-1 ring-inset ring-sky-600/20">{{ $item['tingkat'] }}</span>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 leading-5 text-slate-600">
+                                <div class="font-medium text-slate-800">{{ $item->nama_kompetisi }}</div>
+                                <div class="text-[11px] text-slate-400">{{ $item->penyelenggara }}</div>
+                            </td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
+								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
+                                    {{ $item->status_verifikasi == 'Disetujui' ? 'bg-green-100 text-green-700' : ($item->status_verifikasi == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
+                                    {{ $item->status_verifikasi ?? 'Menunggu' }}
+                                </span>
 							</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-r border-slate-200 last:rounded-r-xl group-hover:bg-slate-50">
 								<div class="flex items-center justify-center gap-3">
-									<a href="{{ route('admin.detail_prestasi') }}" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-50 text-sky-700 transition hover:bg-sky-100" aria-label="Edit">
+									<a href="{{ route('admin.detail_prestasi', $item->id_prestasi) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-50 text-sky-700 transition hover:bg-sky-100" title="Verifikasi">
 										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
-											<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+											<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 										</svg>
 									</a>
-									<button type="button" onclick="if (confirm('Hapus data ini?')) { this.closest('tr').remove(); }" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100" aria-label="Hapus">
-										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
-											<path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.22a51.964 51.964 0 00-3.32 0c-1.18.056-2.09 1.04-2.09 2.22v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-										</svg>
-									</button>
+									<form action="{{ route('admin.prestasi_mahasiswa.delete', $item->id_prestasi) }}" method="POST" onsubmit="return confirm('Hapus data ini?')" style="display:inline;">
+                                        @csrf @method('DELETE')
+                                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus">
+                                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                                                <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.22a51.964 51.964 0 00-3.32 0c-1.18.056-2.09 1.04-2.09 2.22v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                                            </svg>
+                                        </button>
+                                    </form>
 								</div>
 							</td>
 						</tr>
-					@endforeach
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-4 py-12 text-center text-slate-400 italic bg-white first:rounded-l-xl last:rounded-r-xl border border-slate-200">
+                                Belum ada data pengajuan prestasi mahasiswa.
+                            </td>
+                        </tr>
+					@endforelse
 				</tbody>
 			</table>
 		</div>
 	</div>
+	<div class="dashboard-card bg-white rounded-2xl p-6 shadow-sm mt-8">
+        <div class="flex items-center justify-between mb-6">
+            <div class="title">
+                <h2 class="text-lg font-bold text-slate-800">Daftar Pengajuan Proposal Kegiatan Mahasiswa</h2>
+                <p class="text-sm text-slate-500">Pantau pengajuan dana kegiatan lomba mahasiswa secara individu</p>
+            </div>
+        </div>
+
+        <div class="dashboard-table-wrap">
+			<table class="min-w-full w-full border-separate border-spacing-y-3 border-spacing-x-0 text-left text-sm text-slate-700">
+				<thead class="bg-slate-100 text-slate-700">
+					<tr>
+						<th class="px-4 py-3 font-semibold rounded-l-lg">Nama Pengaju</th>
+						<th class="px-4 py-3 font-semibold">Nama Kegiatan</th>
+						<th class="px-4 py-3 font-semibold">Waktu</th>
+						<th class="px-4 py-3 font-semibold text-right">Besar Ajuan</th>
+						<th class="px-4 py-3 font-semibold text-center">Status</th>
+						<th class="px-4 py-3 font-semibold rounded-r-lg text-center">Aksi</th>
+					</tr>
+				</thead>
+				<tbody>
+					@forelse ($studentProposals as $prop)
+						<tr class="group transition-colors hover:bg-slate-50">
+							<td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50">
+                                <div class="font-medium text-slate-900">{{ $prop->user->nama_depan }} {{ $prop->user->nama_belakang }}</div>
+                                <div class="text-[11px] text-slate-400">{{ $prop->user->username }}</div>
+                            </td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-800">{{ $prop->nama_kegiatan }}</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">
+                                {{ $prop->waktu_kegiatan ? \Carbon\Carbon::parse($prop->waktu_kegiatan)->format('d/m/Y') : '-' }}
+                            </td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 text-right font-medium">
+                                Rp {{ number_format($prop->besar_ajuan, 0, ',', '.') }}
+                            </td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
+								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
+                                    {{ $prop->status == 'Disetujui' ? 'bg-green-100 text-green-700' : ($prop->status == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
+                                    {{ $prop->status ?? 'Menunggu' }}
+                                </span>
+							</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-r border-slate-200 last:rounded-r-xl group-hover:bg-slate-50 text-center">
+								<a href="{{ route('admin.form_verifikasi', ['id' => $prop->id_proposal]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-50 text-sky-700 transition hover:bg-sky-100" title="Verifikasi Proposal">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
+                                    </svg>
+                                </a>
+							</td>
+						</tr>
+                    @empty
+                        <tr>
+                            <td colspan="6" class="px-4 py-12 text-center text-slate-400 italic bg-white first:rounded-l-xl last:rounded-r-xl border border-slate-200">
+                                Belum ada pengajuan proposal kegiatan mahasiswa.
+                            </td>
+                        </tr>
+					@endforelse
+				</tbody>
+			</table>
+		</div>
+    </div>
 </div>
 
 @endsection

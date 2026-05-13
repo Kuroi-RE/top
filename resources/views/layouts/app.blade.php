@@ -1,6 +1,9 @@
-@php($layoutRole = session('dummy_user.role', 'ormawa'))
+@php
+    $currentUser = auth()->user();
+    $useKemaLayout = $currentUser?->isAdmin() || $currentUser?->isSuperAdmin();
+@endphp
 
-@if($layoutRole === 'kemahasiswaan')
+@if($useKemaLayout)
     @include('partials.kema_layout')
 @else
     @include('partials.ormawa_layout')

@@ -32,6 +32,8 @@ class ProposalKegiatan extends Model
         'status',
         'anggaran_disetujui',
         'catatan_admin',
+        'file_lpj_keuangan',
+        'category',
     ];
 
     protected $casts = [
@@ -70,5 +72,10 @@ class ProposalKegiatan extends Model
     public function scopeByTriwulan($query, $triwulan)
     {
         return $query->where('ajuan_triwulan', $triwulan);
+    }
+
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
     }
 }

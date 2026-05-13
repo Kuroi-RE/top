@@ -24,54 +24,6 @@
 		align-items: stretch;
 	}
 
-	.dashboard-card {
-		box-shadow: 0 12px 30px rgba(15, 23, 42, 0.06);
-		border: 0;
-		animation: content-fade-in 0.6s ease-out both;
-	}
-
-	.dashboard-table-wrap {
-		scrollbar-width: thin;
-		overflow: auto;
-		max-width: 100%;
-	}
-
-	.dashboard-table-wrap::-webkit-scrollbar {
-		height: 10px;
-	}
-
-	.dashboard-table-wrap::-webkit-scrollbar-thumb {
-		background: rgb(203 213 225);
-		border-radius: 9999px;
-	}
-
-	/* Welcome Banner Animations */
-	.greeting-hero {
-		position: relative;
-		display: flex;
-		align-items: center;
-		gap: 16px;
-		padding: 20px;
-		border-radius: 16px;
-		border: 1px solid #fde68a;
-		background: linear-gradient(135deg, #fff7ed 0%, #ffffff 65%);
-		box-shadow: 0 10px 24px rgba(251, 191, 36, 0.1);
-		overflow: hidden;
-	}
-
-	.greeting-wave {
-		width: 56px;
-		height: 56px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: #ffedd5;
-		color: #f97316;
-		border-radius: 14px;
-		animation: greeting-pop 0.6s ease-out both;
-		flex-shrink: 0;
-	}
-
 	.greeting-wave-icon {
 		font-size: 32px;
 		transform-origin: 70% 70%;
@@ -131,51 +83,55 @@
 </style>
 
 @php
+	$currentUser = auth()->user();
+	$displayName = trim(($currentUser?->nama_depan ?? '') . ' ' . ($currentUser?->nama_belakang ?? ''));
+	$displayName = $displayName !== '' ? $displayName : ($currentUser?->username ?? 'teman');
+
 	$summaryCards = [
-		['title' => 'Proposal Kegiatan', 'count' => 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'LPJ Kegiatan', 'count' => 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'Publikasi Kegiatan', 'count' => 0, 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253'],
+		['title' => 'Proposal Kegiatan', 'count' => \App\Models\ProposalKegiatan::where('category', 'Ormawa')->count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'LPJ Kegiatan', 'count' => \App\Models\LpjKegiatan::whereHas('proposal', fn($q) => $q->where('category', 'Ormawa'))->count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'Publikasi Kegiatan', 'count' => \App\Models\InformasiKegiatan::whereHas('user', function($q) {
+            $q->where('role', 'like', '%Ormawa%')->orWhere('role', 'DPMBEM');
+        })->count(), 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253'],
 	];
 
-	$activities = [
-		[
-			'tw' => '1',
-			'ormawa' => 'Manggala',
-			'nama_kegiatan' => 'Buka Bersama Manggala',
-			'resiko' => 'Sedang',
-			'waktu' => '17 Maret 2026',
-			'ajuan' => 'Rp 200.000',
-			'anggaran' => 'Rp 200.000',
-			'status' => 'Selesai',
-		],
-		[
-			'tw' => '1',
-			'ormawa' => 'Manggala',
-			'nama_kegiatan' => 'Buka Bersama Manggala',
-			'resiko' => 'Tinggi',
-			'waktu' => '17 Maret 2026',
-			'ajuan' => 'Rp 200.000',
-			'anggaran' => 'Rp 200.000',
-			'status' => 'Pencairan',
-		],
-		[
-			'tw' => '1',
-			'ormawa' => 'Manggala',
-			'nama_kegiatan' => 'Buka Bersama Manggala',
-			'resiko' => 'Sedang',
-			'waktu' => '17 Maret 2026',
-			'ajuan' => 'Rp 200.000',
-			'anggaran' => 'Rp 200.000',
-			'status' => 'Acc',
-		],
-	];
+	$activities = \App\Models\ProposalKegiatan::with(['user', 'lpj'])
+        ->where('category', 'Ormawa')
+		->latest('id_proposal')
+		->take(10)
+		->get()
+		->map(function ($proposal, $index) {
+			$formattedDate = data_get($proposal, 'waktu_kegiatan');
+			if ($formattedDate instanceof \Carbon\Carbon) {
+                $formattedDate = $formattedDate->format('d/m/Y');
+            } elseif (!$formattedDate) {
+				$formattedDate = optional($proposal->created_at)->format('d/m/Y') ?? '-';
+			}
+
+			return [
+				'tw' => data_get($proposal, 'ajuan_triwulan', '-'),
+				'ormawa' => data_get($proposal, 'user.nama_belakang', data_get($proposal, 'user.username', 'Ormawa')),
+				'nama_kegiatan' => data_get($proposal, 'nama_kegiatan', '-'),
+				'resiko' => data_get($proposal, 'risiko_proposal', '-'),
+				'waktu' => $formattedDate,
+				'ajuan' => 'Rp ' . number_format((float) data_get($proposal, 'besar_ajuan', 0), 0, ',', '.'),
+				'anggaran' => 'Rp ' . number_format((float) data_get($proposal, 'anggaran_disetujui', 0), 0, ',', '.'),
+				'status' => ($proposal->status == 'Disetujui' && $proposal->lpj->where('status_lpj', 'Menunggu')->count() > 0) ? 'Cek LPJ' : data_get($proposal, 'status', 'Ajuan baru'),
+				'id' => data_get($proposal, 'id_proposal'),
+                'lpj_keu' => data_get($proposal, 'file_lpj_keuangan'),
+                'lpj_keg' => optional($proposal->lpj->first())->file_lpj,
+			];
+		});
 
 	$statusStyles = [
 		'Selesai' => 'bg-emerald-100 text-emerald-700',
+		'Disetujui' => 'bg-emerald-100 text-emerald-700',
 		'Pencairan' => 'bg-amber-100 text-amber-700',
 		'Acc' => 'bg-sky-100 text-sky-700',
 		'Revisi' => 'bg-rose-100 text-rose-700',
+		'Revisi LPJ' => 'bg-rose-100 text-rose-700',
 		'Ajuan baru' => 'bg-slate-100 text-slate-700',
+		'Cek LPJ' => 'bg-purple-100 text-purple-700',
 	];
 @endphp
 
@@ -193,7 +149,7 @@
 			<span class="greeting-wave-icon">👋</span>
 		</div>
 		<div>
-			<div class="greeting-title">Halo, {{ strtolower(session('dummy_user.username', 'manggala')) }}! Selamat datang kembali di TOPKEMA</div>
+			<div class="greeting-title">Halo, {{ strtolower($displayName) }}! Selamat datang kembali di TOPKEMA</div>
 			<div class="greeting-sub">Semoga harimu lancar dan penuh ide untuk kegiatan berikutnya</div>
 		</div>
 	</div>
@@ -241,7 +197,7 @@
 				<label class="text-sm font-semibold text-slate-700">Nama Ormawa</label>
 				<div class="relative" style="position: relative;">
 					<select class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-						<option>Manggala</option>
+						<option>Semua Ormawa</option>
 					</select>
 					<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
@@ -300,8 +256,12 @@
 						<tr class="group transition-colors hover:bg-slate-50">
 							<td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50 text-slate-600 text-center">{{ $activity['tw'] }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-900">{{ $activity['ormawa'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 leading-tight">{{ $activity['nama_kegiatan'] }}</td>
-							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">{{ $activity['resiko'] }}</td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 leading-tight">
+                                <a href="{{ route('admin.detail_kegiatan', $activity['id']) }}" class="transition-colors hover:text-red-600 hover:underline" title="Klik untuk lihat detail">
+                                    {{ $activity['nama_kegiatan'] }}
+                                </a>
+                            </td>
+							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 text-center">{{ $activity['resiko'] }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 whitespace-nowrap text-center">{{ $activity['waktu'] }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 text-right">{{ $activity['ajuan'] }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600 text-right">{{ $activity['anggaran'] }}</td>
@@ -311,18 +271,26 @@
 								</span>
 							</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
-								<button type="button" class="text-slate-400 transition hover:text-red-600">
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 mx-auto">
-										<path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v13.5A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V8.784a2.25 2.25 0 0 0-.659-1.591l-4.534-4.535A2.25 2.25 0 0 0 14.216 2.25H5.25zM12 9.75a.75.75 0 0 1 .75.75v3.19l1.22-1.22a.75.75 0 1 1 1.06 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.22 1.22V10.5a.75.75 0 0 1 .75-.75z" />
-									</svg>
-								</button>
+								@if($activity['lpj_keu'])
+                                    <a href="{{ asset('storage/' . $activity['lpj_keu']) }}" target="_blank" class="text-slate-400 transition hover:text-red-600" title="Download LPJ Keuangan">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 mx-auto">
+                                            <path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v13.5A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V8.784a2.25 2.25 0 0 0-.659-1.591l-4.534-4.535A2.25 2.25 0 0 0 14.216 2.25H5.25zM12 9.75a.75.75 0 0 1 .75.75v3.19l1.22-1.22a.75.75 0 1 1 1.06 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.22 1.22V10.5a.75.75 0 0 1 .75-.75z" />
+                                        </svg>
+                                    </a>
+                                @else
+                                    <span class="text-slate-300 italic">&mdash;</span>
+                                @endif
 							</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
-								<button type="button" class="text-slate-400 transition hover:text-red-600">
-									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 mx-auto">
-										<path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v13.5A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V8.784a2.25 2.25 0 0 0-.659-1.591l-4.534-4.535A2.25 2.25 0 0 0 14.216 2.25H5.25zM12 9.75a.75.75 0 0 1 .75.75v3.19l1.22-1.22a.75.75 0 1 1 1.06 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.22 1.22V10.5a.75.75 0 0 1 .75-.75z" />
-									</svg>
-								</button>
+								@if($activity['lpj_keg'])
+                                    <a href="{{ asset('storage/' . $activity['lpj_keg']) }}" target="_blank" class="text-slate-400 transition hover:text-red-600" title="Download LPJ Kegiatan">
+                                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5 mx-auto">
+                                            <path d="M5.25 3A2.25 2.25 0 0 0 3 5.25v13.5A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V8.784a2.25 2.25 0 0 0-.659-1.591l-4.534-4.535A2.25 2.25 0 0 0 14.216 2.25H5.25zM12 9.75a.75.75 0 0 1 .75.75v3.19l1.22-1.22a.75.75 0 1 1 1.06 1.06l-2.5 2.5a.75.75 0 0 1-1.06 0l-2.5-2.5a.75.75 0 1 1 1.06-1.06l1.22 1.22V10.5a.75.75 0 0 1 .75-.75z" />
+                                        </svg>
+                                    </a>
+                                @else
+                                    <span class="text-slate-300 italic">&mdash;</span>
+                                @endif
 							</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
 								<button type="button" class="text-slate-400 transition hover:text-red-600">
@@ -333,7 +301,7 @@
 							</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-r border-slate-200 last:rounded-r-xl group-hover:bg-slate-50 text-center">
 								<div class="flex items-center justify-center gap-3">
-									<a href="{{ route('admin.form_verifikasi') }}" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-50 text-sky-700 transition hover:bg-sky-100">
+									<a href="{{ route('admin.form_verifikasi', ['id' => $activity['id']]) }}" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-sky-50 text-sky-700 transition hover:bg-sky-100">
 										<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
 											<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
 										</svg>

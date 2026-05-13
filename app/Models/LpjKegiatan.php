@@ -18,6 +18,7 @@ class LpjKegiatan extends Model
         'id_proposal',
         'file_lpj',
         'status_lpj',
+        'catatan_admin',
         'tanggal_upload',
     ];
 

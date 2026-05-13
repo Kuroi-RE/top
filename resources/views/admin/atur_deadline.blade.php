@@ -49,43 +49,52 @@
         </div>
     </div>
 
-    <div class="deadline-form-card bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
-        <form action="{{ route('admin.atur_deadline.post') }}" method="POST">
-            @csrf
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Current Status -->
-                <div class="md:col-span-2">
-                    <div class="current-deadline-badge rounded-2xl p-6 text-center">
-                        <p class="text-xs font-bold text-red-600 uppercase tracking-widest mb-2">Deadline Aktif Saat Ini</p>
-                        @if($deadline)
-                            <div class="flex flex-col md:flex-row items-center justify-center gap-4">
-                                <div class="flex-1">
-                                    <h3 class="text-2xl font-bold text-slate-800">{{ $deadline->title }}</h3>
-                                    <p class="text-slate-600 font-medium mt-1">
-                                        <span class="inline-flex items-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                            </svg>
-                                            {{ $deadline->deadline_at->format('d F Y - H:i') }} WIB
-                                        </span>
-                                    </p>
-                                </div>
-                                <form action="{{ route('admin.atur_deadline.delete') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus deadline ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-colors text-sm font-bold border border-red-200">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                        Hapus Deadline
-                                    </button>
-                                </form>
-                            </div>
-                        @else
-                            <p class="text-slate-400 italic">Belum ada deadline yang ditetapkan</p>
-                        @endif
+    <div class="space-y-8">
+        <!-- Current Status Section -->
+        <div class="current-deadline-badge rounded-2xl p-6 text-center shadow-sm border border-slate-100 bg-white">
+            <p class="text-xs font-bold text-red-600 uppercase tracking-widest mb-2">Deadline Aktif Saat Ini</p>
+            @if($deadline)
+                <div class="flex flex-col md:flex-row items-center justify-center gap-6">
+                    <div class="flex-1">
+                        <h3 class="text-2xl font-bold text-slate-800">{{ $deadline->title }}</h3>
+                        <p class="text-slate-600 font-medium mt-1">
+                            <span class="inline-flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                {{ $deadline->deadline_at->format('d F Y - H:i') }} WIB
+                            </span>
+                        </p>
                     </div>
+                    <form action="{{ route('admin.atur_deadline.delete') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus deadline ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 transition-all text-sm font-bold border border-red-200 hover:shadow-md">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                            Hapus Deadline
+                        </button>
+                    </form>
                 </div>
+            @else
+                <p class="text-slate-400 italic py-2">Belum ada deadline yang ditetapkan</p>
+            @endif
+        </div>
+
+        <!-- Update Form Section -->
+        <div class="deadline-form-card bg-white rounded-3xl p-8 shadow-xl border border-slate-100">
+            <h3 class="text-xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Perbarui Deadline
+            </h3>
+            <form action="{{ route('admin.atur_deadline.post') }}" method="POST">
+                @csrf
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+
 
                 <!-- Title Input -->
                 <div class="flex flex-col gap-2">
@@ -129,6 +138,7 @@
             </div>
         </form>
     </div>
+</div>
 
     <!-- Help Card -->
     <div class="mt-8 bg-blue-50 border border-blue-100 rounded-2xl p-6 flex gap-4 items-start">

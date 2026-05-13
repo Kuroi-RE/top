@@ -52,68 +52,27 @@
 
 @php
 	$summaryCards = [
-		['title' => 'Proposal Ajuan', 'count' => 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'LPJ Kegiatan', 'count' => 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'Lapor Prestasi', 'count' => 0, 'icon' => 'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z'],
+		['title' => 'Proposal Ajuan', 'count' => \App\Models\ProposalPrestasiMahasiswa::count() + \App\Models\ProposalPrestasiOrmawa::count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'LPJ Kegiatan', 'count' => \App\Models\LpjKegiatan::whereHas('proposal', fn($q) => $q->where('category', 'Prestasi'))->count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'Lapor Prestasi', 'count' => \App\Models\Prestasi::count(), 'icon' => 'M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z'],
 	];
 
-	$activities = [
-		[
-			'tahun' => '1',
-			'nim' => '2311104001',
-			'nama' => 'Tri Mylani',
-			'prodi' => 'S1 Rekayasa Perangkat Lunak',
-			'prestasi' => '17 Maret 2026',
-			'nama_event' => 'Lomba Essay',
-			'penyelenggara' => 'Telkom University',
-			'tingkat' => 'Nasional',
-			'klaster' => 'I',
-		],
-		[
-			'tahun' => '1',
-			'nim' => '2311104003',
-			'nama' => 'Martryatus Sofia',
-			'prodi' => 'S1 Rekayasa Perangkat Lunak',
-			'prestasi' => '17 Maret 2026',
-			'nama_event' => 'Lomba Hackathon',
-			'penyelenggara' => 'Telkom University',
-			'tingkat' => 'Internasional',
-			'klaster' => 'II',
-		],
-		[
-			'tahun' => '1',
-			'nim' => '2311103005',
-			'nama' => 'Viona Aziz Syahputri',
-			'prodi' => 'S1 Rekayasa Perangkat Lunak',
-			'prestasi' => '17 Maret 2026',
-			'nama_event' => 'Lomba UI/UX',
-			'penyelenggara' => 'Telkom University',
-			'tingkat' => 'Regional',
-			'klaster' => 'III',
-		],
-		[
-			'tahun' => '1',
-			'nim' => '2311104006',
-			'nama' => 'Kelvin Ferdinan',
-			'prodi' => 'S1 Rekayasa Perangkat Lunak',
-			'prestasi' => '17 Maret 2026',
-			'nama_event' => 'Cerpen',
-			'penyelenggara' => 'Telkom University',
-			'tingkat' => 'Nasional',
-			'klaster' => 'III',
-		],
-		[
-			'tahun' => '1',
-			'nim' => '2311107007',
-			'nama' => 'Satria Ramadhan',
-			'prodi' => 'S1 Rekayasa Perangkat Lunak',
-			'prestasi' => '17 Maret 2026',
-			'nama_event' => 'LKTI',
-			'penyelenggara' => 'Telkom University',
-			'tingkat' => 'Regional',
-			'klaster' => 'I',
-		],
-	];
+	$activities = \App\Models\ProposalPrestasiMahasiswa::with('user')->get()
+        ->concat(\App\Models\ProposalPrestasiOrmawa::with('user')->get())
+        ->sortByDesc('created_at')
+        ->map(function($p) {
+            return [
+                'tahun' => $p->created_at->format('Y'),
+                'nim' => $p->user->username ?? '-',
+                'nama' => $p->user->nama_depan . ' ' . $p->user->nama_belakang,
+                'prodi' => $p->user->prodi ?? '-',
+                'prestasi' => $p->waktu_kegiatan ? \Carbon\Carbon::parse($p->waktu_kegiatan)->format('d F Y') : '-',
+                'nama_event' => $p->nama_kegiatan,
+                'penyelenggara' => $p->tempat_kegiatan,
+                'tingkat' => $p->risiko_proposal, // Mapping risiko as placeholder for tingkat
+                'klaster' => $p->ajuan_triwulan,
+            ];
+        });
 @endphp
 
 <div class="dashboard-shell flex flex-col gap-6">

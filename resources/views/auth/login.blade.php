@@ -529,7 +529,7 @@
                             name="username"
                             type="text"
                             class="input-modern"
-                            placeholder="manggala"
+                            placeholder="username / nim"
                             value="{{ old('username') }}"
                             autocomplete="username"
                             autofocus
