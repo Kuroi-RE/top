@@ -3,8 +3,8 @@ site_description: REST API Documentation for TOP KEMA Telkom
 theme:
   name: material
   palette:
-    primary: indigo
-    accent: blue
+    primary: red
+    accent: red
 nav:
   - Home & Setup: index.md
   - Authentication: authentication.md
