@@ -4,6 +4,17 @@
 @section('page-title', 'Prestasi Mahasiswa')
 @section('page-subtitle', 'Rekap data prestasi mahasiswa aktif')
 
+@php
+    $currentUser = auth()->user();
+    $totalPrestasi = \App\Models\Prestasi::where('id_user', $currentUser->id_user)->count();
+    $internasional = \App\Models\Prestasi::where('id_user', $currentUser->id_user)->where('tingkat', 'Internasional')->count();
+    $nasional = \App\Models\Prestasi::where('id_user', $currentUser->id_user)->where('tingkat', 'Nasional')->count();
+    $regional = \App\Models\Prestasi::where('id_user', $currentUser->id_user)->where('tingkat', 'Regional')->count();
+
+    $myProposals = \App\Models\ProposalKegiatan::where('id_user', $currentUser->id_user)->latest()->get();
+    $myPrestasi = \App\Models\Prestasi::where('id_user', $currentUser->id_user)->latest()->get();
+@endphp
+
 @section('content')
 <div class="p-4 sm:p-6 space-y-6">
 
@@ -28,8 +39,8 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Total Prestasi</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">128</p>
-                <p class="mt-1 text-[11px] text-green-500 font-medium">+12 bulan ini</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $totalPrestasi }}</p>
+                <p class="mt-1 text-[11px] text-green-500 font-medium">Data Terverifikasi</p>
             </div>
         </div>
 
@@ -46,8 +57,8 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Internasional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">34</p>
-                <p class="mt-1 text-[11px] text-blue-500 font-medium">26.5% dari total</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $internasional }}</p>
+                <p class="mt-1 text-[11px] text-blue-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
 
@@ -66,8 +77,8 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Nasional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">57</p>
-                <p class="mt-1 text-[11px] text-yellow-500 font-medium">44.5% dari total</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $nasional }}</p>
+                <p class="mt-1 text-[11px] text-yellow-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
 
@@ -84,8 +95,8 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Regional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">37</p>
-                <p class="mt-1 text-[11px] text-green-500 font-medium">28.9% dari total</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $regional }}</p>
+                <p class="mt-1 text-[11px] text-green-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
 
@@ -154,244 +165,54 @@
                         <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase
                                    tracking-wider text-gray-500">Tingkat</th>
                         <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase
-                                   tracking-wider text-gray-500">Peringkat</th>
-                        <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase
-                                   tracking-wider text-gray-500">Tahun</th>
-                        <th class="whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase
-                                   tracking-wider text-gray-500">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-100">
-
-                    {{-- ── Dummy Row 1 ─────────────────────────── --}}
+                                      @forelse ($myPrestasi as $index => $item)
                     <tr class="hover:bg-gray-50/70 transition-colors">
-                        <td class="px-5 py-3.5 text-gray-400 font-medium">1</td>
+                        <td class="px-5 py-3.5 text-gray-400 font-medium">{{ $index + 1 }}</td>
                         <td class="px-5 py-3.5">
                             <div class="flex items-center gap-3">
                                 <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center
                                             rounded-full bg-red-100 text-xs font-bold text-red-700">
-                                    AR
+                                    {{ strtoupper(substr($currentUser->nama_depan, 0, 1) . substr($currentUser->nama_belakang, 0, 1)) }}
                                 </div>
-                                <span class="font-medium text-gray-800">Andi Rizky</span>
+                                <span class="font-medium text-gray-800">{{ $currentUser->nama_depan }} {{ $currentUser->nama_belakang }}</span>
                             </div>
                         </td>
-                        <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">1301210001</td>
+                        <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">{{ $currentUser->username }}</td>
                         <td class="px-5 py-3.5 text-gray-700 max-w-xs truncate">
-                            Juara 1 Hackathon Nasional 2024
+                            {{ $item->nama_kompetisi }}
                         </td>
                         <td class="px-5 py-3.5">
                             <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5
                                          py-0.5 text-xs font-semibold text-blue-700">
-                                Nasional
+                                {{ $item->tingkat }}
                             </span>
                         </td>
                         <td class="px-5 py-3.5">
                             <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100
                                          px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
-                                🥇 Juara 1
+                                🏆 {{ $item->capaian }}
                             </span>
                         </td>
-                        <td class="px-5 py-3.5 text-gray-500">2024</td>
+                        <td class="px-5 py-3.5 text-gray-500">{{ $item->created_at->format('Y') }}</td>
                         <td class="px-5 py-3.5">
                             <div class="flex items-center gap-1.5">
-                                <a href="{{ url('/prestasi/1') }}"
-                                   class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50
-                                          hover:text-blue-700 transition-colors"
-                                   title="Detail">
+                                <a href="#" class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 transition-colors" title="Detail">
                                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
-                                                 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477
-                                                 0-8.268-2.943-9.542-7z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
                                     </svg>
                                 </a>
-                                <a href="{{ url('/prestasi/1/edit') }}"
-                                   class="rounded-lg p-1.5 text-amber-500 hover:bg-amber-50
-                                          hover:text-amber-700 transition-colors"
-                                   title="Edit">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828
-                                                 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                </a>
-                                <form method="POST" action="{{ url('/prestasi/1') }}"
-                                      onsubmit="return confirm('Hapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="rounded-lg p-1.5 text-red-400 hover:bg-red-50
-                                                   hover:text-red-600 transition-colors"
-                                            title="Hapus">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2
-                                                     2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1
-                                                     1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </form>
                             </div>
                         </td>
                     </tr>
-
-                    {{-- ── Dummy Row 2 ─────────────────────────── --}}
-                    <tr class="hover:bg-gray-50/70 transition-colors">
-                        <td class="px-5 py-3.5 text-gray-400 font-medium">2</td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center
-                                            rounded-full bg-blue-100 text-xs font-bold text-blue-700">
-                                    SP
-                                </div>
-                                <span class="font-medium text-gray-800">Siti Putri</span>
-                            </div>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">1301210042</td>
-                        <td class="px-5 py-3.5 text-gray-700 max-w-xs truncate">
-                            Best Paper ICICT International Conference
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center rounded-full bg-purple-100 px-2.5
-                                         py-0.5 text-xs font-semibold text-purple-700">
-                                Internasional
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-gray-100
-                                         px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-                                🏅 Best Paper
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500">2024</td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-1.5">
-                                <a href="{{ url('/prestasi/2') }}"
-                                   class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50
-                                          hover:text-blue-700 transition-colors" title="Detail">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
-                                                 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477
-                                                 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                                <a href="{{ url('/prestasi/2/edit') }}"
-                                   class="rounded-lg p-1.5 text-amber-500 hover:bg-amber-50
-                                          hover:text-amber-700 transition-colors" title="Edit">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828
-                                                 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                </a>
-                                <form method="POST" action="{{ url('/prestasi/2') }}"
-                                      onsubmit="return confirm('Hapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="rounded-lg p-1.5 text-red-400 hover:bg-red-50
-                                                   hover:text-red-600 transition-colors" title="Hapus">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2
-                                                     2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1
-                                                     1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-
-                    {{-- ── Dummy Row 3 ─────────────────────────── --}}
-                    <tr class="hover:bg-gray-50/70 transition-colors">
-                        <td class="px-5 py-3.5 text-gray-400 font-medium">3</td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center
-                                            rounded-full bg-green-100 text-xs font-bold text-green-700">
-                                    BF
-                                </div>
-                                <span class="font-medium text-gray-800">Budi Firmansyah</span>
-                            </div>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">1301210088</td>
-                        <td class="px-5 py-3.5 text-gray-700 max-w-xs truncate">
-                            Juara 2 Lomba Debat Bahasa Inggris Jawa Tengah
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center rounded-full bg-green-100 px-2.5
-                                         py-0.5 text-xs font-semibold text-green-700">
-                                Regional
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-gray-100
-                                         px-2.5 py-0.5 text-xs font-semibold text-gray-600">
-                                🥈 Juara 2
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500">2025</td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-1.5">
-                                <a href="{{ url('/prestasi/3') }}"
-                                   class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50
-                                          hover:text-blue-700 transition-colors" title="Detail">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943
-                                                 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477
-                                                 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                                <a href="{{ url('/prestasi/3/edit') }}"
-                                   class="rounded-lg p-1.5 text-amber-500 hover:bg-amber-50
-                                          hover:text-amber-700 transition-colors" title="Edit">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5
-                                                 m-1.414-9.414a2 2 0 112.828 2.828L11.828
-                                                 15H9v-2.828l8.586-8.586z"/>
-                                    </svg>
-                                </a>
-                                <form method="POST" action="{{ url('/prestasi/3') }}"
-                                      onsubmit="return confirm('Hapus data ini?')">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="rounded-lg p-1.5 text-red-400 hover:bg-red-50
-                                                   hover:text-red-600 transition-colors" title="Hapus">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2
-                                                     2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1
-                                                     1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                                        </svg>
-                                    </button>
-                                </form>
-                            </div>
-                        </td>
-                    </tr>
-
-                    {{-- ── Empty State (shown when no data) ───── --}}
-                    {{-- Uncomment this block and remove dummy rows when using real data:
-                    @if ($prestasis->isEmpty())
+                    @empty
                     <tr>
-                        <td colspan="8" class="px-5 py-16 text-center">
-                            <div class="flex flex-col items-center gap-3">
-                                <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-gray-100">
-                                    <svg class="h-8 w-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
-                                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
+                        <td colspan="8" class="px-5 py-10 text-center text-gray-400 italic">
+                            Belum ada data prestasi terverifikasi.
+                        </td>
+                    </tr>
+                    @endforelse
+ 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
                                                  01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                                     </svg>
                                 </div>
@@ -444,6 +265,60 @@
 
     </div>
     {{-- END TABLE CARD --}}
+
+    {{-- ══════════════════════════════════════════════════════════════
+         STATUS PENGAJUAN PROPOSAL (Kegiatan)
+    ══════════════════════════════════════════════════════════════════ --}}
+    <div class="rounded-2xl bg-white shadow-sm border border-gray-100 overflow-hidden">
+        <div class="border-b border-gray-100 px-5 py-4">
+            <h2 class="text-base font-bold text-gray-800">Status Pengajuan Proposal Kegiatan</h2>
+            <p class="mt-0.5 text-xs text-gray-400">Pantau status verifikasi proposal kegiatan yang kamu ajukan</p>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-gray-50 text-left">
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500">No</th>
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500">Nama Kegiatan</th>
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500">Pelaksanaan</th>
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500">Ajuan Dana</th>
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500 text-center">Status</th>
+                        <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500 text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    @forelse ($myProposals as $index => $prop)
+                    <tr class="hover:bg-gray-50/70 transition-colors">
+                        <td class="px-5 py-3.5 text-gray-400">{{ $index + 1 }}</td>
+                        <td class="px-5 py-3.5 font-medium text-gray-800">{{ $prop->nama_kegiatan }}</td>
+                        <td class="px-5 py-3.5 text-gray-600">{{ \Carbon\Carbon::parse($prop->waktu_kegiatan)->format('d M Y') }}</td>
+                        <td class="px-5 py-3.5 text-gray-600">Rp {{ number_format($prop->besar_ajuan, 0, ',', '.') }}</td>
+                        <td class="px-5 py-3.5 text-center">
+                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
+                                {{ $prop->status == 'Disetujui' ? 'bg-green-100 text-green-700' : ($prop->status == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
+                                {{ $prop->status }}
+                            </span>
+                        </td>
+                        <td class="px-5 py-3.5 text-center">
+                            @if($prop->file)
+                            <a href="{{ asset('storage/' . $prop->file) }}" target="_blank" class="text-blue-500 hover:underline text-xs">Lihat File</a>
+                            @else
+                            <span class="text-gray-400">-</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-5 py-10 text-center text-gray-400 italic">
+                            Belum ada pengajuan proposal kegiatan.
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
 
 </div>
 @endsection

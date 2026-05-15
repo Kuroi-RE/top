@@ -82,19 +82,23 @@ class User extends Authenticatable
     // Check if user is Ormawa
     public function isOrmawa(): bool
     {
-        return $this->hasRole('Ormawa') || $this->role === 'Ormawa';
+        return $this->hasRole('Ormawa') || $this->role === 'Ormawa' 
+            || $this->hasRole('Ormawa Institusi') || $this->role === 'Ormawa Institusi'
+            || $this->hasRole('Ormawa Prodi') || $this->role === 'Ormawa Prodi';
     }
 
     // Check if user is Ormawa Institusi (UKM)
     public function isOrmawaInstitusi(): bool
     {
-        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'institusi';
+        return $this->hasRole('Ormawa Institusi') || $this->role === 'Ormawa Institusi'
+            || (($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'institusi');
     }
 
     // Check if user is Ormawa Prodi (Himpunan)
     public function isOrmawaProdi(): bool
     {
-        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'prodi';
+        return $this->hasRole('Ormawa Prodi') || $this->role === 'Ormawa Prodi'
+            || (($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'prodi');
     }
 
     // Check if user is Mahasiswa

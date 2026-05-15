@@ -1,12 +1,7 @@
 @php
-    $sessionUser = session('dummy_user', []);
-    $userLabel = $sessionUser['display_name'] ?? ($sessionUser['username'] ?? ($sessionUser['name'] ?? null));
-
-    if (!$userLabel && auth()->check()) {
-        $userLabel = auth()->user()->name;
-    }
-
-    $userLabel = $userLabel ?: 'Pengguna';
+    $currentUser = auth()->user();
+    $userLabel = trim(($currentUser?->nama_depan ?? '') . ' ' . ($currentUser?->nama_belakang ?? ''));
+    $userLabel = $userLabel !== '' ? $userLabel : ($currentUser?->username ?? 'Pengguna');
 @endphp
 
 <style>

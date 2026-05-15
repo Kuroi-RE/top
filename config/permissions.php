@@ -29,7 +29,13 @@ return [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
             'View LPJ Kegiatan', 'View Prestasi', 'View Users', 'View Template Dokumen', 'View Reports'
         ],
-        'Ormawa' => [
+        'Ormawa Institusi' => [
+            'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
+            'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
+            'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
+            'View Template Dokumen'
+        ],
+        'Ormawa Prodi' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
             'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
