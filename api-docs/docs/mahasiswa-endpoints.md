@@ -14,6 +14,8 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
 
 **Headers:** Tidak perlu token
 
+> **Catatan:** Hanya email dengan domain `telkomuniversity.ac.id` atau `ittelkom-pwt.ac.id` yang diterima.
+
 **Request Body:**
 
 ```json
@@ -22,7 +24,7 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
     "nama_depan": "John",
     "nama_belakang": "Doe",
     "prodi": "Teknik Informatika",
-    "email": "john123@example.com",
+    "email": "john123@telkomuniversity.ac.id",
     "password": "password123",
     "password_confirmation": "password123"
 }
@@ -33,7 +35,7 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
 ```json
 {
     "status": "success",
-    "message": "Registrasi berhasil",
+    "message": "Registrasi berhasil. Silakan cek email Anda untuk verifikasi akun.",
     "data": {
         "user": {
             "id_user": 21,
@@ -42,13 +44,64 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
             "nama_depan": "John",
             "nama_belakang": "Doe",
             "prodi": "Teknik Informatika",
-            "email": "john123@example.com",
+            "email": "john123@telkomuniversity.ac.id",
             "role": "Mahasiswa",
-            "is_active": true,
+            "is_active": false,
             "created_at": "2024-01-01T00:00:00.000000Z"
-        },
-        "token": "1|eyJ0eXAiOiJKV1QiLCJhbGc..."
+        }
     }
+}
+```
+
+> Akun dibuat dengan `is_active: false`. User harus verifikasi email sebelum bisa login. Token tidak diberikan di sini.
+
+---
+
+#### Verifikasi Email
+
+**Endpoint:** `POST /api/v1/auth/verify-email`
+
+**Headers:** Tidak perlu token
+
+**Request Body:**
+
+```json
+{
+    "token": "a3f8c2d1e4b5..."
+}
+```
+
+**Response (Success - 200):**
+
+```json
+{
+    "status": "success",
+    "message": "Email berhasil diverifikasi."
+}
+```
+
+---
+
+#### Kirim Ulang Email Verifikasi
+
+**Endpoint:** `POST /api/v1/auth/resend-verification`
+
+**Headers:** Tidak perlu token
+
+**Request Body:**
+
+```json
+{
+    "email": "john123@telkomuniversity.ac.id"
+}
+```
+
+**Response (Success - 200):**
+
+```json
+{
+    "status": "success",
+    "message": "Email verifikasi telah dikirim ulang."
 }
 ```
 
@@ -149,7 +202,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Query Parameters:**
 
-- `status_verifikasi`: Filter berdasarkan status (Menunggu, Revisi, Valid, Tidak Valid)
+- `status_verifikasi`: Filter berdasarkan status (`Pending`, `Revision`, `Valid`, `Invalid`)
 - `per_page`: Jumlah data per halaman (default: 15)
 
 **Deskripsi:** Mahasiswa hanya bisa melihat prestasi milik mereka sendiri. Admin (Kemahasiswaan) dapat melihat semua prestasi.
@@ -253,7 +306,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
         "tingkat": "Nasional",
         "capaian": "Juara 1",
         "kategori": "Kelompok",
-        "status_verifikasi": "Menunggu",
+        "status_verifikasi": "Pending",
         "user": {
             "id_user": 21,
             "username": "john123"
@@ -363,7 +416,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Auth Required:** Yes (Mahasiswa - hanya pemilik)
 
-**Deskripsi:** Mahasiswa hanya bisa update jika status masih "Menunggu" atau "Revisi".
+**Deskripsi:** Mahasiswa hanya bisa update jika status masih `Pending` atau `Revision`.
 
 **Request Body:**
 
@@ -390,7 +443,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
         "tingkat": "Internasional",
         "capaian": "Juara 2",
         "kategori": "Kelompok",
-        "status_verifikasi": "Menunggu",
+        "status_verifikasi": "Pending",
         "updated_at": "2024-01-05T00:00:00.000000Z"
     }
 }
@@ -532,7 +585,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Auth Required:** Yes (Mahasiswa - hanya pemilik)
 
-**Deskripsi:** Mahasiswa hanya bisa hapus jika status prestasi masih "Menunggu". File dokumen akan otomatis dihapus dari storage.
+**Deskripsi:** Mahasiswa hanya bisa hapus jika status prestasi masih `Pending`. File dokumen akan otomatis dihapus dari storage.
 
 **Response (Success - 200):**
 

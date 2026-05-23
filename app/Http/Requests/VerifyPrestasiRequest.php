@@ -14,7 +14,7 @@ class VerifyPrestasiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status_verifikasi' => 'required|in:Valid,Tidak Valid,Revisi',
+            'status_verifikasi' => 'required|in:Valid,Invalid,Revision',
         ];
     }
 

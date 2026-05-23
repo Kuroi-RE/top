@@ -51,6 +51,9 @@ class PrestasiController
         }
 
         if ($request->has('status_verifikasi')) {
+            $request->validate([
+                'status_verifikasi' => 'in:Pending,Valid,Invalid,Revision',
+            ]);
             $query->where('status_verifikasi', $request->status_verifikasi);
         }
 

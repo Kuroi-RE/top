@@ -44,6 +44,9 @@ class LpjController
 
         // Filter berdasarkan status
         if ($request->has('status_lpj')) {
+            $request->validate([
+                'status_lpj' => 'in:Pending,Revision,Approved',
+            ]);
             $query->where('status_lpj', $request->status_lpj);
         }
 

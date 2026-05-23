@@ -49,6 +49,9 @@ class ProposalController
 
         // Filter berdasarkan status
         if ($request->has('status')) {
+            $request->validate([
+                'status' => 'in:Pending,Revision,Approved,Rejected',
+            ]);
             $query->where('status', $request->status);
         }
 

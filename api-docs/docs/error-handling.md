@@ -10,6 +10,24 @@
 }
 ```
 
+**403 Forbidden - Email Belum Diverifikasi:**
+
+```json
+{
+    "status": "error",
+    "message": "Email belum diverifikasi. Silakan cek email Anda."
+}
+```
+
+**403 Forbidden - Akun Dinonaktifkan:**
+
+```json
+{
+    "status": "error",
+    "message": "Akun Anda telah dinonaktifkan"
+}
+```
+
 **403 Forbidden - Insufficient Permissions:**
 
 ```json
@@ -50,10 +68,18 @@ curl -X POST http://localhost:8000/api/v1/auth/register \
     "nama_depan": "John",
     "nama_belakang": "Doe",
     "prodi": "Teknik Informatika",
-    "email": "test@example.com",
+    "email": "test@telkomuniversity.ac.id",
     "password": "password123",
     "password_confirmation": "password123"
   }'
+```
+
+**Verify Email:**
+
+```bash
+curl -X POST http://localhost:8000/api/v1/auth/verify-email \
+  -H "Content-Type: application/json" \
+  -d '{"token": "TOKEN_DARI_EMAIL"}'
 ```
 
 **Login:**
@@ -128,5 +154,5 @@ CREATE TABLE users (
 
 ---
 
-**Last Updated:** April 10, 2026
-**Version:** 2.0
+**Last Updated:** Mei 2026
+**Version:** 3.0

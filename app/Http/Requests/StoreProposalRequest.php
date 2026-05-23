@@ -25,7 +25,7 @@ class StoreProposalRequest extends FormRequest
             'nama_rekening' => 'required|string|max:100',
             'nama_bank' => 'required|string|max:100',
             'honor_pelatih' => 'required|in:Ya,Tidak',
-            'file' => 'required|file|mimes:pdf|max:5120',
+            'file' => ['required', 'file', 'mimes:pdf', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
         ];
     }
 
@@ -64,6 +64,7 @@ class StoreProposalRequest extends FormRequest
             'file.required' => 'File wajib diisi',
             'file.file' => 'File harus berupa file',
             'file.mimes' => 'Format File harus berupa pdf',
+            'file.min' => 'File tidak boleh kosong (0 bytes)',
             'file.max' => 'File maksimal 5120 KB',
         ];
     }

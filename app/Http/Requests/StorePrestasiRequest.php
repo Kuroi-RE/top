@@ -21,7 +21,7 @@ class StorePrestasiRequest extends FormRequest
             'kategori' => 'required|in:Individu,Kelompok',
             'dokumen' => 'required|array|min:1',
             'dokumen.*.jenis_dokumen' => 'required|string|max:100',
-            'dokumen.*.file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'dokumen.*.file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
         ];
     }
 
@@ -50,6 +50,7 @@ class StorePrestasiRequest extends FormRequest
             'dokumen.*.file.required' => 'File wajib diisi',
             'dokumen.*.file.file' => 'File harus berupa file',
             'dokumen.*.file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png',
+            'dokumen.*.file.min' => 'File tidak boleh kosong (0 bytes)',
             'dokumen.*.file.max' => 'File maksimal 5120 KB',
         ];
     }

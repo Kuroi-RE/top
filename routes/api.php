@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\ProposalController;
 use App\Http\Controllers\Api\LpjController;
 use App\Http\Controllers\Api\PrestasiController;
@@ -27,6 +28,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->name('auth.login');
         Route::post('register', [AuthController::class, 'register'])->name('auth.register');
+        Route::post('verify-email', [EmailVerificationController::class, 'verify'])->name('auth.verify-email');
+        Route::post('resend-verification', [EmailVerificationController::class, 'resend'])->name('auth.resend-verification');
     });
 
     // ============================================================
@@ -53,25 +56,25 @@ Route::prefix('v1')->group(function () {
         // PROPOSAL KEGIATAN ROUTES
         // ========================================================
         Route::prefix('proposal')->name('proposal.')->group(function () {
-            Route::get('/', [ProposalController::class, 'index'])->middleware('permission:View Proposal Kegiatan')->name('index');
-            Route::post('/', [ProposalController::class, 'store'])->middleware('permission:Create Proposal Kegiatan')->name('store');
-            Route::get('/{proposal}', [ProposalController::class, 'show'])->middleware('permission:View Proposal Kegiatan')->name('show')->where('proposal', '[0-9]+');
-            Route::put('/{proposal}', [ProposalController::class, 'update'])->middleware('permission:Edit Proposal Kegiatan')->name('update')->where('proposal', '[0-9]+');
-            Route::delete('/{proposal}', [ProposalController::class, 'destroy'])->middleware('permission:Delete Proposal Kegiatan')->name('destroy')->where('proposal', '[0-9]+');
-            Route::get('/{proposal}/status', [ProposalController::class, 'checkStatus'])->middleware('permission:View Proposal Kegiatan')->name('status')->where('proposal', '[0-9]+');
-            Route::post('/{proposal}/revisi', [ProposalController::class, 'submitRevision'])->middleware('permission:Create Proposal Kegiatan|Edit Proposal Kegiatan')->name('revisi')->where('proposal', '[0-9]+');
-            Route::patch('/{proposal}/verifikasi', [ProposalController::class, 'verify'])->middleware('permission:Approve Proposal Kegiatan|Reject Proposal Kegiatan')->name('verify')->where('proposal', '[0-9]+');
+            Route::get('/', [ProposalController::class, 'index'])->middleware('permission:View Proposal')->name('index');
+            Route::post('/', [ProposalController::class, 'store'])->middleware('permission:Create Proposal')->name('store');
+            Route::get('/{proposal}', [ProposalController::class, 'show'])->middleware('permission:View Proposal')->name('show')->where('proposal', '[0-9]+');
+            Route::put('/{proposal}', [ProposalController::class, 'update'])->middleware('permission:Edit Proposal')->name('update')->where('proposal', '[0-9]+');
+            Route::delete('/{proposal}', [ProposalController::class, 'destroy'])->middleware('permission:Delete Proposal')->name('destroy')->where('proposal', '[0-9]+');
+            Route::get('/{proposal}/status', [ProposalController::class, 'checkStatus'])->middleware('permission:View Proposal')->name('status')->where('proposal', '[0-9]+');
+            Route::post('/{proposal}/revisi', [ProposalController::class, 'submitRevision'])->middleware('permission:Create Proposal|Edit Proposal')->name('revisi')->where('proposal', '[0-9]+');
+            Route::patch('/{proposal}/verifikasi', [ProposalController::class, 'verify'])->middleware('permission:Approve Proposal|Reject Proposal')->name('verify')->where('proposal', '[0-9]+');
         });
 
         // ========================================================
         // LPJ KEGIATAN ROUTES
         // ========================================================
         Route::prefix('lpj')->name('lpj.')->group(function () {
-            Route::get('/', [LpjController::class, 'index'])->middleware('permission:View LPJ Kegiatan')->name('index');
-            Route::post('/', [LpjController::class, 'store'])->middleware('permission:Create LPJ Kegiatan')->name('store');
-            Route::get('/{lpj}', [LpjController::class, 'show'])->middleware('permission:View LPJ Kegiatan')->name('show')->where('lpj', '[0-9]+');
-            Route::post('/{lpj}/revisi', [LpjController::class, 'submitRevision'])->middleware('permission:Create LPJ Kegiatan|Edit LPJ Kegiatan')->name('revisi')->where('lpj', '[0-9]+');
-            Route::patch('/{lpj}/verifikasi', [LpjController::class, 'verify'])->middleware('permission:Approve LPJ Kegiatan|Reject LPJ Kegiatan')->name('verify')->where('lpj', '[0-9]+');
+            Route::get('/', [LpjController::class, 'index'])->middleware('permission:View LPJ')->name('index');
+            Route::post('/', [LpjController::class, 'store'])->middleware('permission:Create LPJ')->name('store');
+            Route::get('/{lpj}', [LpjController::class, 'show'])->middleware('permission:View LPJ')->name('show')->where('lpj', '[0-9]+');
+            Route::post('/{lpj}/revisi', [LpjController::class, 'submitRevision'])->middleware('permission:Create LPJ|Edit LPJ')->name('revisi')->where('lpj', '[0-9]+');
+            Route::patch('/{lpj}/verifikasi', [LpjController::class, 'verify'])->middleware('permission:Approve LPJ|Reject LPJ')->name('verify')->where('lpj', '[0-9]+');
         });
 
         // ========================================================
@@ -95,12 +98,12 @@ Route::prefix('v1')->group(function () {
         // TEMPLATE DOKUMEN ROUTES
         // ========================================================
         Route::prefix('template')->name('template.')->group(function () {
-            Route::get('/', [TemplateController::class, 'index'])->middleware('permission:View Template Dokumen')->name('index');
-            Route::post('/', [TemplateController::class, 'store'])->middleware('permission:Manage Template Dokumen')->name('store');
-            Route::get('/{template}', [TemplateController::class, 'show'])->middleware('permission:View Template Dokumen')->name('show')->where('template', '[0-9]+');
-            Route::put('/{template}', [TemplateController::class, 'update'])->middleware('permission:Manage Template Dokumen')->name('update')->where('template', '[0-9]+');
-            Route::delete('/{template}', [TemplateController::class, 'destroy'])->middleware('permission:Manage Template Dokumen')->name('destroy')->where('template', '[0-9]+');
-            Route::get('/{template}/download', [TemplateController::class, 'download'])->middleware('permission:View Template Dokumen')->name('download')->where('template', '[0-9]+');
+            Route::get('/', [TemplateController::class, 'index'])->middleware('permission:View Template Documents')->name('index');
+            Route::post('/', [TemplateController::class, 'store'])->middleware('permission:Manage Template Documents')->name('store');
+            Route::get('/{template}', [TemplateController::class, 'show'])->middleware('permission:View Template Documents')->name('show')->where('template', '[0-9]+');
+            Route::put('/{template}', [TemplateController::class, 'update'])->middleware('permission:Manage Template Documents')->name('update')->where('template', '[0-9]+');
+            Route::delete('/{template}', [TemplateController::class, 'destroy'])->middleware('permission:Manage Template Documents')->name('destroy')->where('template', '[0-9]+');
+            Route::get('/{template}/download', [TemplateController::class, 'download'])->middleware('permission:View Template Documents')->name('download')->where('template', '[0-9]+');
         });
 
         // ========================================================

@@ -3,42 +3,42 @@
 return [
     'role_defaults' => [
         'Super Admin' => [
-            'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan', 'Delete Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
-            'View Revisi Proposal', 'Edit Revisi Proposal', 'Approve Revisi Proposal',
-            'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan', 'Delete LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
+            'Create Proposal', 'View Proposal', 'Edit Proposal', 'Delete Proposal', 'Approve Proposal', 'Reject Proposal',
+            'View Revision Proposal', 'Edit Revision Proposal', 'Approve Revision Proposal',
+            'Create LPJ', 'View LPJ', 'Edit LPJ', 'Delete LPJ', 'Approve LPJ', 'Reject LPJ',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi', 'Delete Prestasi', 'Approve Prestasi', 'Reject Prestasi',
             'View Users', 'Create Users', 'Edit Users', 'Delete Users',
-            'Manage Template Dokumen', 'View Template Dokumen',
+            'Manage Template Documents', 'View Template Documents',
             'View Reports', 'Export Reports'
         ],
         'Admin / Kemahasiswaan' => [
-            'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
-            'View Revisi Proposal', 'Approve Revisi Proposal',
-            'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
+            'View Proposal', 'Approve Proposal', 'Reject Proposal',
+            'View Revision Proposal', 'Approve Revision Proposal',
+            'View LPJ', 'Approve LPJ', 'Reject LPJ',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports'
+            'View Users', 'View Template Documents', 'View Reports', 'Export Reports'
         ],
         'Kemahasiswaan' => [
-            'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
-            'View Revisi Proposal', 'Approve Revisi Proposal',
-            'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
+            'View Proposal', 'Approve Proposal', 'Reject Proposal',
+            'View Revision Proposal', 'Approve Revision Proposal',
+            'View LPJ', 'Approve LPJ', 'Reject LPJ',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports'
+            'View Users', 'View Template Documents', 'View Reports', 'Export Reports'
         ],
         'DPMBEM' => [
-            'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
-            'View LPJ Kegiatan', 'View Prestasi', 'View Users', 'View Template Dokumen', 'View Reports'
+            'View Proposal', 'Approve Proposal', 'Reject Proposal',
+            'View LPJ', 'View Prestasi', 'View Users', 'View Template Documents', 'View Reports'
         ],
         'Ormawa' => [
-            'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
-            'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
+            'Create Proposal', 'View Proposal', 'Edit Proposal',
+            'Create LPJ', 'View LPJ', 'Edit LPJ',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
-            'View Template Dokumen'
+            'View Template Documents'
         ],
         'Mahasiswa' => [
-            'Create Proposal Kegiatan', 'View Proposal Kegiatan',
+            'Create Proposal', 'View Proposal',
             'Create Prestasi', 'View Prestasi',
-            'View Template Dokumen'
+            'View Template Documents'
         ]
     ]
 ];

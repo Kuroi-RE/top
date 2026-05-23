@@ -37,26 +37,26 @@ class RoleAndPermissionSeeder extends Seeder
 
         // Define permissions
         $permissions = [
-            // Proposal Kegiatan permissions
-            'create-proposal' => 'Create Proposal Kegiatan',
-            'view-proposal' => 'View Proposal Kegiatan',
-            'edit-proposal' => 'Edit Proposal Kegiatan',
-            'delete-proposal' => 'Delete Proposal Kegiatan',
-            'approve-proposal' => 'Approve Proposal Kegiatan',
-            'reject-proposal' => 'Reject Proposal Kegiatan',
+            // Proposal permissions
+            'create-proposal' => 'Create Proposal',
+            'view-proposal' => 'View Proposal',
+            'edit-proposal' => 'Edit Proposal',
+            'delete-proposal' => 'Delete Proposal',
+            'approve-proposal' => 'Approve Proposal',
+            'reject-proposal' => 'Reject Proposal',
 
-            // Revisi Proposal permissions
-            'view-revisi-proposal' => 'View Revisi Proposal',
-            'edit-revisi-proposal' => 'Edit Revisi Proposal',
-            'approve-revisi-proposal' => 'Approve Revisi Proposal',
+            // Revision Proposal permissions
+            'view-revisi-proposal' => 'View Revision Proposal',
+            'edit-revisi-proposal' => 'Edit Revision Proposal',
+            'approve-revisi-proposal' => 'Approve Revision Proposal',
 
-            // LPJ Kegiatan permissions
-            'create-lpj' => 'Create LPJ Kegiatan',
-            'view-lpj' => 'View LPJ Kegiatan',
-            'edit-lpj' => 'Edit LPJ Kegiatan',
-            'delete-lpj' => 'Delete LPJ Kegiatan',
-            'approve-lpj' => 'Approve LPJ Kegiatan',
-            'reject-lpj' => 'Reject LPJ Kegiatan',
+            // LPJ permissions
+            'create-lpj' => 'Create LPJ',
+            'view-lpj' => 'View LPJ',
+            'edit-lpj' => 'Edit LPJ',
+            'delete-lpj' => 'Delete LPJ',
+            'approve-lpj' => 'Approve LPJ',
+            'reject-lpj' => 'Reject LPJ',
 
             // Prestasi permissions
             'create-prestasi' => 'Create Prestasi',
@@ -72,9 +72,9 @@ class RoleAndPermissionSeeder extends Seeder
             'edit-users' => 'Edit Users',
             'delete-users' => 'Delete Users',
 
-            // Template Dokumen permissions
-            'manage-templates' => 'Manage Template Dokumen',
-            'view-templates' => 'View Template Dokumen',
+            // Template Document permissions
+            'manage-templates' => 'Manage Template Documents',
+            'view-templates' => 'View Template Documents',
 
             // Reports
             'view-reports' => 'View Reports',

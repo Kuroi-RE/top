@@ -14,7 +14,7 @@ class VerifyLpjRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status_lpj' => 'required|in:Disetujui,Revisi',
+            'status_lpj' => 'required|in:Approved,Revision',
         ];
     }
 

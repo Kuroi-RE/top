@@ -5,11 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Requests\LoginRequest;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Resources\UserResource;
+use App\Jobs\SendVerificationEmail;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 /**
  * @group Authentication
@@ -45,15 +45,24 @@ class AuthController
         $user = User::where('username', $request->username)->first();
 
         if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'credentials' => 'Username atau password salah',
-            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Username atau password salah',
+            ], 401);
         }
 
         if (!$user->is_active) {
-            throw ValidationException::withMessages([
-                'account' => 'Akun Anda telah dinonaktifkan',
-            ]);
+            if (is_null($user->email_verified_at)) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Email belum diverifikasi. Silakan cek email Anda.',
+                ], 403);
+            }
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun Anda telah dinonaktifkan',
+            ], 403);
         }
 
         $token = $user->createToken('api-token', ['*'])->plainTextToken;
@@ -128,7 +137,7 @@ class AuthController
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role' => 'Mahasiswa',
-                'is_active' => true,
+                'is_active' => false,
             ]);
 
             // Assign Spatie role
@@ -140,14 +149,14 @@ class AuthController
 
             \Log::info('User created successfully', ['user_id' => $user->id_user, 'username' => $username]);
 
-            $token = $user->createToken('api-token', ['*'])->plainTextToken;
+            // Dispatch queued job to generate verification token and send email
+            SendVerificationEmail::dispatch($user);
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Registrasi berhasil',
+                'message' => 'Registrasi berhasil. Silakan cek email Anda untuk verifikasi akun.',
                 'data' => [
                     'user' => new UserResource($user),
-                    'token' => $token,
                 ],
             ], 201);
         } catch (\Exception $e) {

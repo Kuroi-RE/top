@@ -17,7 +17,7 @@ return new class extends Migration
             $table->enum('tingkat', ['Regional', 'Nasional', 'Internasional']);
             $table->string('capaian', 100);
             $table->enum('kategori', ['Individu', 'Kelompok']);
-            $table->enum('status_verifikasi', ['Menunggu', 'Valid', 'Tidak Valid', 'Revisi'])->default('Menunggu');
+            $table->enum('status_verifikasi', ['Pending', 'Valid', 'Invalid', 'Revision'])->default('Pending');
             $table->timestamps();
             
             $table->index('id_user');

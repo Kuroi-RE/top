@@ -7,7 +7,7 @@ Ormawa dapat mengajukan proposal kegiatan dan Kemahasiswaan dapat melakukan veri
 **Endpoint:** `GET /api/v1/proposal`
 **Headers:** `Authorization: Bearer {token}`
 **Query Parameters:**
-- `status`: Menunggu, Revisi, Disetujui, Ditolak
+- `status`: `Pending`, `Revision`, `Approved`, `Rejected`
 - `triwulan`: I, II, III, IV
 
 **Response (Success - 200):**
@@ -32,23 +32,23 @@ Ormawa dapat mengajukan proposal kegiatan dan Kemahasiswaan dapat melakukan veri
 - `besar_ajuan` (decimal)
 - `nomor_rekening`, `nama_rekening`, `nama_bank`
 - `honor_pelatih` (Ya/Tidak)
-- `file` (PDF, max 5MB)
+- `file` (PDF, max 5MB — divalidasi MIME type dan magic bytes `%PDF`)
 
 ### Detail, Update, Hapus Proposal
 - **Detail:** `GET /api/v1/proposal/{id}`
-- **Update:** `PUT /api/v1/proposal/{id}` (hanya bila status Menunggu/Revisi)
+- **Update:** `PUT /api/v1/proposal/{id}` (hanya bila status `Pending` atau `Revision`)
 - **Hapus:** `DELETE /api/v1/proposal/{id}`
 - **Cek Status:** `GET /api/v1/proposal/{id}/status`
 
 ### Upload Revisi Proposal
 **Endpoint:** `POST /api/v1/proposal/{id}/revisi`
-Sama dengan pengajuan baru, namun di-submit saat diminta revisi dan wajib mengunggah file baru. Mengembalikan status proposal ke Menunggu.
+Sama dengan pengajuan baru, namun di-submit saat diminta revisi dan wajib mengunggah file baru. Mengembalikan status proposal ke `Pending`.
 
 ### Verifikasi Proposal (Admin Only)
 **Endpoint:** `PATCH /api/v1/proposal/{id}/verifikasi`
 **Request Body:**
-- `status`: Disetujui, Revisi, Ditolak
+- `status`: `Approved`, `Revision`, `Rejected`
 - `catatan_admin`: String (Opsional)
-- `anggaran_disetujui`: Decimal (Wajib jika Disetujui)
+- `anggaran_disetujui`: Decimal (Wajib jika status `Approved`)
 
 ---

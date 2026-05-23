@@ -93,13 +93,22 @@ class RolePermissionController
      */
     public function syncUserPermissions(Request $request, User $user): JsonResponse
     {
+        // Build the flat list of all known permission names from config
+        $knownPermissions = collect(config('permissions.role_defaults', []))
+            ->flatten()
+            ->unique()
+            ->values()
+            ->all();
+
+        $inRule = 'in:' . implode(',', $knownPermissions);
+
         $request->validate([
             'permissions' => 'present|array',
-            'permissions.*' => 'string|exists:permissions,name'
+            'permissions.*' => ['string', $inRule],
         ], [
             'permissions.present' => 'Parameter permissions wajib disertakan (boleh array kosong)',
             'permissions.array' => 'Permissions harus berupa array',
-            'permissions.*.exists' => 'Salah satu permission tidak valid atau tidak ditemukan di database'
+            'permissions.*.in' => 'Salah satu permission tidak dikenali atau tidak termasuk dalam daftar permission yang valid',
         ]);
 
         // Menyinkronkan direct permissions.
