@@ -12,6 +12,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Enable Sanctum stateful API SPA auth for local domain
+        $middleware->statefulApi();
+
         // CORS middleware untuk API
         $middleware->use([
             \App\Http\Middleware\CorsMiddleware::class,

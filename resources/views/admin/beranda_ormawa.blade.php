@@ -178,12 +178,14 @@
 
 	<!-- Unified Card for Filters and Table -->
 	<div class="dashboard-card main-content-card bg-white rounded-2xl p-6 shadow-sm">
-		<div class="dashboard-filter-grid mb-6">
+		<form method="GET" action="{{ route('admin.beranda_ormawa') }}" class="dashboard-filter-grid mb-6">
 			<div class="flex flex-col gap-2">
 				<label class="text-sm font-semibold text-slate-700">Jenis Ormawa</label>
 				<div class="relative" style="position: relative;">
-					<select class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-						<option>Ormawa Institusi</option>
+					<select name="jenis_ormawa" onchange="this.form.submit()" class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
+						<option value="">Semua Jenis Ormawa</option>
+						<option value="institusi" {{ request('jenis_ormawa') === 'institusi' ? 'selected' : '' }}>Ormawa Institusi</option>
+						<option value="prodi" {{ request('jenis_ormawa') === 'prodi' ? 'selected' : '' }}>Ormawa Prodi</option>
 					</select>
 					<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
 						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
@@ -192,21 +194,17 @@
 					</div>
 				</div>
 			</div>
-
 			<div class="flex flex-col gap-2">
 				<label class="text-sm font-semibold text-slate-700">Nama Ormawa</label>
-				<div class="relative" style="position: relative;">
-					<select class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-						<option>Semua Ormawa</option>
-					</select>
-					<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
-							<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-						</svg>
-					</div>
+				<div class="flex gap-2">
+					<input type="text" name="nama_ormawa" value="{{ request('nama_ormawa') }}" placeholder="Cari nama ormawa..." class="flex-1 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 placeholder:text-slate-400" style="padding: 0.75rem 1.25rem;">
+					<button type="submit" class="rounded-xl bg-red-600 px-4 text-sm font-semibold text-white hover:bg-red-700 transition">Filter</button>
+					@if(request('jenis_ormawa') || request('nama_ormawa') || request('status'))
+						<a href="{{ route('admin.beranda_ormawa') }}" class="rounded-xl border border-slate-200 px-4 flex items-center text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Reset</a>
+					@endif
 				</div>
 			</div>
-		</div>
+		</form>
 
 		<div class="flex items-center justify-between mb-6">
 			<div class="flex items-center gap-3">

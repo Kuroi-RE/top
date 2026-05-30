@@ -74,12 +74,9 @@
 </style>
 
 @php
-    $prestasis = \App\Models\Prestasi::with('user')->latest()->get();
+    $prestasis = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'tidak')->latest()->get();
     
-    $studentProposals = \App\Models\ProposalKegiatan::with('user')
-        ->whereHas('user', function($q) {
-            $q->where('role', 'Mahasiswa');
-        })
+    $studentProposals = \App\Models\ProposalPrestasiMahasiswa::with('user')
         ->latest()
         ->get();
 @endphp
@@ -93,82 +90,83 @@
 	</div>
 
 	<div class="dashboard-card bg-white rounded-2xl p-6 shadow-sm">
-		<div class="dashboard-filter-grid mb-6">
-			<!-- Left side: Prestasi dropdown -->
-			<div class="flex flex-col gap-2">
-				<label class="text-sm font-semibold text-slate-700">Prestasi</label>
-				<div class="relative" style="position: relative;">
-					<select class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-						<option value="" disabled selected>Semua Prestasi</option>
-						<option value="juara1">Juara 1</option>
-						<option value="juara2">Juara 2</option>
-						<option value="juara3">Juara 3</option>
-					</select>
-					<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
-							<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-						</svg>
-					</div>
-				</div>
-			</div>
 
-			<!-- Right side: Tingkat dropdown and Search input -->
-			<div class="flex gap-4">
-				<div class="flex flex-col gap-2 flex-1">
-					<label class="text-sm font-semibold text-slate-700">Tingkat</label>
-					<div class="relative" style="position: relative;">
-						<select class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer" style="appearance: none; -webkit-appearance: none; padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-							<option value="" disabled selected>Semua Tingkat</option>
-							<option value="internasional">Internasional</option>
-							<option value="nasional">Nasional</option>
-							<option value="regional">Regional</option>
-						</select>
-						<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
-							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
-								<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-							</svg>
-						</div>
-					</div>
-				</div>
-				
-				<div class="flex flex-col gap-2 flex-1">
-					<label class="text-sm font-semibold text-slate-700">Pencarian</label>
-					<div class="relative" style="position: relative;">
-						<input type="text" placeholder="Cari nama, nim..." class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 placeholder:text-slate-400" style="padding-top: 0.75rem; padding-bottom: 0.75rem; padding-left: 1.25rem; padding-right: 2.5rem;">
-						<div class="pointer-events-none text-slate-400" style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%);">
-							<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1.25rem; height: 1.25rem;">
-								<path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z" />
-							</svg>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
+        {{-- Filter Form --}}
+        <form method="GET" action="{{ route('admin.prestasi_mahasiswa') }}" id="prestasi-filter-form" class="mb-6">
+            <div class="flex flex-wrap gap-4 items-end">
+                {{-- Tingkat --}}
+                <div class="flex flex-col gap-1.5 flex-1 min-w-[160px]">
+                    <label class="text-sm font-semibold text-slate-700">Tingkat</label>
+                    <div class="relative">
+                        <select name="tingkat" onchange="this.form.submit()"
+                            class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer"
+                            style="appearance:none;-webkit-appearance:none;padding:0.75rem 2.5rem 0.75rem 1.25rem;">
+                            <option value="">Semua Tingkat</option>
+                            <option value="Internasional" {{ request('tingkat') == 'Internasional' ? 'selected' : '' }}>Internasional</option>
+                            <option value="Nasional" {{ request('tingkat') == 'Nasional' ? 'selected' : '' }}>Nasional</option>
+                            <option value="Regional" {{ request('tingkat') == 'Regional' ? 'selected' : '' }}>Regional</option>
+                        </select>
+                        <div class="pointer-events-none text-slate-400" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1rem;height:1rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
 
-		<div class="flex items-center justify-between mb-6">
-			<div class="flex items-center gap-3">
-				<div class="relative">
-					<select class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer shadow-sm" style="appearance: none; -webkit-appearance: none; padding-right: 2.5rem;">
-						<option value="5">5</option>
-						<option value="10">10</option>
-						<option value="20">20</option>
-					</select>
-					<div class="pointer-events-none text-slate-400" style="position: absolute; right: 0.875rem; top: 50%; transform: translateY(-50%);">
-						<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 1rem; height: 1rem;">
-							<path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-						</svg>
-					</div>
-				</div>
-				<span class="text-sm font-medium text-slate-500">Record per page</span>
-			</div>
+                {{-- Pencarian --}}
+                <div class="flex flex-col gap-1.5 flex-1 min-w-[220px]">
+                    <label class="text-sm font-semibold text-slate-700">Pencarian</label>
+                    <div class="relative">
+                        <input type="text" name="search" value="{{ request('search') }}"
+                            placeholder="Cari nama, NIM, prestasi..."
+                            class="w-full rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 shadow-sm outline-none transition-all hover:border-slate-300 focus:border-red-500 placeholder:text-slate-400"
+                            style="padding:0.75rem 2.5rem 0.75rem 1.25rem;">
+                        <div class="pointer-events-none text-slate-400" style="position:absolute;right:1rem;top:50%;transform:translateY(-50%);">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1.25rem;height:1.25rem;">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-4.35-4.35M17 10.5A6.5 6.5 0 1 1 4 10.5a6.5 6.5 0 0 1 13 0Z"/>
+                            </svg>
+                        </div>
+                    </div>
+                </div>
 
-			<a href="{{ route('admin.prestasi_mahasiswa.export_pdf') }}" target="_blank" rel="noopener noreferrer" class="inline-flex w-fit items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md focus:ring-4 focus:ring-red-500/20">
-				<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 -960 960 960" class="h-5 w-5 shrink-0">
-					<path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z" />
-				</svg>
-				Export Data
-			</a>
-		</div>
+                {{-- Buttons --}}
+                <div class="flex gap-2 self-end">
+                    <button type="submit" class="rounded-xl bg-red-600 px-5 py-3 text-sm font-semibold text-white hover:bg-red-700 transition">Cari</button>
+                    @if(request('search') || request('tingkat'))
+                        <a href="{{ route('admin.prestasi_mahasiswa') }}" class="rounded-xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition">Reset</a>
+                    @endif
+                </div>
+            </div>
+        </form>
+
+        {{-- Toolbar: record-per-page + export --}}
+        <div class="flex items-center justify-between mb-6">
+            <div class="flex items-center gap-3">
+                <div class="relative">
+                    <select class="rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer shadow-sm"
+                        style="appearance:none;-webkit-appearance:none;padding:0.5rem 2.5rem 0.5rem 1rem;">
+                        <option value="5">5</option>
+                        <option value="10">10</option>
+                        <option value="20">20</option>
+                    </select>
+                    <div class="pointer-events-none text-slate-400" style="position:absolute;right:0.875rem;top:50%;transform:translateY(-50%);">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1rem;height:1rem;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5"/>
+                        </svg>
+                    </div>
+                </div>
+                <span class="text-sm font-medium text-slate-500">Record per page</span>
+            </div>
+
+            <a href="{{ route('admin.prestasi_mahasiswa.export_pdf') }}" target="_blank" rel="noopener noreferrer"
+                class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md focus:ring-4 focus:ring-red-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 -960 960 960" class="h-5 w-5 shrink-0">
+                    <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
+                </svg>
+                Export Data
+            </a>
+        </div>
 
 		<div class="dashboard-table-wrap">
 			<table class="min-w-full w-full border-separate border-spacing-y-3 border-spacing-x-0 text-left text-sm text-slate-700">
@@ -184,7 +182,7 @@
 					</tr>
 				</thead>
 				<tbody>
-					@forelse ($prestasis as $item)
+					@forelse ($prestasi as $item)
 						<tr class="group transition-colors hover:bg-slate-50">
 							<td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50 text-slate-600">{{ $item->user->username }}</td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-900">{{ $item->user->nama_depan }} {{ $item->user->nama_belakang }}</td>
@@ -198,7 +196,7 @@
                             </td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
 								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
-                                    {{ $item->status_verifikasi == 'Disetujui' ? 'bg-green-100 text-green-700' : ($item->status_verifikasi == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
+                                    {{ $item->status_verifikasi == 'Valid' ? 'bg-green-100 text-green-700' : ($item->status_verifikasi == 'Menunggu' ? 'bg-blue-100 text-blue-700' : ($item->status_verifikasi == 'Revisi' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')) }}">
                                     {{ $item->status_verifikasi ?? 'Menunggu' }}
                                 </span>
 							</td>
@@ -209,9 +207,9 @@
 											<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 										</svg>
 									</a>
-									<form action="{{ route('admin.prestasi_mahasiswa.delete', $item->id_prestasi) }}" method="POST" onsubmit="return confirm('Hapus data ini?')" style="display:inline;">
+									<form action="{{ route('admin.prestasi_mahasiswa.delete', $item->id_prestasi) }}" method="POST" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100" title="Hapus">
+                                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed" title="Hapus" onclick="return confirm('Yakin ingin menghapus data prestasi ini?\n\nNama Event: {{ $item->nama_kompetisi }}\nCapaian: {{ $item->capaian }}\n\nAksi ini tidak dapat dibatalkan.');this.disabled=true;">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.22a51.964 51.964 0 00-3.32 0c-1.18.056-2.09 1.04-2.09 2.22v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                             </svg>
@@ -266,7 +264,7 @@
                                 Rp {{ number_format($prop->besar_ajuan, 0, ',', '.') }}
                             </td>
 							<td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
-								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
+								<span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold
                                     {{ $prop->status == 'Disetujui' ? 'bg-green-100 text-green-700' : ($prop->status == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
                                     {{ $prop->status ?? 'Menunggu' }}
                                 </span>
@@ -279,7 +277,7 @@
                                 </a>
 							</td>
 						</tr>
-                    @empty
+					@empty
                         <tr>
                             <td colspan="6" class="px-4 py-12 text-center text-slate-400 italic bg-white first:rounded-l-xl last:rounded-r-xl border border-slate-200">
                                 Belum ada pengajuan proposal kegiatan mahasiswa.

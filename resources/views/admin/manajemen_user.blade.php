@@ -201,6 +201,7 @@
                         <th>Username / NIM</th>
                         <th>Role Saat Ini</th>
                         <th>Detail Ormawa</th>
+                        <th class="text-center">Status</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
@@ -243,13 +244,36 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                <button type="button" 
-                                    onclick="openRoleModal({{ json_encode($user) }})"
-                                    class="btn-action" title="Ubah Role">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                    </svg>
-                                </button>
+                                @if($user->is_active ?? true)
+                                    <span class="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-semibold text-green-700">Aktif</span>
+                                @else
+                                    <span class="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-semibold text-red-700">Nonaktif</span>
+                                @endif
+                            </td>
+                            <td class="text-center">
+                                <div class="flex items-center justify-center gap-2">
+                                    <button type="button" 
+                                        onclick="openRoleModal({{ json_encode($user) }})"
+                                        class="btn-action" title="Ubah Role">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                        </svg>
+                                    </button>
+                                    <form action="{{ route('admin.users.toggle_active', $user->id_user) }}" method="POST" onsubmit="return confirm('{{ ($user->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }} akun ini?')" style="display:inline;">
+                                        @csrf
+                                        <button type="submit" class="btn-action {{ ($user->is_active ?? true) ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50' }}" title="{{ ($user->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }} Akun">
+                                            @if($user->is_active ?? true)
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                                </svg>
+                                            @else
+                                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                            @endif
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     @empty
@@ -302,14 +326,40 @@
             <div id="ormawaFields" style="display: none;" class="space-y-4 pt-2 border-t border-slate-50">
                 <div id="ormawaTypeContainer">
                     <label class="form-label">Tipe Ormawa</label>
-                    <select name="ormawa_type" id="ormawaTypeSelect" class="form-select-premium">
+                    <select name="ormawa_type" id="ormawaTypeSelect" class="form-select-premium" onchange="toggleOrmawaFields()">
                         <option value="institusi">Institusi (UKM)</option>
                         <option value="prodi">Program Studi (Himpunan)</option>
                     </select>
                 </div>
-                <div>
-                    <label class="form-label">Nama Ormawa</label>
-                    <input type="text" name="ormawa_name" id="ormawaNameInput" placeholder="Contoh: UKM Teater, HMIF, dll" class="form-input-modal">
+                <div id="ormawaNameSelectContainer" style="display: none;">
+                    <label class="form-label">Nama Himpunan</label>
+                    <select id="ormawaNameSelect" class="form-select-premium">
+                        <option value="">-- Pilih Himpunan --</option>
+                        <option value="HMIF">HMIF</option>
+                        <option value="HMTI">HMTI</option>
+                        <option value="HMDKV">HMDKV</option>
+                        <option value="HMSE">HMSE</option>
+                        <option value="HMTB">HMTB</option>
+                        <option value="HMTT">HMTT</option>
+                        <option value="HMTE">HMTE</option>
+                        <option value="HMTP">HMTP</option>
+                        <option value="HMDP">HMDP</option>
+                        <option value="HMSD">HMSD</option>
+                        <option value="HMTL">HMTL</option>
+                        <option value="HMBD">HMBD</option>
+                        <option value="HMDT">HMDT</option>
+                    </select>
+                </div>
+                <div id="ormawaUkmSelectContainer" style="display: none;">
+                    <label class="form-label">Nama UKM</label>
+                    <select id="ormawaUkmSelect" class="form-select-premium">
+                        <option value="">-- Pilih UKM --</option>
+                        <option value="GDGOC">GDGOC</option>
+                        <option value="KSPM">KSPM</option>
+                        <option value="SRE">SRE</option>
+                        <option value="KSR">KSR</option>
+                        <option value="HIPMI">HIPMI</option>
+                    </select>
                 </div>
             </div>
 
@@ -339,7 +389,36 @@
         
         document.getElementById('roleSelect').value = user.role || 'Mahasiswa';
         document.getElementById('ormawaTypeSelect').value = user.ormawa_type || 'institusi';
-        document.getElementById('ormawaNameInput').value = user.ormawa_name || '';
+        
+        const ormawaName = user.ormawa_name || '';
+        
+        // Himpunan matching
+        const himpunanSelect = document.getElementById('ormawaNameSelect');
+        let himpunanFound = false;
+        for (let i = 0; i < himpunanSelect.options.length; i++) {
+            if (himpunanSelect.options[i].value.toLowerCase() === ormawaName.toLowerCase()) {
+                himpunanSelect.selectedIndex = i;
+                himpunanFound = true;
+                break;
+            }
+        }
+        if (!himpunanFound) {
+            himpunanSelect.value = "";
+        }
+        
+        // UKM matching
+        const ukmSelect = document.getElementById('ormawaUkmSelect');
+        let ukmFound = false;
+        for (let i = 0; i < ukmSelect.options.length; i++) {
+            if (ukmSelect.options[i].value.toLowerCase() === ormawaName.toLowerCase()) {
+                ukmSelect.selectedIndex = i;
+                ukmFound = true;
+                break;
+            }
+        }
+        if (!ukmFound) {
+            ukmSelect.value = "";
+        }
         
         toggleOrmawaFields();
         
@@ -358,26 +437,57 @@
         const fields = document.getElementById('ormawaFields');
         const typeContainer = document.getElementById('ormawaTypeContainer');
         const typeSelect = document.getElementById('ormawaTypeSelect');
-        const nameInput = document.getElementById('ormawaNameInput');
+        
+        const himpunanContainer = document.getElementById('ormawaNameSelectContainer');
+        const himpunanEl = document.getElementById('ormawaNameSelect');
+        const ukmContainer = document.getElementById('ormawaUkmSelectContainer');
+        const ukmEl = document.getElementById('ormawaUkmSelect');
         
         const isAnyOrmawa = ['Ormawa', 'Ormawa Institusi', 'Ormawa Prodi'].includes(role);
         
         if (isAnyOrmawa) {
             fields.style.display = 'block';
-            nameInput.required = true;
             
-            // If specific ormawa role, hide the type select (since it's implied)
-            if (role === 'Ormawa Institusi' || role === 'Ormawa Prodi') {
+            let currentType = '';
+            if (role === 'Ormawa Institusi') {
                 typeContainer.style.display = 'none';
                 typeSelect.required = false;
+                currentType = 'institusi';
+            } else if (role === 'Ormawa Prodi') {
+                typeContainer.style.display = 'none';
+                typeSelect.required = false;
+                currentType = 'prodi';
             } else {
                 typeContainer.style.display = 'block';
                 typeSelect.required = true;
+                currentType = typeSelect.value;
+            }
+            
+            if (currentType === 'prodi') {
+                himpunanContainer.style.display = 'block';
+                himpunanEl.name = 'ormawa_name';
+                himpunanEl.required = true;
+                
+                ukmContainer.style.display = 'none';
+                ukmEl.removeAttribute('name');
+                ukmEl.required = false;
+            } else {
+                ukmContainer.style.display = 'block';
+                ukmEl.name = 'ormawa_name';
+                ukmEl.required = true;
+                
+                himpunanContainer.style.display = 'none';
+                himpunanEl.removeAttribute('name');
+                himpunanEl.required = false;
             }
         } else {
             fields.style.display = 'none';
             typeSelect.required = false;
-            nameInput.required = false;
+            
+            himpunanEl.removeAttribute('name');
+            himpunanEl.required = false;
+            ukmEl.removeAttribute('name');
+            ukmEl.required = false;
         }
     }
 

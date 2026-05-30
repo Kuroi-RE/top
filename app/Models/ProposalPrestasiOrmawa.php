@@ -45,4 +45,14 @@ class ProposalPrestasiOrmawa extends Model
     {
         return $this->belongsTo(User::class, 'id_user', 'id_user');
     }
+
+    public function revisions(): HasMany
+    {
+        return $this->hasMany(RevisiProposal::class, 'id_proposal', 'id_proposal');
+    }
+
+    public function lpj(): HasMany
+    {
+        return $this->hasMany(LpjKegiatan::class, 'id_proposal', 'id_proposal');
+    }
 }

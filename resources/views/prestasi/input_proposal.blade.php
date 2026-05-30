@@ -4,13 +4,14 @@
 
 @section('content')
 
-<div class="min-h-screen bg-gray-100 flex justify-center px-4 py-8">
-    <div class="w-full max-w-5xl rounded-2xl bg-white p-6 shadow-lg sm:p-8 lg:p-10">
-
-    <!-- Header -->
-    <div class="mb-6">
+<div class="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div class="rounded-2xl border border-red-200 bg-gradient-to-r from-red-50 to-white p-5 shadow-sm">
         <h1 class="text-2xl font-semibold text-gray-800">Input Proposal Ajuan Dana Prestasi</h1>
+        <p class="mt-1 text-sm text-gray-500">Isi data proposal di bawah ini untuk mengajukan dana prestasi.</p>
     </div>
+
+    <div class="overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <div class="p-6 sm:p-8 lg:p-10">
 
     @php
         $fields = [
@@ -72,9 +73,9 @@
             </button>
         </div>
     </form>
+    </div>
 </div>
 
-</div>
 @endsection
 
 @push('scripts')

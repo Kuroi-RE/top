@@ -11,11 +11,6 @@ class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $user = auth()->user();
-        if (!$user || (!$user->isAdmin() && !$user->isSuperAdmin())) {
-            return redirect()->route('login');
-        }
-
         $query = User::query();
 
         if ($request->has('search')) {
@@ -40,11 +35,6 @@ class UserController extends Controller
 
     public function updateRole(Request $request, User $user)
     {
-        $currentUser = auth()->user();
-        if (!$currentUser || (!$currentUser->isAdmin() && !$currentUser->isSuperAdmin())) {
-            return back()->with('error', 'Akses ditolak.');
-        }
-
         $request->validate([
             'role' => 'required|string|in:Kemahasiswaan,DPMBEM,Ormawa,Ormawa Institusi,Ormawa Prodi,Mahasiswa,Super Admin',
             'ormawa_type' => 'nullable|required_if:role,Ormawa|in:institusi,prodi',
@@ -85,6 +75,20 @@ class UserController extends Controller
         } catch (\Exception $e) {
             Log::error('Error updating user role: ' . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan saat memperbarui role.');
+        }
+    }
+
+    public function toggleActive(User $user)
+    {
+        try {
+            $user->is_active = !$user->is_active;
+            $user->save();
+
+            $statusText = $user->is_active ? 'diaktifkan' : 'dinonaktifkan';
+            return back()->with('success', "Akun user {$user->username} berhasil {$statusText}.");
+        } catch (\Exception $e) {
+            Log::error('Error toggling user active status: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat mengubah status akun.');
         }
     }
 }

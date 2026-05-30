@@ -22,6 +22,7 @@ class PublikasiKegiatan extends Model
         'poster',
         'status',
         'catatan_admin',
+        'placement',
     ];
 
     /**

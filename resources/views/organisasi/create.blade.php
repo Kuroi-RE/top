@@ -1,6 +1,6 @@
 @extends('layouts.app')
 
-@section('title', 'Input Proposal Ajuan Dana Prestasi')
+@section('title', 'Input Proposal Ajuan Dana Kegiatan')
 
 @section('fullpage')
 @endsection
@@ -12,7 +12,7 @@
 
     <!-- Header -->
     <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">Input Proposal Ajuan Dana Prestasi</h1>
+        <h1 class="text-2xl font-semibold text-gray-800">Input Proposal Ajuan Dana Kegiatan</h1>
     </div>
 
     @php
@@ -66,24 +66,7 @@
             </div>
         </div>
 
-        <!-- Kategori Proposal (Only for Ormawa) -->
-        @if(!auth()->user()->isMahasiswa())
-        <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-3 md:gap-6">
-            <label class="pt-3 text-sm font-medium text-gray-700">Kategori Proposal</label>
-            <div class="flex flex-wrap items-center gap-5 pt-2">
-                @foreach (['Ormawa', 'Prestasi'] as $cat)
-                    <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                        <input type="radio" name="category" value="{{ $cat }}" {{ (old('category') ?? 'Ormawa') == $cat ? 'checked' : '' }}
-                            class="h-5 w-5 border-gray-400 accent-red-600">
-                        <span>{{ $cat }}</span>
-                    </label>
-                @endforeach
-                @error('category') <p class="text-xs text-red-600 mt-1">{{ $message }}</p> @enderror
-            </div>
-        </div>
-        @else
-        <input type="hidden" name="category" value="Prestasi">
-        @endif
+        <input type="hidden" name="category" value="Ormawa">
 
         <!-- Resiko Proposal -->
         <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-3 md:gap-6">

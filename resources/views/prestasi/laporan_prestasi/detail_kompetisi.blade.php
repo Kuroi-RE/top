@@ -11,7 +11,7 @@
             <h1 class="text-2xl font-semibold leading-tight text-gray-800 sm:text-3xl">Input Prestasi - Detail Kompetisi</h1>
         </div>
 
-        <form method="POST" action="#" class="mt-4 sm:mt-8">
+        <form id="prestasi-detail-form" method="POST" action="#" class="mt-4 sm:mt-8" data-prev-url="{{ route('prestasi.laporan_prestasi.biodata') }}" data-next-url="{{ route('prestasi.laporan_prestasi.capaian_prestasi') }}">
             @csrf
 
             <!-- Nama Kompetisi -->
@@ -135,20 +135,20 @@
             <!-- Navigasi -->
             <div class="flex flex-col-reverse gap-3 pt-8 sm:flex-row sm:items-center sm:justify-between">
                 <!-- Tombol Kembali -->
-                <a href="{{ route('prestasi.laporan_prestasi.biodata') }}" class="inline-flex min-w-[140px] items-center justify-center rounded-full border border-gray-400 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:border-gray-500 hover:text-gray-900 hover:-translate-y-1 hover:shadow-md focus:ring-2 focus:ring-gray-200">
+                <button type="button" id="prestasi-detail-prev" class="inline-flex min-w-[140px] items-center justify-center rounded-full border border-gray-400 bg-white px-5 py-2 text-sm font-medium text-gray-700 transition-all duration-300 hover:bg-gray-100 hover:border-gray-500 hover:text-gray-900 hover:-translate-y-1 hover:shadow-md focus:ring-2 focus:ring-gray-200">
                     <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
                     </svg>
                     Kembali
-                </a>
+                </button>
                 
                 <!-- Tombol Berikutnya -->
-                <a href="{{ route('prestasi.laporan_prestasi.capaian_prestasi') }}" class="inline-flex min-w-[140px] items-center justify-center rounded-full bg-red-700 px-5 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-red-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200 focus:ring-2 focus:ring-red-200">
+                <button type="button" id="prestasi-detail-next" class="inline-flex min-w-[140px] items-center justify-center rounded-full bg-red-700 px-5 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-red-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200 focus:ring-2 focus:ring-red-200">
                     Berikutnya
                     <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                     </svg>
-                </a>
+                </button>
             </div>
         </form>
 
@@ -232,4 +232,78 @@
         </script>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const storageKey = 'prestasi-laporan-wizard';
+    const form = document.getElementById('prestasi-detail-form');
+    const prevButton = document.getElementById('prestasi-detail-prev');
+    const nextButton = document.getElementById('prestasi-detail-next');
+
+    function loadState() {
+        try {
+            return JSON.parse(localStorage.getItem(storageKey) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function saveState(partial) {
+        const current = loadState();
+        const merged = { ...current, ...partial };
+        localStorage.setItem(storageKey, JSON.stringify(merged));
+        return merged;
+    }
+
+    function collectDetail() {
+        const detail = {};
+        form.querySelectorAll('input, select').forEach(function (field) {
+            if (!field.name) return;
+            if ((field.type === 'radio' || field.type === 'checkbox') && !field.checked) return;
+            detail[field.name] = field.value;
+        });
+        return detail;
+    }
+
+    function fillFields() {
+        const state = loadState().detail_kompetisi || {};
+
+        ['nama_kompetisi', 'penyelenggara', 'waktu_kompetisi', 'tanggal_pengumuman', 'klaster', 'jumlah_negara'].forEach(function (name) {
+            const input = form.querySelector(`[name="${name}"]`);
+            if (input && state[name]) input.value = state[name];
+        });
+
+        if (state.pelaksanaan) {
+            const radio = form.querySelector(`[name="pelaksanaan"][value="${state.pelaksanaan}"]`);
+            if (radio) radio.checked = true;
+        }
+
+        if (state.tingkat_kompetisi) {
+            const radio = form.querySelector(`[name="tingkat_kompetisi"][value="${state.tingkat_kompetisi}"]`);
+            if (radio) radio.checked = true;
+            radio?.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+    }
+
+    form.addEventListener('input', function () {
+        saveState({ detail_kompetisi: collectDetail() });
+    });
+
+    form.addEventListener('change', function () {
+        saveState({ detail_kompetisi: collectDetail() });
+    });
+
+    prevButton.addEventListener('click', function () {
+        saveState({ detail_kompetisi: collectDetail() });
+        window.location.href = form.dataset.prevUrl;
+    });
+
+    nextButton.addEventListener('click', function () {
+        saveState({ detail_kompetisi: collectDetail() });
+        window.location.href = form.dataset.nextUrl;
+    });
+
+    fillFields();
+});
+</script>
 @endsection

@@ -22,7 +22,9 @@ class Prestasi extends Model
         'tingkat',
         'capaian',
         'kategori',
+        'mewakili_ormawa',
         'status_verifikasi',
+        'catatan_admin',
     ];
 
     // Relationships

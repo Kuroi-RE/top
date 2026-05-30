@@ -18,7 +18,6 @@ use App\Http\Requests\UpdatePrestasiRequest;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-
 /**
  * @group Prestasi Mahasiswa
  * Endpoints untuk input, verifikasi, dan monitoring prestasi mahasiswa
@@ -39,8 +38,6 @@ class PrestasiController
      *   "data": [...]
      * }
      */
-
-
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -191,7 +188,10 @@ class PrestasiController
      */
     public function verify(VerifyPrestasiRequest $request, Prestasi $prestasi): JsonResponse
     {
-        $prestasi->update(['status_verifikasi' => $request->status_verifikasi]);
+        $prestasi->update([
+            'status_verifikasi' => $request->status_verifikasi,
+            'catatan_admin' => $request->catatan_admin,
+        ]);
 
         return response()->json([
             'status' => 'success',
@@ -380,8 +380,6 @@ class PrestasiController
             'message' => 'Dosen pendamping berhasil dihapus',
         ], 200);
     }
-
-
 
     /**
      * Tambah dosen pendamping

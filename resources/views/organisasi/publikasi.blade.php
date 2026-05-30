@@ -94,26 +94,34 @@
                             <th class="px-4 py-3">Judul</th>
                             <th class="px-4 py-3">Caption</th>
                             <th class="px-4 py-3">Link</th>
-                            <th class="px-4 py-3">File</th>
-                            <th class="px-4 py-3">Aksi</th>
+                            <th class="px-4 py-3 text-center">File</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                            <th class="px-4 py-3 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
                         @forelse ($publikasiItems as $item)
-                            <tr class="text-gray-700">
-                                <td class="px-4 py-3 font-medium text-gray-800">{{ $item['judul'] ?? '-' }}</td>
-                                <td class="px-4 py-3 text-gray-600">{{ $item['caption'] ?? '-' }}</td>
-                                <td class="px-4 py-3">
+                            <tr class="text-gray-700 hover:bg-gray-50/50 transition-colors">
+                                <td class="px-4 py-4">
+                                    <div class="font-medium text-gray-800">{{ $item['judul'] ?? '-' }}</div>
+                                    @if(($item->status == 'Revisi' || $item->status == 'Ditolak') && $item->catatan_admin)
+                                        <div class="mt-1 text-xs text-red-600 font-semibold flex items-center gap-1">
+                                            <span>📌 Catatan: {{ $item->catatan_admin }}</span>
+                                        </div>
+                                    @endif
+                                </td>
+                                <td class="px-4 py-4 text-gray-600 max-w-xs truncate">{{ $item['caption'] ?? '-' }}</td>
+                                <td class="px-4 py-4">
                                     @if (!empty($item['link']))
                                         <a href="{{ $item['link'] }}" target="_blank" rel="noopener noreferrer"
                                            class="text-blue-600 hover:underline">
-                                            {{ $item['link'] }}
+                                            {{ \Illuminate\Support\Str::limit($item['link'], 20) }}
                                         </a>
                                     @else
                                         <span class="text-gray-400">-</span>
                                     @endif
                                 </td>
-                                <td class="px-4 py-3">
+                                <td class="px-4 py-4 text-center">
                                     <a href="{{ asset('storage/' . $item->poster) }}" target="_blank" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-100 transition-colors">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
                                             <path stroke-linecap="round" stroke-linejoin="round"
@@ -121,17 +129,37 @@
                                         </svg>
                                     </a>
                                 </td>
-                                <td class="px-4 py-3">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <button type="button" class="rounded-lg bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">Edit</button>
-                                        <button type="button" class="rounded-lg bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">Delete</button>
-                                        <button type="button" class="rounded-lg bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">Hapus</button>
+                                <td class="px-4 py-4 text-center">
+                                    @php
+                                        $badgeColor = match($item->status) {
+                                            'Disetujui' => 'bg-green-50 text-green-700 border-green-200',
+                                            'Ditolak' => 'bg-red-50 text-red-700 border-red-200',
+                                            'Revisi' => 'bg-amber-50 text-amber-700 border-amber-200',
+                                            default => 'bg-blue-50 text-blue-700 border-blue-200', // Menunggu
+                                        };
+                                    @endphp
+                                    <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold {{ $badgeColor }}">
+                                        {{ $item->status ?? 'Menunggu' }}
+                                    </span>
+                                </td>
+                                <td class="px-4 py-4 text-center">
+                                    <div class="flex items-center justify-center gap-2">
+                                        <a href="{{ route('organisasi.publikasi_edit', $item->id_publikasi) }}" class="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors">
+                                            Edit
+                                        </a>
+                                        <form action="{{ route('organisasi.publikasi_destroy', $item->id_publikasi) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus publikasi ini?');" class="inline-block">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="inline-flex items-center rounded-lg bg-red-50 px-2.5 py-1 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors">
+                                                Hapus
+                                            </button>
+                                        </form>
                                     </div>
                                 </td>
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="5" class="px-4 py-10 text-center text-sm text-gray-500">
+                                <td colspan="6" class="px-4 py-12 text-center text-sm text-gray-500 italic">
                                     Belum ada publikasi.
                                 </td>
                             </tr>

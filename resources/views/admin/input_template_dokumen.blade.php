@@ -123,19 +123,26 @@
     </div>
 
     <div class="premium-card">
-        <form method="POST" action="#" enctype="multipart/form-data">
+        <form id="template-form" method="POST" action="#" enctype="multipart/form-data" data-endpoint="/api/v1/template" data-redirect="{{ route('admin.template_proposal') }}">
             @csrf
 
+
+
             <div class="form-group">
-                <label for="nama_dokumen" class="form-label">Nama Dokumen</label>
-                <input
-                    type="text"
-                    id="nama_dokumen"
-                    name="nama_dokumen"
+                <label for="jenis_template" class="form-label">Jenis Template</label>
+                <select
+                    id="jenis_template"
+                    name="jenis_template"
                     class="form-input-premium"
-                    placeholder="Contoh: Panduan Proposal Triwulan I"
                     required
                 >
+                    <option value="" selected disabled>Pilih jenis template</option>
+                    <option value="proposal kegiatan resiko tinggi">Proposal Kegiatan Resiko Tinggi</option>
+                    <option value="proposal kegiatan resiko sedang/rendah">Proposal Kegiatan Resiko Sedang/Rendah</option>
+                    <option value="proposal prestasi">Proposal Prestasi</option>
+                    <option value="lpj kegiatan resiko tinggi">LPJ Kegiatan Resiko Tinggi</option>
+                    <option value="lpj kegiatan resiko sedang/rendah">LPJ Kegiatan Resiko Sedang/Rendah</option>
+                </select>
             </div>
 
             <div class="form-group">
@@ -197,5 +204,110 @@
             display.classList.remove('text-red-600');
         }
     }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('template-form');
+        if (!form) return;
+
+        const endpoint = form.dataset.endpoint;
+        const redirectUrl = form.dataset.redirect;
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        function showFlash(type, message) {
+            const existing = document.getElementById('template-flash');
+            if (existing) existing.remove();
+
+            const flash = document.createElement('div');
+            flash.id = 'template-flash';
+            flash.className = 'fixed left-1/2 top-6 z-50 w-[min(92vw,640px)] -translate-x-1/2 rounded-2xl border px-4 py-3 text-sm shadow-lg';
+            flash.setAttribute('role', 'status');
+            flash.setAttribute('aria-live', 'polite');
+
+            if (type === 'success') {
+                flash.classList.add('border-green-200', 'bg-green-50', 'text-green-800');
+            } else {
+                flash.classList.add('border-red-200', 'bg-red-50', 'text-red-800');
+            }
+
+            flash.textContent = message;
+            document.body.appendChild(flash);
+
+            setTimeout(function () {
+                flash.remove();
+            }, 2600);
+        }
+
+        form.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span>Menyimpan...</span>';
+            }
+
+            try {
+                const formData = new FormData(form);
+                
+                const fileInput = document.getElementById('dokumen');
+                let fileName = '';
+                if (fileInput.files && fileInput.files[0]) {
+                    const originalName = fileInput.files[0].name;
+                    fileName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+                }
+                
+                const selectEl = document.getElementById('jenis_template');
+                const jenisText = selectEl.options[selectEl.selectedIndex].text;
+                
+                const templateName = `${jenisText} - ${fileName}`;
+                formData.set('nama_template', templateName);
+                formData.set('file', formData.get('dokumen'));
+
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    body: formData,
+                    credentials: 'same-origin',
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    showFlash('error', payload.message || 'Gagal menyimpan template dokumen.');
+
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.innerHTML = `
+                            <span>Simpan Template</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                        `;
+                    }
+
+                    return;
+                }
+
+                showFlash('success', payload.message || 'Template dokumen berhasil dibuat.');
+                setTimeout(function () {
+                    window.location.href = redirectUrl;
+                }, 900);
+            } catch (error) {
+                showFlash('error', 'Terjadi gangguan saat mengirim template dokumen.');
+
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = `
+                        <span>Simpan Template</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                    `;
+                }
+            }
+        });
+    });
 </script>
 @endsection

@@ -1102,7 +1102,7 @@
                             <p class="text-sm font-bold text-gray-800">Berhasil!</p>
                             <p class="text-xs text-gray-500">{{ session('success') }}</p>
                         </div>
-                        <button onclick="this.parentElement.remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors">
+                        <button type="button" onclick="this.closest('#toast-success').remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Tutup">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                             </svg>
@@ -1115,7 +1115,35 @@
                                 toast.classList.add('animate-out', 'fade-out', 'slide-out-to-top-4', 'duration-500');
                                 setTimeout(() => toast.remove(), 500);
                             }
-                        }, 4000);
+                        }, 5000);
+                    </script>
+                @endif
+
+                @if (session('error'))
+                    <div id="toast-error" class="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-white border border-red-100 px-6 py-4 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">Terjadi Kesalahan!</p>
+                            <p class="text-xs text-gray-500">{{ session('error') }}</p>
+                        </div>
+                        <button type="button" onclick="this.closest('#toast-error').remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Tutup">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            const toast = document.getElementById('toast-error');
+                            if (toast) {
+                                toast.classList.add('animate-out', 'fade-out', 'slide-out-to-top-4', 'duration-500');
+                                setTimeout(() => toast.remove(), 500);
+                            }
+                        }, 7000);
                     </script>
                 @endif
 

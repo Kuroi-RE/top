@@ -16,12 +16,11 @@
             ->get()
         : collect([]);
 
-    $modelClass = $user->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : \App\Models\ProposalPrestasiOrmawa::class;
-    
+    // Ambil dari model yang sesuai dengan role user (mahasiswa vs ormawa)
     $myProposals = $userId
-        ? $modelClass::where('id_user', $userId)
-            ->latest('created_at')
-            ->get()
+        ? ($user->isMahasiswa()
+            ? \App\Models\ProposalPrestasiMahasiswa::where('id_user', $userId)->latest('created_at')->get()
+            : \App\Models\ProposalPrestasiOrmawa::where('id_user', $userId)->latest('created_at')->get())
         : collect([]);
 
     $totalPrestasi = $prestasis->count();
@@ -162,35 +161,62 @@
             <table class="min-w-[900px] w-full border-separate border-spacing-y-3 border-spacing-x-0 text-left text-sm text-slate-700">
                 <thead class="bg-slate-100 text-slate-700">
                     <tr>
-                        <th class="px-4 py-3 font-semibold">No</th>
+                        <th class="px-4 py-3 font-semibold rounded-l-lg">No</th>
                         <th class="px-4 py-3 font-semibold">Nama Kegiatan</th>
                         <th class="px-4 py-3 font-semibold">Tingkat</th>
                         <th class="px-4 py-3 font-semibold">Prestasi Dicapai</th>
-                        <th class="px-4 py-3 font-semibold">Nama Kompetisi</th>
                         <th class="px-4 py-3 font-semibold">Penyelenggara</th>
+                        <th class="px-4 py-3 font-semibold text-center">Status</th>
+                        <th class="px-4 py-3 font-semibold text-center rounded-r-lg">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse ($prestasis as $index => $prestasi)
-                        <tr>
-                            <td class="bg-white px-4 py-4 align-middle first:rounded-l-xl">{{ $index + 1 }}</td>
-                            <td class="bg-white px-4 py-4 align-middle leading-5 text-slate-700">{{ $prestasi->nama_kompetisi }}</td>
-                            <td class="bg-white px-4 py-4 align-middle">
+                        @php
+                            $statusClasses = match($prestasi->status_verifikasi) {
+                                'Valid'       => 'bg-green-100 text-green-700',
+                                'Revisi'      => 'bg-amber-100 text-amber-700',
+                                'Tidak Valid' => 'bg-red-100 text-red-700',
+                                default       => 'bg-blue-100 text-blue-700', // Menunggu
+                            };
+                        @endphp
+                        <tr class="group transition-colors hover:bg-slate-50">
+                            <td class="bg-white px-4 py-4 align-middle border-y border-l border-slate-200 first:rounded-l-xl group-hover:bg-slate-50 text-slate-500">{{ $index + 1 }}</td>
+                            <td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 font-medium text-slate-800">{{ $prestasi->nama_kompetisi }}</td>
+                            <td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50">
                                 <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $tingkatStyles[$prestasi->tingkat] ?? 'bg-slate-100 text-slate-700' }}">
                                     {{ $prestasi->tingkat }}
                                 </span>
                             </td>
-                            <td class="bg-white px-4 py-4 align-middle">
-                                <span class="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold bg-slate-100 text-slate-700">
+                            <td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-amber-50 text-amber-700 ring-1 ring-inset ring-amber-600/20">
                                     {{ $prestasi->capaian ?? '-' }}
                                 </span>
                             </td>
-                            <td class="bg-white px-4 py-4 align-middle text-slate-700">{{ $prestasi->nama_kompetisi }}</td>
-                            <td class="bg-white px-4 py-4 align-middle last:rounded-r-xl text-slate-700">{{ $prestasi->penyelenggara ?? '-' }}</td>
+                            <td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-slate-600">{{ $prestasi->penyelenggara ?? '-' }}</td>
+                            <td class="bg-white px-4 py-4 align-middle border-y border-slate-200 group-hover:bg-slate-50 text-center">
+                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold {{ $statusClasses }}">
+                                    {{ $prestasi->status_verifikasi ?? 'Menunggu' }}
+                                </span>
+                            </td>
+                            <td class="bg-white px-4 py-4 align-middle border-y border-r border-slate-200 last:rounded-r-xl group-hover:bg-slate-50 text-center">
+                                @if($prestasi->status_verifikasi === 'Revisi')
+                                    <a href="{{ route('prestasi.revisi', $prestasi->id_prestasi) }}"
+                                       class="inline-flex items-center gap-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors whitespace-nowrap shadow-sm"
+                                       title="Lakukan Revisi">
+                                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                        </svg>
+                                        Revisi
+                                    </a>
+                                @else
+                                    <span class="text-slate-300 text-xs">—</span>
+                                @endif
+                            </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="bg-white px-4 py-8 text-center text-slate-500 first:rounded-l-xl last:rounded-r-xl">
+                            <td colspan="7" class="bg-white px-4 py-8 text-center text-slate-500 first:rounded-l-xl last:rounded-r-xl border border-slate-200">
                                 Belum ada prestasi. <a href="{{ route('prestasi.create') }}" class="text-red-600 hover:underline font-medium">Tambah prestasi sekarang</a>
                             </td>
                         </tr>
@@ -200,10 +226,65 @@
         </div>
     </div>
 
+    {{-- PRESTASI PERLU REVISI --}}
+    @php
+        $prestasiRevisi = $prestasis->where('status_verifikasi', 'Revisi')->all();
+    @endphp
+    @if(!empty($prestasiRevisi))
+    <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-amber-200 mt-8 ring-2 ring-amber-50">
+        <div class="px-5 py-4 border-b border-amber-200 bg-amber-50">
+            <h2 class="text-base font-semibold text-amber-900 flex items-center gap-2">
+                <svg class="h-5 w-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                ⚠️ Prestasi Perlu Revisi
+            </h2>
+            <p class="text-xs text-amber-700 mt-1">Admin memberikan catatan untuk perbaikan data prestasi Anda</p>
+        </div>
+
+        <div class="divide-y divide-amber-100">
+            @foreach($prestasiRevisi as $prestasi)
+            <div class="p-5 hover:bg-amber-50/50 transition-colors">
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 mb-2">
+                            <h3 class="font-semibold text-gray-800 truncate">{{ $prestasi->nama_kompetisi }}</h3>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-700 whitespace-nowrap">
+                                📋 {{ $prestasi->tingkat }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+                                🏆 {{ $prestasi->capaian }}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-3">{{ $prestasi->penyelenggara }}</p>
+                        
+                        {{-- Catatan Admin --}}
+                        @if($prestasi->catatan_admin)
+                        <div class="mb-3 p-3 rounded-lg border-l-4 border-red-500 bg-red-50">
+                            <p class="text-xs font-bold text-red-700 mb-1">📌 Catatan Admin:</p>
+                            <p class="text-sm text-red-800 leading-relaxed">{{ $prestasi->catatan_admin }}</p>
+                        </div>
+                        @endif
+                    </div>
+                    
+                    <a href="{{ route('prestasi.revisi', $prestasi->id_prestasi) }}" 
+                       class="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold transition-colors whitespace-nowrap">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        Revisi
+                    </a>
+                </div>
+            </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <div class="overflow-hidden rounded-2xl bg-white shadow-sm border border-gray-100 mt-8">
         <div class="px-5 py-4 border-b border-gray-100">
-            <h2 class="text-base font-semibold text-gray-800">Status Pengajuan Proposal Kegiatan</h2>
-            <p class="text-xs text-gray-500 mt-1">Pantau status verifikasi proposal kegiatan yang kamu ajukan</p>
+            <h2 class="text-base font-semibold text-gray-800">Status Pengajuan Dana Prestasi</h2>
+            <p class="text-xs text-gray-500 mt-1">Pantau status verifikasi ajuan dana prestasi yang kamu ajukan</p>
         </div>
 
         <div class="overflow-x-auto">
