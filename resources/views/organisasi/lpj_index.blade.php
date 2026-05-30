@@ -49,7 +49,7 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
-                                        {{ $item['lpj_status'] == 'Disetujui' ? 'bg-green-100 text-green-800' : ($item['lpj_status'] == 'Revisi' ? 'bg-red-100 text-red-800' : ($item['lpj_status'] == 'Menunggu' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600')) }}">
+                                        {{ $item['lpj_status'] == 'Disetujui' ? 'bg-green-100 text-green-800' : ($item['lpj_status'] == 'Revisi' ? 'bg-red-100 text-red-800' : ($item['lpj_status'] == 'Menunggu Rev LPJ' ? 'bg-purple-100 text-purple-800' : ($item['lpj_status'] == 'Menunggu' ? 'bg-yellow-100 text-yellow-800' : 'bg-gray-100 text-gray-600'))) }}">
                                         {{ $item['lpj_status'] }}
                                     </span>
                                 </td>
@@ -66,13 +66,21 @@
                                             </a>
                                         @endif
 
-                                        @if($item['lpj_status'] == 'Belum Upload' || $item['lpj_status'] == 'Revisi')
+                                        @if($item['lpj_status'] == 'Belum Upload')
                                             <a href="{{ route('organisasi.lpj', $item['id']) }}" 
-                                               class="inline-flex items-center gap-1.5 rounded-lg {{ $item['lpj_status'] == 'Revisi' ? 'bg-red-600 hover:bg-red-700' : 'bg-blue-600 hover:bg-blue-700' }} px-3 py-1.5 text-xs font-bold text-white transition-all shadow-sm">
+                                               class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1.5 text-xs font-bold text-white transition-all shadow-sm">
                                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5">
                                                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75v-2.25m-18 0A2.25 2.25 0 005.25 14.25h13.5A2.25 2.25 0 0021 16.5m-18 0V6.75A2.25 2.25 0 015.25 4.5h13.5A2.25 2.25 0 0121 6.75v9.75m-18 0l3-3m0 0l3 3m-3-3v11.25" />
                                                 </svg>
-                                                {{ $item['lpj_status'] == 'Revisi' ? 'Revisi' : 'Upload' }}
+                                                Upload
+                                            </a>
+                                        @elseif($item['lpj_status'] == 'Revisi')
+                                            <a href="{{ route('organisasi.lpj.revisi', $item['id']) }}" 
+                                               class="inline-flex items-center gap-1.5 rounded-lg bg-red-600 hover:bg-red-700 px-3 py-1.5 text-xs font-bold text-white transition-all shadow-sm">
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-3.5 w-3.5">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.995-1.465" />
+                                                </svg>
+                                                Revisi
                                             </a>
                                         @endif
                                     </div>

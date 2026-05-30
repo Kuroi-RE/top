@@ -58,7 +58,7 @@
                 <div class="flex flex-wrap items-center gap-5 pt-2">
                     @foreach (['Rendah', 'Sedang', 'Tinggi'] as $r)
                         <label class="inline-flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-                            <input type="radio" name="resiko_proposal" value="{{ $r }}"
+                            <input type="radio" name="risiko_proposal" value="{{ $r }}"
                                 {{ $p->risiko_proposal == $r ? 'checked' : '' }}
                                 class="h-5 w-5 border-gray-400 accent-red-600">
                             <span>{{ $r }}</span>

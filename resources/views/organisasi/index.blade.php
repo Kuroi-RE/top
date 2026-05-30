@@ -379,6 +379,15 @@
                                           d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                 </svg>
                             </a>
+                        @elseif(isset($item['lpj_kegiatan_status']) && $item['lpj_kegiatan_status'] == 'Revisi')
+                            <a href="{{ route('organisasi.lpj.revisi', $item['id']) }}" title="Revisi LPJ"
+                               class="inline-flex items-center justify-center rounded-lg p-1.5
+                                      text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.995-1.465"/>
+                                </svg>
+                            </a>
                         @else
                             <span class="text-gray-300">&mdash;</span>
                         @endif

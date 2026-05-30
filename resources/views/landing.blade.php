@@ -218,6 +218,7 @@
     <section id="home" class="bg-gradient-to-b from-yellow-50 to-white py-12">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="carousel-container mb-8">
+                <!-- Default Slides -->
                 <div class="carousel-slide" data-slide="0">
                     <div class="flex h-full gap-6 bg-gradient-to-r from-yellow-400 to-yellow-200 rounded-lg p-8 items-center">
                         <div class="flex-1">
@@ -251,6 +252,28 @@
                         <div class="placeholder-box flex-1 w-48 h-48"><div class="text-center"><p class="text-sm">Gambar Inovasi</p><p class="text-xs text-gray-500">Placeholder</p></div></div>
                     </div>
                 </div>
+
+                <!-- Dynamic Publikasi Slides (Banner Besar) -->
+                @php
+                    $publikasiBesar = $publikasis->where('placement', 'besar')->values();
+                    $publikasiKeduanya = $publikasis->where('placement', 'keduanya')->values();
+                    $bannerPublikasis = $publikasiBesar->merge($publikasiKeduanya);
+                @endphp
+                @forelse ($bannerPublikasis as $index => $pb)
+                    <div class="carousel-slide hidden" data-slide="{{ $index + 3 }}">
+                        <div class="flex h-full gap-6 rounded-lg p-8 items-center" style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.8) 0%, rgba(185, 28, 28, 0.8) 100%), url('{{ asset('storage/' . $pb->poster) }}'); background-size: cover; background-position: center;">
+                            <div class="flex-1 text-white drop-shadow-lg">
+                                <h1 class="text-4xl font-bold mb-3">{{ $pb->judul }}</h1>
+                                <p class="text-lg mb-3 font-semibold">{{ $pb->ormawa }}</p>
+                                <p class="mb-4 leading-relaxed">{{ Str::limit($pb->caption, 150) }}</p>
+                                @if($pb->link)
+                                    <a href="{{ Str::startsWith($pb->link, 'http') ? $pb->link : 'https://' . $pb->link }}" target="_blank" class="inline-block rounded-full bg-white px-8 py-3 text-red-700 font-medium hover:bg-gray-100 transition">Lihat Selengkapnya</a>
+                                @endif
+                            </div>
+                        </div>
+                    </div>
+                @empty
+                @endforelse
                 <button class="carousel-nav-btn prev" onclick="prevSlide()">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
@@ -262,10 +285,13 @@
                     </svg>
                 </button>
             </div>
-            <div class="carousel-dots">
-                <div class="dot active" onclick="goToSlide(0)"></div>
-                <div class="dot" onclick="goToSlide(1)"></div>
-                <div class="dot" onclick="goToSlide(2)"></div>
+            <div class="carousel-dots" id="carouselDots">
+                @php
+                    $totalBannerSlides = 3 + $bannerPublikasis->count();
+                @endphp
+                @for ($i = 0; $i < $totalBannerSlides; $i++)
+                    <div class="dot {{ $i === 0 ? 'active' : '' }}" onclick="goToSlide({{ $i }})"></div>
+                @endfor
             </div>
         </div>
     </section>
@@ -277,7 +303,13 @@
                 <p class="mt-4 text-xl text-gray-500">Temukan berbagai kegiatan seru dari organisasi mahasiswa kami.</p>
             </div>
             <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                @forelse ($publikasis as $index => $p)
+                @php
+                    // Filter publikasi untuk ditampilkan di berita kecil
+                    $publikasiKecil = $publikasis->where('placement', 'kecil')->values();
+                    $publikasiKeduanya2 = $publikasis->where('placement', 'keduanya')->values();
+                    $beritaKecil = $publikasiKecil->merge($publikasiKeduanya2);
+                @endphp
+                @forelse ($beritaKecil as $index => $p)
                     <div class="event-card rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-xl fade-in" 
                         style="animation-delay: {{ $index * 0.1 }}s;" 
                         data-date="{{ $p->created_at->format('d M Y') }}" 

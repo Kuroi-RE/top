@@ -8,7 +8,7 @@ class StorePrestasiRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isMahasiswa();
+        return $this->user()->hasPermissionTo('Create Prestasi') || $this->user()->isMahasiswa();
     }
 
     public function rules(): array
@@ -21,7 +21,7 @@ class StorePrestasiRequest extends FormRequest
             'kategori' => 'required|in:Individu,Kelompok',
             'dokumen' => 'required|array|min:1',
             'dokumen.*.jenis_dokumen' => 'required|string|max:100',
-            'dokumen.*.file' => 'required|file|mimes:pdf,jpg,jpeg,png|max:5120',
+            'dokumen.*.file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ];
     }
 
@@ -49,8 +49,8 @@ class StorePrestasiRequest extends FormRequest
             'dokumen.*.jenis_dokumen.max' => 'Jenis Dokumen maksimal 100 karakter',
             'dokumen.*.file.required' => 'File wajib diisi',
             'dokumen.*.file.file' => 'File harus berupa file',
-            'dokumen.*.file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png',
-            'dokumen.*.file.max' => 'File maksimal 5120 KB',
+            'dokumen.*.file.mimes' => 'Format File harus berupa pdf, jpg, jpeg, png, doc, atau docx',
+            'dokumen.*.file.max' => 'File maksimal 10 MB',
         ];
     }
 }

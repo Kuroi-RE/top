@@ -345,14 +345,14 @@
                 </div>
                 <div class="info-row">
                     <div class="info-item">
-                        <span class="info-label">Tanggal lulus/Date of completion</span>
+                        <span class="info-label">Tanggal Cetak/Date of Print</span>
                         <span class="info-separator">:</span>
                         <span class="info-value">{{ now()->format('d-m-Y') }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Jenjang Pendidikan/Level of Education</span>
                         <span class="info-separator">:</span>
-                        <span class="info-value">TINGKAT 2</span>
+                        <span class="info-value">S1 (Strata 1)</span>
                     </div>
                 </div>
             </div>

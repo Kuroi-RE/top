@@ -16,7 +16,7 @@ class StoreAnggotaRequest extends FormRequest
     {
         return [
             'nama' => 'required|string|max:100',
-            'nim' => 'required|string|max:12|unique:anggota_prestasi',
+            'nim' => 'required|string|max:12',
             'prodi' => 'required|string|max:100',
         ];
     }
@@ -30,7 +30,6 @@ class StoreAnggotaRequest extends FormRequest
             'nim.required' => 'Nim wajib diisi',
             'nim.string' => 'Nim harus berupa teks',
             'nim.max' => 'Nim maksimal 12 karakter',
-            'nim.unique' => 'Nim sudah terdaftar',
             'prodi.required' => 'Prodi wajib diisi',
             'prodi.string' => 'Prodi harus berupa teks',
             'prodi.max' => 'Prodi maksimal 100 karakter',
