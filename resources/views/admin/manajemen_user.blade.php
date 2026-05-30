@@ -259,9 +259,13 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                         </svg>
                                     </button>
-                                    <form action="{{ route('admin.users.toggle_active', $user->id_user) }}" method="POST" onsubmit="return confirm('{{ ($user->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }} akun ini?')" style="display:inline;">
+                                     <form id="toggle-form-{{ $user->id_user }}" action="{{ route('admin.users.toggle_active', $user->id_user) }}" method="POST" style="display:inline;">
                                         @csrf
-                                        <button type="submit" class="btn-action {{ ($user->is_active ?? true) ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50' }}" title="{{ ($user->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }} Akun">
+                                        <button type="button"
+                                            data-toggle-akses="{{ $user->id_user }}"
+                                            data-is-active="{{ ($user->is_active ?? true) ? '1' : '0' }}"
+                                            class="btn-action {{ ($user->is_active ?? true) ? 'text-orange-600 hover:bg-orange-50' : 'text-green-600 hover:bg-green-50' }}"
+                                            title="{{ ($user->is_active ?? true) ? 'Nonaktifkan' : 'Aktifkan' }} Akun">
                                             @if($user->is_active ?? true)
                                                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -274,6 +278,7 @@
                                         </button>
                                     </form>
                                 </div>
+
                             </td>
                         </tr>
                     @empty
@@ -379,19 +384,26 @@
 
 @push('scripts')
 <script>
+    // ── State ────────────────────────────────────────────────────────────────
+    let _currentUserId = null;
+
+    // ── Modal: Open / Close ──────────────────────────────────────────────────
     function openRoleModal(user) {
         const modal = document.getElementById('roleModal');
         const form = document.getElementById('roleForm');
         const nameSpan = document.getElementById('modalUserName');
-        
+
+        _currentUserId = user.id_user;
+
         nameSpan.textContent = user.nama_depan + ' ' + (user.nama_belakang || '') + ' (' + user.username + ')';
+        // Simpan juga sebagai fallback web route
         form.action = `/admin/users/${user.id_user}/role`;
-        
+
         document.getElementById('roleSelect').value = user.role || 'Mahasiswa';
         document.getElementById('ormawaTypeSelect').value = user.ormawa_type || 'institusi';
-        
+
         const ormawaName = user.ormawa_name || '';
-        
+
         // Himpunan matching
         const himpunanSelect = document.getElementById('ormawaNameSelect');
         let himpunanFound = false;
@@ -402,10 +414,8 @@
                 break;
             }
         }
-        if (!himpunanFound) {
-            himpunanSelect.value = "";
-        }
-        
+        if (!himpunanFound) himpunanSelect.value = '';
+
         // UKM matching
         const ukmSelect = document.getElementById('ormawaUkmSelect');
         let ukmFound = false;
@@ -416,12 +426,9 @@
                 break;
             }
         }
-        if (!ukmFound) {
-            ukmSelect.value = "";
-        }
-        
+        if (!ukmFound) ukmSelect.value = '';
+
         toggleOrmawaFields();
-        
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
@@ -430,6 +437,7 @@
         const modal = document.getElementById('roleModal');
         modal.classList.remove('active');
         document.body.style.overflow = '';
+        _currentUserId = null;
     }
 
     function toggleOrmawaFields() {
@@ -437,17 +445,17 @@
         const fields = document.getElementById('ormawaFields');
         const typeContainer = document.getElementById('ormawaTypeContainer');
         const typeSelect = document.getElementById('ormawaTypeSelect');
-        
+
         const himpunanContainer = document.getElementById('ormawaNameSelectContainer');
         const himpunanEl = document.getElementById('ormawaNameSelect');
         const ukmContainer = document.getElementById('ormawaUkmSelectContainer');
         const ukmEl = document.getElementById('ormawaUkmSelect');
-        
+
         const isAnyOrmawa = ['Ormawa', 'Ormawa Institusi', 'Ormawa Prodi'].includes(role);
-        
+
         if (isAnyOrmawa) {
             fields.style.display = 'block';
-            
+
             let currentType = '';
             if (role === 'Ormawa Institusi') {
                 typeContainer.style.display = 'none';
@@ -462,12 +470,11 @@
                 typeSelect.required = true;
                 currentType = typeSelect.value;
             }
-            
+
             if (currentType === 'prodi') {
                 himpunanContainer.style.display = 'block';
                 himpunanEl.name = 'ormawa_name';
                 himpunanEl.required = true;
-                
                 ukmContainer.style.display = 'none';
                 ukmEl.removeAttribute('name');
                 ukmEl.required = false;
@@ -475,7 +482,6 @@
                 ukmContainer.style.display = 'block';
                 ukmEl.name = 'ormawa_name';
                 ukmEl.required = true;
-                
                 himpunanContainer.style.display = 'none';
                 himpunanEl.removeAttribute('name');
                 himpunanEl.required = false;
@@ -483,12 +489,126 @@
         } else {
             fields.style.display = 'none';
             typeSelect.required = false;
-            
             himpunanEl.removeAttribute('name');
             himpunanEl.required = false;
             ukmEl.removeAttribute('name');
             ukmEl.required = false;
         }
+    }
+
+    // ── API: Submit Role via PATCH /api/v1/users/{id}/assign-role ────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        const roleForm = document.getElementById('roleForm');
+        if (!roleForm) return;
+
+        roleForm.addEventListener('submit', function (e) {
+            const token = localStorage.getItem('topkema_api_token');
+            const userId = _currentUserId;
+
+            // Jika tidak ada token, fallback ke form POST web (default action)
+            if (!token || !userId || !window.axios) {
+                return; // biarkan form submit normal
+            }
+
+            e.preventDefault(); // prevent default form submission
+
+            const role = document.getElementById('roleSelect').value;
+            const ormawaNameEl = roleForm.querySelector('[name="ormawa_name"]');
+            const ormawaName = ormawaNameEl ? ormawaNameEl.value : null;
+            const ormawaType = document.getElementById('ormawaTypeSelect').value;
+
+            const payload = { role };
+            if (['Ormawa', 'Ormawa Institusi', 'Ormawa Prodi'].includes(role)) {
+                // Map role ke format API
+                const apiRole = role === 'Ormawa Institusi' ? 'Ormawa Institusi'
+                              : role === 'Ormawa Prodi'   ? 'Ormawa Prodi'
+                              : 'Ormawa';
+                payload.role = apiRole;
+                if (ormawaName) payload.ormawa_name = ormawaName;
+                if (ormawaType) payload.ormawa_type = role === 'Ormawa' ? ormawaType : (role === 'Ormawa Institusi' ? 'institusi' : 'prodi');
+            }
+
+            const submitBtn = roleForm.querySelector('[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Menyimpan...';
+
+            window.axios.patch(`users/${userId}/assign-role`, payload)
+                .then(function (response) {
+                    closeRoleModal();
+                    // Tampilkan notifikasi sukses lalu reload
+                    showApiToast('success', 'Role berhasil diperbarui.');
+                    setTimeout(() => window.location.reload(), 1200);
+                })
+                .catch(function (error) {
+                    const msg = error?.response?.data?.message || 'Gagal memperbarui role.';
+                    showApiToast('error', msg);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+        });
+
+        // ── API: Toggle Akses via PATCH /api/v1/users/{id}/toggle-akses ──────
+        document.querySelectorAll('[data-toggle-akses]').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                const token = localStorage.getItem('topkema_api_token');
+                const userId = btn.getAttribute('data-toggle-akses');
+                const isActive = btn.getAttribute('data-is-active') === '1';
+                const confirmMsg = isActive
+                    ? 'Nonaktifkan akun ini?'
+                    : 'Aktifkan kembali akun ini?';
+
+                if (!confirm(confirmMsg)) return;
+
+                if (!token || !window.axios) {
+                    // Fallback: submit form web
+                    const fallbackForm = document.getElementById(`toggle-form-${userId}`);
+                    if (fallbackForm) fallbackForm.submit();
+                    return;
+                }
+
+                e.preventDefault();
+
+                window.axios.patch(`users/${userId}/toggle-akses`)
+                    .then(function () {
+                        showApiToast('success', isActive ? 'Akun berhasil dinonaktifkan.' : 'Akun berhasil diaktifkan.');
+                        setTimeout(() => window.location.reload(), 1200);
+                    })
+                    .catch(function (error) {
+                        const msg = error?.response?.data?.message || 'Gagal mengubah status akun.';
+                        showApiToast('error', msg);
+                    });
+            });
+        });
+    });
+
+    // ── Toast Notifikasi ─────────────────────────────────────────────────────
+    function showApiToast(type, message) {
+        const existing = document.getElementById('api-toast');
+        if (existing) existing.remove();
+
+        const colors = type === 'success'
+            ? { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534', icon: '✓' }
+            : { bg: '#fef2f2', border: '#fecaca', text: '#991b1b', icon: '✕' };
+
+        const toast = document.createElement('div');
+        toast.id = 'api-toast';
+        toast.style.cssText = `
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; display: flex; align-items: center; gap: 12px;
+            background: ${colors.bg}; border: 1px solid ${colors.border};
+            color: ${colors.text}; padding: 14px 22px; border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-size: 14px; font-weight: 600;
+            animation: slideDown 0.3s ease;
+        `;
+        toast.innerHTML = `<span style="font-size:18px;">${colors.icon}</span><span>${message}</span>`;
+
+        const style = document.createElement('style');
+        style.textContent = '@keyframes slideDown { from { opacity:0; transform:translateX(-50%) translateY(-10px); } to { opacity:1; transform:translateX(-50%) translateY(0); } }';
+        document.head.appendChild(style);
+
+        document.body.appendChild(toast);
+        setTimeout(() => { if (toast.parentNode) toast.remove(); }, 4000);
     }
 
     // Handle ESC key

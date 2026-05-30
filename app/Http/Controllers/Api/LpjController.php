@@ -38,7 +38,7 @@ class LpjController
         $query = LpjKegiatan::query();
 
         // Filter berdasarkan role
-        if ($user->isOrmawa()) {
+        if ($user->isOrmawa() || $user->isMahasiswa()) {
             $query->whereHas('proposal', fn($q) => $q->where('id_user', $user->id_user));
         }
 
@@ -132,7 +132,7 @@ class LpjController
      */
     public function show(Request $request, LpjKegiatan $lpj): JsonResponse
     {
-        if ($request->user()->isOrmawa() && $request->user()->id_user !== $lpj->proposal->id_user) {
+        if (($request->user()->isOrmawa() || $request->user()->isMahasiswa()) && $request->user()->id_user !== $lpj->proposal->id_user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses ke LPJ ini',

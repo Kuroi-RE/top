@@ -95,6 +95,12 @@ class PrestasiController
             'tingkat' => $request->tingkat,
             'capaian' => $request->capaian,
             'kategori' => $request->kategori,
+            'mewakili_ormawa' => $request->mewakili_ormawa,
+            'pelaksanaan' => $request->pelaksanaan,
+            'waktu_kompetisi' => $request->waktu_kompetisi,
+            'tanggal_pengumuman' => $request->tanggal_pengumuman,
+            'klaster' => $request->klaster,
+            'jumlah_negara' => $request->jumlah_negara,
             'status_verifikasi' => 'Menunggu',
         ]);
 
@@ -260,6 +266,12 @@ class PrestasiController
             'tingkat',
             'capaian',
             'kategori',
+            'mewakili_ormawa',
+            'pelaksanaan',
+            'waktu_kompetisi',
+            'tanggal_pengumuman',
+            'klaster',
+            'jumlah_negara',
         ]));
 
         // Refresh data dari database untuk menampilkan nilai terbaru

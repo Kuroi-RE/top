@@ -123,7 +123,7 @@ Route::middleware("guest")->group(function () {
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => 'Mahasiswa',
-            'is_active' => true,
+            'is_active' => false,
         ]);
 
         try {
@@ -184,16 +184,14 @@ Route::middleware("guest")->group(function () {
             $redirectRoute = 'organisasi.index';
         }
 
-        try {
-              Log::info('Login: about to send 2FA to ' . $user->email);
-              $sendTwoFactorCode($user, $request, 'login', $redirectRoute);
-              Log::info('Login: sendTwoFactorCode returned for ' . $user->email);
-        } catch (\Throwable $e) {
-            Log::warning('Unable to send login 2FA code: ' . $e->getMessage());
-            return back()->withErrors(['username' => $e->getMessage() ?: 'Gagal mengirim kode verifikasi. Silakan coba lagi.'])->withInput($request->only('username'));
-        }
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->put('dummy_user', array_merge(
+            $user->only(['id_user', 'username', 'nim', 'nama_depan', 'nama_belakang', 'prodi', 'email', 'role', 'is_active']),
+            ['display_name' => trim($user->nama_depan . ' ' . $user->nama_belakang)]
+        ));
 
-        return redirect()->route('twofactor.verify')->with('success', 'Kode verifikasi telah dikirim ke email Anda.');
+        return redirect()->route($redirectRoute)->with('success', 'Login berhasil.');
     })->name("login.post");
 
     Route::get('/verify-2fa', function (Request $request) {
@@ -241,6 +239,10 @@ Route::middleware("guest")->group(function () {
         if (!$user) {
             $request->session()->forget('pending_2fa');
             return redirect()->route('login')->with('error', 'Akun tidak ditemukan. Silakan login ulang.');
+        }
+
+        if (($pending['purpose'] ?? '') === 'register') {
+            $user->update(['is_active' => true]);
         }
 
         Auth::login($user);
@@ -298,6 +300,44 @@ Route::post("/logout", function (Request $request) {
 })->name("logout");
 
 Route::get("/logout", fn() => redirect()->route("login"));
+
+// ── API Token Generator (Web Session → Sanctum Token) ────────────────────────
+// Memungkinkan JavaScript di halaman Blade mendapatkan Sanctum token
+// berdasarkan session web yang sudah aktif.
+Route::get('/api/token', function (Request $request) {
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthenticated'], 401);
+    }
+
+    $user = Auth::user();
+
+    // Cari token yang sudah ada dan masih aktif, atau buat baru
+    $existingToken = $user->tokens()
+        ->where('name', 'web-session-token')
+        ->latest()
+        ->first();
+
+    if ($existingToken) {
+        // Token Sanctum sudah ada — kembalikan plaintext token-nya tidak bisa,
+        // jadi kita hapus dan buat baru
+        $existingToken->delete();
+    }
+
+    $token = $user->createToken('web-session-token', ['*'])->plainTextToken;
+
+    return response()->json([
+        'token' => $token,
+        'user'  => [
+            'id'         => $user->id_user,
+            'username'   => $user->username,
+            'nama_depan' => $user->nama_depan,
+            'nama_belakang' => $user->nama_belakang,
+            'email'      => $user->email,
+            'role'       => $user->role,
+            'is_active'  => $user->is_active,
+        ],
+    ]);
+})->middleware('auth')->name('api.token');
 
 // ── Admin ────────────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('admin')->group(function () {
@@ -1087,54 +1127,14 @@ Route::prefix("prestasi")
     ->group(function () {
         Route::get("/", fn() => view("prestasi.index"))->name("index");
         Route::get("/input-proposal", fn() => view("prestasi.input_proposal"))->name("input_proposal");
-        Route::post("/input-proposal", function (Illuminate\Http\Request $request) {
-            $user = auth()->user();
-
-            $request->validate([
-                'nama_kegiatan' => 'required|string|max:255',
-                'tanggal_pelaksanaan' => 'required|date',
-                'total_anggaran' => 'required',
-                'nama_bank' => 'required|string',
-                'nomor_rekening' => 'required|string',
-                'atas_nama_rekening' => 'required|string',
-                'proposal' => 'required|file|mimes:pdf|max:10240',
-            ]);
-
-            $filePath = null;
-            if ($request->hasFile('proposal')) {
-                $file = $request->file('proposal');
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $fileName = time() . '_' . $originalName;
-                $filePath = $file->storeAs('proposals', $fileName, 'public');
-            }
-
-            // Map UI fields to database columns
-            \App\Models\ProposalKegiatan::create([
-                'id_user' => $user->id_user,
-                'ajuan_triwulan' => 'I', // Default
-                'risiko_proposal' => 'Sedang', // Default
-                'no_telepon' => $request->nomor_whatsapp ?? '-',
-                'nama_kegiatan' => $request->nama_kegiatan,
-                'waktu_kegiatan' => $request->tanggal_pelaksanaan,
-                'tempat_kegiatan' => $request->penyelenggara_event ?? '-',
-                'besar_ajuan' => (float) str_replace(['Rp', '.', ','], '', $request->total_anggaran),
-                'nomor_rekening' => $request->nomor_rekening,
-                'nama_bank' => $request->nama_bank,
-                'nama_rekening' => $request->atas_nama_rekening,
-                'honor_pelatih' => 'Tidak',
-                'file' => $filePath,
-                'status' => 'Menunggu',
-            ]);
-
-            return redirect()->route('prestasi.index')->with('success', 'Proposal berhasil diunggah dan sedang menunggu verifikasi.');
-        })->name("input_proposal.post");
         Route::get("/upload-lpj", fn() => view("prestasi.upload_lpj"))->name("upload_lpj");
         Route::get("/template-dokumen", fn() => view("prestasi.template_dokumen"))->name("template_dokumen");
-        Route::get("/laporan-prestasi/biodata", fn() => view("prestasi.laporan_prestasi.biodata"))->name("laporan_prestasi.biodata");
-        Route::get("/laporan-prestasi/detail-kompetisi", fn() => view("prestasi.laporan_prestasi.detail_kompetisi"))->name("laporan_prestasi.detail_kompetisi");
-        Route::get("/laporan-prestasi/capaian-prestasi", fn() => view("prestasi.laporan_prestasi.capaian_prestasi"))->name("laporan_prestasi.capaian_prestasi");
-        Route::get("/laporan-prestasi/informasi-dosen-pembimbing", fn() => view("prestasi.laporan_prestasi.informasi_dosen_pembimbing"))->name("laporan_prestasi.informasi_dosen_pembimbing");
-        Route::get("/laporan-prestasi/evidance", fn() => view("prestasi.laporan_prestasi.evidance"))->name("laporan_prestasi.evidance");
+        Route::get("/laporan-prestasi", fn() => view("prestasi.laporan_prestasi"))->name("laporan_prestasi");
+        Route::get("/laporan-prestasi/biodata", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.biodata");
+        Route::get("/laporan-prestasi/detail-kompetisi", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.detail_kompetisi");
+        Route::get("/laporan-prestasi/capaian-prestasi", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.capaian_prestasi");
+        Route::get("/laporan-prestasi/informasi-dosen-pembimbing", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.informasi_dosen_pembimbing");
+        Route::get("/laporan-prestasi/evidance", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.evidance");
             Route::get("/kartu-prestasi/{nim}", function (string $nim) {
                 $user = \App\Models\User::where('nim', $nim)->first();
 
@@ -1164,6 +1164,16 @@ Route::prefix("prestasi")
                 ));
             })->name('kartu_prestasi');
 
+        Route::get("/kartu-prestasi/{nim}/download-pdf", function (string $nim) {
+            $controller = app(\App\Http\Controllers\Api\CetakPrestasiController::class);
+            return $controller->cetakKartu(request(), $nim);
+        })->name('kartu_prestasi.download_pdf');
+
+        Route::get("/transkrip-prestasi/download-pdf", function () {
+            $controller = app(\App\Http\Controllers\Api\CetakPrestasiController::class);
+            return $controller->cetakTranskrip(request());
+        })->name('transkrip_prestasi.download_pdf');
+
         Route::get("/transkrip-prestasi", function () {
             $user = auth()->user();
 
@@ -1192,138 +1202,12 @@ Route::prefix("prestasi")
         })->name('transkrip_prestasi');
 
         Route::get("/revisi/{id}", function ($id) {
-            $prestasi = \App\Models\Prestasi::with(['anggota', 'dosen', 'dokumen'])->findOrFail($id);
-            if ($prestasi->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
-            return view("prestasi.revisi", compact("prestasi"));
+            return view("prestasi.revisi", compact("id"));
         })->name("revisi");
-
-        Route::post("/revisi/{id}", function (Illuminate\Http\Request $request, $id) {
-            $prestasi = \App\Models\Prestasi::findOrFail($id);
-            if ($prestasi->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
-
-            $request->validate([
-                'nama_kompetisi' => 'required|string|max:255',
-                'penyelenggara' => 'required|string|max:255',
-                'tingkat' => 'required|string|in:Internasional,Nasional,Regional',
-                'capaian' => 'required|string',
-                'kategori' => 'required|string|in:Individu,Kelompok',
-            ]);
-
-            // Update basic data
-            $prestasi->update([
-                'nama_kompetisi' => $request->nama_kompetisi,
-                'penyelenggara' => $request->penyelenggara,
-                'tingkat' => $request->tingkat,
-                'capaian' => $request->capaian,
-                'kategori' => $request->kategori,
-                'status_verifikasi' => 'Menunggu',
-            ]);
-
-            // Update Anggota
-            $prestasi->anggota()->delete();
-            if ($request->kategori === 'Kelompok' && $request->has('anggota_nim')) {
-                foreach ($request->anggota_nim as $key => $nim) {
-                    if (!empty($nim)) {
-                        \App\Models\AnggotaPrestasi::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'nim' => $nim,
-                            'nama' => $request->anggota_nama[$key] ?? '',
-                            'prodi' => $request->anggota_prodi[$key] ?? '',
-                        ]);
-                    }
-                }
-            }
-
-            // Update Dosen
-            $prestasi->dosen()->delete();
-            if ($request->has('dosen_nama')) {
-                foreach ($request->dosen_nama as $key => $nama) {
-                    if (!empty($nama)) {
-                        \App\Models\DosenPendamping::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'nama_dosen' => $nama,
-                            'nidn' => $request->dosen_nidn[$key] ?? null,
-                            'nip' => $request->dosen_nip[$key] ?? null,
-                            'prodi' => $request->dosen_prodi[$key] ?? '',
-                        ]);
-                    }
-                }
-            }
-
-            // Update existing documents and add new documents
-            if ($request->has('dokumen_id')) {
-                // Find all existing documents for this prestasi to handle deletions
-                $existingDocIds = $prestasi->dokumen->pluck('id_dokumen')->toArray();
-                $submittedDocIds = $request->dokumen_id;
-                $deletedDocIds = array_diff($existingDocIds, $submittedDocIds);
-
-                // Delete removed docs from storage and database
-                foreach ($deletedDocIds as $delId) {
-                    $delDoc = \App\Models\DokumenPrestasi::find($delId);
-                    if ($delDoc) {
-                        Illuminate\Support\Facades\Storage::disk('public')->delete($delDoc->file);
-                        $delDoc->delete();
-                    }
-                }
-
-                // Update kept docs
-                foreach ($submittedDocIds as $key => $docId) {
-                    $doc = \App\Models\DokumenPrestasi::find($docId);
-                    if ($doc && $doc->id_prestasi == $prestasi->id_prestasi) {
-                        if (isset($request->dokumen_jenis[$docId])) {
-                            $doc->jenis_dokumen = $request->dokumen_jenis[$docId];
-                        }
-                        
-                        // Check if file uploaded for this specific doc ID
-                        if ($request->hasFile('dokumen_file') && isset($request->file('dokumen_file')[$docId])) {
-                            Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file);
-                            $file = $request->file('dokumen_file')[$docId];
-                            $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                            $fileName = time() . '_' . $originalName;
-                            $filePath = $file->storeAs('prestasi', $fileName, 'public');
-                            $doc->file = $filePath;
-                        }
-                        $doc->save();
-                    }
-                }
-            } else {
-                // If no dokumen_id sent, delete all existing docs
-                foreach ($prestasi->dokumen as $delDoc) {
-                    Illuminate\Support\Facades\Storage::disk('public')->delete($delDoc->file);
-                    $delDoc->delete();
-                }
-            }
-
-            // New documents
-            if ($request->has('dokumen_jenis_new')) {
-                foreach ($request->dokumen_jenis_new as $key => $jenis) {
-                    if ($request->hasFile('dokumen_file_new') && isset($request->file('dokumen_file_new')[$key])) {
-                        $file = $request->file('dokumen_file_new')[$key];
-                        $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                        $fileName = time() . '_' . $originalName;
-                        $filePath = $file->storeAs('prestasi', $fileName, 'public');
-
-                        \App\Models\DokumenPrestasi::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'jenis_dokumen' => $jenis,
-                            'file' => $filePath,
-                        ]);
-                    }
-                }
-            }
-
-            return redirect()->route('prestasi.index')->with('success', 'Revisi prestasi berhasil dikirim.');
-        })->name("submit_revisi");
 
         Route::get(
             "/create",
-            fn() => redirect()
-                ->route("prestasi.index")
-                ->with("error", "Halaman belum tersedia."),
+            fn() => view("prestasi.laporan_prestasi"),
         )->name("create");
         Route::post(
             "/",

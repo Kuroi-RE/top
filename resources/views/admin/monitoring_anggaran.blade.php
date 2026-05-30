@@ -185,7 +185,7 @@
                 <div class="summary-body">
                     <div class="summary-meta">
                         <p class="summary-title">Total Proposal</p>
-                        <p class="summary-value">{{ $summary['totalProposal'] }}</p>
+                        <p class="summary-value" id="stat-total-proposal">{{ $summary['totalProposal'] }}</p>
                         <p class="summary-caption">Data proposal yang tercatat</p>
                     </div>
                     <div class="summary-icon">
@@ -198,7 +198,7 @@
                 <div class="summary-body">
                     <div class="summary-meta">
                         <p class="summary-title">Total Anggaran Diajukan</p>
-                        <p class="summary-value">Rp {{ number_format($summary['totalDiajukan'], 0, ',', '.') }}</p>
+                        <p class="summary-value" id="stat-total-diajukan">Rp {{ number_format($summary['totalDiajukan'], 0, ',', '.') }}</p>
                         <p class="summary-caption">Total pengajuan anggaran</p>
                     </div>
                     <div class="summary-icon">
@@ -211,7 +211,7 @@
                 <div class="summary-body">
                     <div class="summary-meta">
                         <p class="summary-title">Total Anggaran Disetujui</p>
-                        <p class="summary-value">Rp {{ number_format($summary['totalDisetujui'], 0, ',', '.') }}</p>
+                        <p class="summary-value" id="stat-total-disetujui">Rp {{ number_format($summary['totalDisetujui'], 0, ',', '.') }}</p>
                         <p class="summary-caption">Anggaran yang sudah disetujui</p>
                     </div>
                     <div class="summary-icon">
@@ -311,7 +311,7 @@
                         <th class="px-4 py-3 font-semibold text-center">Status</th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="proposal-table-body">
                     @forelse($proposals as $proposal)
                         <tr class="mon-row"
                             data-nama="{{ strtolower($proposal->nama_kegiatan) }}"
@@ -345,7 +345,7 @@
 (function () {
     'use strict';
 
-    const ALL_ROWS = Array.from(document.querySelectorAll('.mon-row'));
+    let ALL_ROWS = Array.from(document.querySelectorAll('.mon-row'));
     let _filtered  = [...ALL_ROWS];
     let _perPage   = 5;
     let _page      = 1;
@@ -382,8 +382,92 @@
         _filtered.slice(start, end).forEach(r => r.style.display = '');
     }
 
-    // Init
-    render();
+    // ── API Integration ───────────────────────────────────────────────────────
+    function formatRupiah(num) {
+        return 'Rp ' + Number(num).toLocaleString('id-ID');
+    }
+
+    function initAPI() {
+        const token = localStorage.getItem('topkema_api_token');
+        if (!token || !window.axios) {
+            render();
+            return;
+        }
+
+        // Fetch statistics real-time
+        window.axios.get('monitoring/statistics')
+            .then(function (res) {
+                const data = res.data.data;
+                const pStats = data.proposal_statistics;
+                const bStats = data.budget_statistics;
+
+                const elProposal = document.getElementById('stat-total-proposal');
+                const elDiajukan = document.getElementById('stat-total-diajukan');
+                const elDisetujui = document.getElementById('stat-total-disetujui');
+
+                if (elProposal) elProposal.textContent = pStats.total;
+                if (elDiajukan) elDiajukan.textContent = formatRupiah(bStats.total_budget_requested);
+                if (elDisetujui) elDisetujui.textContent = formatRupiah(bStats.total_budget_approved);
+            })
+            .catch(function (err) {
+                console.error('Failed to load real-time statistics:', err);
+            });
+
+        // Fetch recent activities/proposals list
+        window.axios.get('monitoring/kegiatan', { params: { per_page: 8 } })
+            .then(function (res) {
+                const proposals = res.data.data || [];
+                const tbody = document.getElementById('proposal-table-body');
+                if (!tbody) return;
+
+                if (proposals.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="bg-white px-4 py-8 text-center text-slate-500 first:rounded-l-xl last:rounded-r-xl">
+                                Belum ada data monitoring anggaran.
+                            </td>
+                        </tr>
+                    `;
+                    ALL_ROWS = [];
+                    _filtered = [];
+                    render();
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                proposals.forEach(function (proposal, idx) {
+                    const tr = document.createElement('tr');
+                    tr.className = 'mon-row';
+                    tr.dataset.nama = (proposal.nama_kegiatan || '').toLowerCase();
+                    tr.dataset.status = (proposal.status || '').toLowerCase();
+                    tr.dataset.tw = (proposal.ajuan_triwulan || '').toLowerCase();
+
+                    tr.innerHTML = `
+                        <td class="bg-white px-4 py-4 align-middle first:rounded-l-xl">${idx + 1}</td>
+                        <td class="bg-white px-4 py-4 align-middle">${proposal.ajuan_triwulan || '-'}</td>
+                        <td class="bg-white px-4 py-4 align-middle">${proposal.nama_kegiatan || '-'}</td>
+                        <td class="bg-white px-4 py-4 align-middle whitespace-nowrap">${formatRupiah(proposal.besar_ajuan || 0)}</td>
+                        <td class="bg-white px-4 py-4 align-middle whitespace-nowrap">${formatRupiah(proposal.anggaran_disetujui || 0)}</td>
+                        <td class="bg-white px-4 py-4 align-middle text-center last:rounded-r-xl">
+                            <span class="table-pill">${proposal.status || '-'}</span>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Re-evaluate table rows for filtering/pagination
+                ALL_ROWS = Array.from(tbody.querySelectorAll('.mon-row'));
+                _filtered = [...ALL_ROWS];
+                render();
+            })
+            .catch(function (err) {
+                console.error('Failed to load recent proposals list:', err);
+                render();
+            });
+    }
+
+    // Init page
+    initAPI();
 })();
 </script>
 @endpush

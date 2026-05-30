@@ -452,6 +452,53 @@
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
 
+        // State: ID user yang ditemukan via API (untuk sync permissions)
+        let _foundUserId = null;
+
+        // ── Cari User via API berdasarkan NIM ─────────────────────────────────
+        let _nimSearchTimeout = null;
+        function searchUserByNim(nim) {
+            _foundUserId = null;
+            if (!nim || !window.axios) return;
+
+            clearTimeout(_nimSearchTimeout);
+            _nimSearchTimeout = setTimeout(function () {
+                // GET /api/v1/users?role=Mahasiswa&nim=<nim> — belum tentu ada param nim,
+                // jadi kita ambil semua dan filter client-side
+                window.axios.get('users', { params: { role: 'Mahasiswa', per_page: 500 } })
+                    .then(function (res) {
+                        const users = res.data?.data || [];
+                        // Cari yang NIM-nya matching
+                        const found = users.find(function (u) {
+                            return (u.nim || '').toLowerCase() === nim.toLowerCase() ||
+                                   (u.username || '').toLowerCase() === nim.toLowerCase();
+                        });
+                        if (found) {
+                            _foundUserId = found.id_user;
+                            // Load permissions dari API untuk user ini
+                            return window.axios.get(`users/${found.id_user}/permissions`);
+                        }
+                    })
+                    .then(function (res) {
+                        if (res && res.data) {
+                            // permissions bisa berupa array langsung
+                            const permissions = res.data?.data?.permissions || res.data?.permissions || [];
+                            // Update localStorage
+                            const nim = nimInput.value.trim();
+                            const storageKey = `kontrol_akun_perms_Mahasiswa_NIM_${nim}`;
+                            const permNames = permissions.map(function (p) {
+                                return typeof p === 'string' ? p : p.name;
+                            });
+                            localStorage.setItem(storageKey, JSON.stringify(permNames));
+                            renderTable();
+                        }
+                    })
+                    .catch(function (err) {
+                        console.warn('[TOPKEMA] Gagal mencari user/permissions:', err.message);
+                    });
+            }, 600);
+        }
+
         const himpunanOptions = [
             { value: 'HMIF', text: 'HMIF' },
             { value: 'HMTI', text: 'HMTI' },
@@ -596,14 +643,14 @@
             });
         }
 
-        // Save updated config to LocalStorage
+        // Save updated config to LocalStorage + sync ke API
         function savePermissions() {
             const role = roleSelect.value;
             const himpunan = himpunanSelect.value;
             const nim = nimInput.value.trim();
             const isOrmawa = ['Ormawa Prodi', 'Ormawa Institusi'].includes(role);
             const isMahasiswa = role === 'Mahasiswa';
-            
+
             let storageKey = '';
             if (isOrmawa) {
                 storageKey = `kontrol_akun_perms_${role.replace(/\s+/g, '_')}_${himpunan.replace(/\s+/g, '_')}`;
@@ -612,34 +659,55 @@
             } else {
                 storageKey = `kontrol_akun_perms_${role.replace(/\s+/g, '_')}`;
             }
-            
+
             const checkboxes = document.querySelectorAll('.feature-checkbox');
             const activePerms = [];
-            checkboxes.forEach(cb => {
-                if (cb.checked) {
-                    activePerms.push(cb.getAttribute('data-name'));
-                }
+            checkboxes.forEach(function (cb) {
+                if (cb.checked) activePerms.push(cb.getAttribute('data-name'));
             });
 
-            // Save to localStorage
+            // 1. Simpan ke localStorage
             localStorage.setItem(storageKey, JSON.stringify(activePerms));
 
-            // Show Toast Notification
-            let targetName = '';
-            if (isOrmawa) {
-                targetName = `${role} (${himpunan})`;
-            } else if (isMahasiswa && nim !== '') {
-                targetName = `${role} (NIM: ${nim})`;
+            // 2. Sync ke API jika ada userId yang ditemukan (untuk user spesifik)
+            const userId = _foundUserId;
+            const token = localStorage.getItem('topkema_api_token');
+
+            if (userId && token && window.axios) {
+                window.axios.patch(`users/${userId}/permissions`, { permissions: activePerms })
+                    .then(function () {
+                        showToast(`Hak akses user berhasil disimpan ke database.`, 'success');
+                    })
+                    .catch(function (err) {
+                        const msg = err?.response?.data?.message || 'Gagal sync ke API.';
+                        showToast(`LocalStorage disimpan, API gagal: ${msg}`, 'error');
+                    });
             } else {
-                targetName = role;
+                // Tanpa userId — simpan lokal saja (konfigurasi role umum)
+                let targetName = '';
+                if (isOrmawa) {
+                    targetName = `${role} (${himpunan})`;
+                } else if (isMahasiswa && nim !== '') {
+                    targetName = `${role} (NIM: ${nim})`;
+                } else {
+                    targetName = role;
+                }
+                showToast(`Konfigurasi untuk ${targetName} disimpan secara lokal.`, 'success');
             }
-            
-            toastMessage.textContent = `Hak akses untuk ${targetName} berhasil diperbarui di LocalStorage.`;
+        }
+
+        function showToast(message, type) {
+            const iconEl = toast.querySelector('.toast-icon');
+            if (type === 'error') {
+                toast.style.background = 'rgba(153, 27, 27, 0.92)';
+                if (iconEl) iconEl.style.background = '#dc2626';
+            } else {
+                toast.style.background = 'rgba(15, 23, 42, 0.9)';
+                if (iconEl) iconEl.style.background = '#10b981';
+            }
+            toastMessage.textContent = message;
             toast.classList.add('active');
-            
-            setTimeout(() => {
-                toast.classList.remove('active');
-            }, 3500);
+            setTimeout(function () { toast.classList.remove('active'); }, 3500);
         }
 
         // Toggle Himpunan dropdown visibility based on role selection
@@ -697,7 +765,11 @@
         // Event Listeners
         roleSelect.addEventListener('change', handleRoleChange);
         himpunanSelect.addEventListener('change', renderTable);
-        nimInput.addEventListener('input', renderTable);
+        nimInput.addEventListener('input', function () {
+            renderTable();
+            const nim = nimInput.value.trim();
+            if (nim.length >= 8) searchUserByNim(nim);
+        });
         searchInput.addEventListener('input', filterFeatures);
         btnSave.addEventListener('click', savePermissions);
 

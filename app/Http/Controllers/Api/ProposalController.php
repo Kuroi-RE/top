@@ -43,7 +43,7 @@ class ProposalController
         $query = ProposalKegiatan::query();
 
         // Filter berdasarkan role
-        if ($user->isOrmawa()) {
+        if ($user->isOrmawa() || $user->isMahasiswa()) {
             $query->where('id_user', $user->id_user);
         }
 
@@ -150,7 +150,7 @@ class ProposalController
      */
     public function show(Request $request, ProposalKegiatan $proposal): JsonResponse
     {
-        if ($request->user()->isOrmawa() && $request->user()->id_user !== $proposal->id_user) {
+        if (($request->user()->isOrmawa() || $request->user()->isMahasiswa()) && $request->user()->id_user !== $proposal->id_user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses ke proposal ini',

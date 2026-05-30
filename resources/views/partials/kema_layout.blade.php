@@ -1248,5 +1248,58 @@
 
 @stack('scripts')
 
+<script>
+/**
+ * TOPKEMA API Token Initializer
+ * Otomatis mengambil Sanctum token dari server berdasarkan session web aktif
+ * dan menyimpannya ke localStorage agar bisa digunakan oleh AJAX calls.
+ */
+(function () {
+    'use strict';
+
+    const TOKEN_KEY = 'topkema_api_token';
+
+    function initApiToken() {
+        const existingToken = localStorage.getItem(TOKEN_KEY);
+
+        // Jika sudah ada token, update axios header (dilakukan oleh app.js)
+        // Tetapi tetap refresh token setiap page load agar tidak expired
+        fetch('/api/token', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+        })
+        .then(function (res) {
+            if (!res.ok) throw new Error('Token fetch failed: ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            if (data && data.token) {
+                localStorage.setItem(TOKEN_KEY, data.token);
+                // Update axios header jika axios sudah dimuat
+                if (window.axios) {
+                    window.axios.defaults.headers.common['Authorization'] = 'Bearer ' + data.token;
+                }
+            }
+        })
+        .catch(function (err) {
+            // Tidak perlu tampilkan error ke user — token lama mungkin masih valid
+            console.warn('[TOPKEMA] Gagal memperbarui API token:', err.message);
+        });
+    }
+
+    // Jalankan setelah DOM ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApiToken);
+    } else {
+        initApiToken();
+    }
+})();
+</script>
+
 </body>
 </html>
