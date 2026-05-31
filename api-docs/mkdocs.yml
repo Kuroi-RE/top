@@ -13,5 +13,7 @@ nav:
   - Mahasiswa Endpoints: mahasiswa-endpoints.md
   - Proposal Kegiatan: proposal.md
   - LPJ Kegiatan: lpj.md
+  - Publikasi Kegiatan: publikasi.md
+  - Deadline: deadline.md
   - Monitoring Anggaran: monitoring.md
   - Error Handling & Schema: error-handling.md

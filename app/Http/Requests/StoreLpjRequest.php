@@ -16,7 +16,7 @@ class StoreLpjRequest extends FormRequest
         return [
             'id_proposal' => 'required|exists:proposal_kegiatan,id_proposal',
             'file_lpj' => 'required|file|mimes:pdf|max:5120',
-            'tanggal_upload' => 'required|date',
+            'tanggal_upload' => 'nullable|date',
         ];
     }
 

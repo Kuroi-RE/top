@@ -120,7 +120,7 @@ class ProposalController
             'nama_bank' => $request->nama_bank,
             'honor_pelatih' => $request->honor_pelatih,
             'file' => $filePath,
-            'status' => 'Menunggu',
+            'status' => 'Pending',
         ]);
 
         return response()->json([
@@ -186,7 +186,7 @@ class ProposalController
      */
     public function update(UpdateProposalRequest $request, ProposalKegiatan $proposal): JsonResponse
     {
-        if ($proposal->status !== 'Menunggu' && $proposal->status !== 'Revisi') {
+        if ($proposal->status !== 'Pending' && $proposal->status !== 'Revision') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Proposal tidak dapat diedit pada status saat ini',
@@ -228,7 +228,7 @@ class ProposalController
      */
     public function destroy(Request $request, ProposalKegiatan $proposal): JsonResponse
     {
-        if ($proposal->status === 'Disetujui') {
+        if ($proposal->status === 'Approved') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Proposal yang sudah disetujui tidak dapat dihapus',
@@ -311,7 +311,7 @@ class ProposalController
             'file' => $filePath,
         ]);
 
-        $proposal->update(['status' => 'Menunggu']);
+        $proposal->update(['status' => 'Pending']);
 
         return response()->json([
             'status' => 'success',
@@ -346,11 +346,21 @@ class ProposalController
      */
     public function verify(VerifyProposalRequest $request, ProposalKegiatan $proposal): JsonResponse
     {
-        $proposal->update([
+        $updateData = [
             'status' => $request->status,
             'catatan_admin' => $request->catatan_admin,
-            'anggaran_disetujui' => $request->status === 'Disetujui' ? $request->anggaran_disetujui : null,
-        ]);
+            'anggaran_disetujui' => $request->status === 'Approved' ? $request->anggaran_disetujui : null,
+        ];
+
+        if ($request->hasFile('file_lpj_keuangan')) {
+            if ($proposal->file_lpj_keuangan) {
+                Storage::disk('public')->delete($proposal->file_lpj_keuangan);
+            }
+            $updateData['file_lpj_keuangan'] = $request->file('file_lpj_keuangan')
+                ->store('lpj_keuangan', 'public');
+        }
+
+        $proposal->update($updateData);
 
         return response()->json([
             'status' => 'success',

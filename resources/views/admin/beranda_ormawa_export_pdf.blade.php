@@ -133,11 +133,11 @@
         <tr>
             <td class="summary-card">
                 <div class="sc-label">Jenis Ormawa</div>
-                <div class="sc-value">Ormawa Institusi</div>
+                <div class="sc-value">{{ $jenisOrmawaText }}</div>
             </td>
             <td class="summary-card">
                 <div class="sc-label">Nama Ormawa</div>
-                <div class="sc-value">Manggala</div>
+                <div class="sc-value">{{ $namaOrmawaText }}</div>
             </td>
         </tr>
     </table>

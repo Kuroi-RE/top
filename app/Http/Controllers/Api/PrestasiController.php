@@ -101,7 +101,7 @@ class PrestasiController
             'tanggal_pengumuman' => $request->tanggal_pengumuman,
             'klaster' => $request->klaster,
             'jumlah_negara' => $request->jumlah_negara,
-            'status_verifikasi' => 'Menunggu',
+            'status_verifikasi' => 'Pending',
         ]);
 
         // Upload dokumen
