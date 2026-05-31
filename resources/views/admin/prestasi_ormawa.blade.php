@@ -4,6 +4,29 @@
 
 @section('content')
 
+@php
+    $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'ya');
+    if (request('tingkat')) {
+        $query->where('tingkat', request('tingkat'));
+    }
+    if (request('search')) {
+        $q = request('search');
+        $query->where(function($sub) use ($q) {
+            $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
+                ->orWhere('penyelenggara', 'like', '%' . $q . '%')
+                ->orWhere('capaian', 'like', '%' . $q . '%')
+                ->orWhereHas('user', function($u) use ($q) {
+                    $u->where('nama_depan', 'like', '%' . $q . '%')
+                      ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                      ->orWhere('username', 'like', '%' . $q . '%');
+                });
+        });
+    }
+    $prestasi = $query->latest()->paginate(request('per_page', 10))->withQueryString();
+
+    $ormawProposals = \App\Models\ProposalKegiatan::with('user')->where('category', 'Ormawa')->latest()->get();
+@endphp
+
 <style>
 	.dashboard-shell {
 		width: 100%;
@@ -130,10 +153,11 @@
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <select class="rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer shadow-sm"
-                        style="appearance:none;-webkit-appearance:none;padding:0.5rem 2.5rem 0.5rem 1rem;">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
+                        style="appearance:none;-webkit-appearance:none;padding:0.5rem 2.5rem 0.5rem 1rem;"
+                        onchange="window.location.href = '{{ route('admin.prestasi_ormawa') }}?per_page=' + this.value + '&search={{ request('search') }}&tingkat={{ request('tingkat') }}'">
+                        <option value="5" {{ request('per_page') == 5 ? 'selected' : '' }}>5</option>
+                        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                        <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20</option>
                     </select>
                     <div class="pointer-events-none text-slate-400" style="position:absolute;right:0.875rem;top:50%;transform:translateY(-50%);">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1rem;height:1rem;">
@@ -144,7 +168,7 @@
                 <span class="text-sm font-medium text-slate-500">Record per page</span>
             </div>
 
-            <a href="{{ route('admin.prestasi_ormawa.export_pdf') }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ route('admin.prestasi_ormawa.export_pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md focus:ring-4 focus:ring-red-500/20">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 -960 960 960" class="h-5 w-5 shrink-0">
                     <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>

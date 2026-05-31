@@ -61,6 +61,10 @@ class MonitoringController
             $query->whereHas('user', fn($q) => $q->where('ormawa_type', $request->ormawa_type));
         }
 
+        if ($request->has('by_ormawa')) {
+            $query->where('id_user', $request->by_ormawa);
+        }
+
         $proposals = $query->paginate($request->per_page ?? 20);
 
         return response()->json([
@@ -283,6 +287,55 @@ class MonitoringController
                     'budget_utilization_rate' => $totalAnggaran > 0 ? 
                         round(($totalDisetujuiAgg / $totalAnggaran) * 100, 2) : 0,
                 ],
+            ],
+        ], 200);
+    }
+
+    /**
+     * Statistik prestasi mahasiswa
+     * 
+     * Mendapatkan statistik lengkap prestasi mahasiswa keseluruhan.
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Statistik prestasi mahasiswa",
+     *   "data": {...}
+     * }
+     */
+    public function prestasiStats(Request $request): JsonResponse
+    {
+        if (!($request->user()->isDpmbem() || $request->user()->isAdmin())) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden - Hanya DPMBEM dan Admin yang dapat mengakses',
+            ], 403);
+        }
+
+        $total = \App\Models\Prestasi::count();
+        $valid = \App\Models\Prestasi::where('status_verifikasi', 'Valid')->count();
+        $pending = \App\Models\Prestasi::where('status_verifikasi', 'Pending')->count();
+        $revisi = \App\Models\Prestasi::where('status_verifikasi', 'Revisi')->count();
+
+        $byTingkat = \App\Models\Prestasi::selectRaw('tingkat, count(*) as count')
+            ->groupBy('tingkat')
+            ->get()
+            ->pluck('count', 'tingkat');
+
+        $byKategori = \App\Models\Prestasi::selectRaw('kategori, count(*) as count')
+            ->groupBy('kategori')
+            ->get()
+            ->pluck('count', 'kategori');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Statistik prestasi mahasiswa',
+            'data' => [
+                'total' => $total,
+                'valid' => $valid,
+                'pending' => $pending,
+                'revision_needed' => $revisi,
+                'by_tingkat' => $byTingkat,
+                'by_kategori' => $byKategori,
             ],
         ], 200);
     }

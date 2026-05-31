@@ -538,7 +538,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // Prep detailed dataset for modal
             const dosenStr = item.dosen && item.dosen.length > 0
-                ? item.dosen.map(d => d.nama + ' (' + (d.nip || '-') + ')').join(', ')
+                ? item.dosen.map(d => (d.nama_dosen || d.nama || '-') + ' (' + (d.nip || d.nidn || '-') + ')').join(', ')
                 : 'Tidak ada';
                 
             const anggotaStr = item.anggota && item.anggota.length > 0

@@ -17,7 +17,7 @@ return [
             'View Revisi Proposal', 'Approve Revisi Proposal',
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports',
+            'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
             'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
         ],
         'Kemahasiswaan' => [
@@ -25,7 +25,7 @@ return [
             'View Revisi Proposal', 'Approve Revisi Proposal',
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports',
+            'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
             'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
         ],
         'DPMBEM' => [

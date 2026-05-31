@@ -800,7 +800,7 @@ document.addEventListener('DOMContentLoaded', function () {
             dosenContainer.innerHTML = '';
             if (data.dosen && data.dosen.length > 0) {
                 data.dosen.forEach(dos => {
-                    createDosenBlock(dos.nama, dos.nidn || '', dos.nip || '', dos.prodi || '', dos.id_dosen);
+                    createDosenBlock(dos.nama_dosen || dos.nama || '', dos.nidn || '', dos.nip || '', dos.prodi || '', dos.id_dosen);
                 });
             } else {
                 checkDosenPlaceholder();

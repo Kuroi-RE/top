@@ -170,6 +170,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/lpj', [MonitoringController::class, 'lpjList'])->name('lpj');
             Route::get('/kegiatan/{proposal}', [MonitoringController::class, 'activityDetail'])->name('activity-detail')->where('proposal', '[0-9]+');
             Route::get('/statistics', [MonitoringController::class, 'statistics'])->name('statistics');
+            Route::get('/prestasi', [MonitoringController::class, 'prestasiStats'])->name('prestasi');
         });
 
     });

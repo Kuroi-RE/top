@@ -47,8 +47,35 @@ class PrestasiController
             $query->where('id_user', $user->id_user);
         }
 
-        if ($request->has('status_verifikasi')) {
+        if ($request->filled('mewakili_ormawa')) {
+            $query->where('mewakili_ormawa', $request->mewakili_ormawa);
+        }
+
+        if ($request->filled('status_verifikasi')) {
             $query->where('status_verifikasi', $request->status_verifikasi);
+        }
+
+        if ($request->filled('tingkat')) {
+            $query->where('tingkat', $request->tingkat);
+        }
+
+        if ($request->filled('klaster')) {
+            $query->where('klaster', $request->klaster);
+        }
+
+        if ($request->filled('search')) {
+            $q = $request->search;
+            $query->where(function($sub) use ($q) {
+                $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
+                    ->orWhere('penyelenggara', 'like', '%' . $q . '%')
+                    ->orWhere('capaian', 'like', '%' . $q . '%')
+                    ->orWhereHas('user', function($u) use ($q) {
+                        $u->where('nama_depan', 'like', '%' . $q . '%')
+                          ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                          ->orWhere('username', 'like', '%' . $q . '%')
+                          ->orWhere('nim', 'like', '%' . $q . '%');
+                    });
+            });
         }
 
         $prestasi = $query->with('user', 'dokumen', 'anggota', 'dosen')->paginate($request->per_page ?? 15);
@@ -101,7 +128,7 @@ class PrestasiController
             'tanggal_pengumuman' => $request->tanggal_pengumuman,
             'klaster' => $request->klaster,
             'jumlah_negara' => $request->jumlah_negara,
-            'status_verifikasi' => 'Pending',
+            'status_verifikasi' => 'Menunggu',
         ]);
 
         // Upload dokumen

@@ -13,6 +13,8 @@ Ormawa dapat mengajukan proposal kegiatan dan Kemahasiswaan dapat melakukan veri
 **Query Parameters:**
 - `status`: `Pending`, `Revision`, `Approved`, `Rejected`, `Cek LPJ`, `Selesai`, `Revisi LPJ`
 - `triwulan`: I, II, III, IV
+- `ormawa_id`: ID user / Ormawa
+- `ormawa_name`: Pencarian parsial berdasarkan nama Ormawa
 
 **Response (Success - 200):**
 

@@ -263,15 +263,32 @@
                 </div>
             </div>
 
-            <div class="flex flex-col gap-2" id="nim-filter-container" style="display: none;">
-                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">NIM Mahasiswa</label>
+            <div class="flex flex-col gap-2 relative" id="nim-filter-container" style="display: none;">
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider ml-1">NIM atau Nama Mahasiswa</label>
                 <div class="input-container">
-                    <input type="text" id="nim-input" placeholder="Masukkan NIM (contoh: 23110401)..." class="form-input-premium has-icon-left">
+                    <input type="text" id="nim-input" placeholder="Cari NIM atau Nama..." class="form-input-premium has-icon-left" autocomplete="off">
                     <div class="icon-left">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
                     </div>
+                </div>
+                <!-- Dynamic Search Results Dropdown -->
+                <div id="student-search-results" class="absolute left-0 right-0 top-full mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-50 max-h-60 overflow-y-auto hidden divide-y divide-slate-100">
+                    <div class="p-3 text-xs text-slate-400 italic text-center">Mengetik pencarian...</div>
+                </div>
+                <!-- Selected Student Pill -->
+                <div id="selected-student-pill" class="flex items-center justify-between bg-red-50/60 border border-red-100/80 rounded-2xl p-3 mt-0.5 hidden">
+                    <div class="flex items-center gap-3">
+                        <div class="h-8 w-8 rounded-full bg-red-100/80 flex items-center justify-center text-red-700 font-bold text-xs">M</div>
+                        <div class="flex flex-col">
+                            <span id="selected-student-name" class="font-bold text-slate-800 text-sm"></span>
+                            <span id="selected-student-nim" class="text-xs text-slate-500 font-medium"></span>
+                        </div>
+                    </div>
+                    <button type="button" id="btn-deselect-student" class="h-7 w-7 rounded-full flex items-center justify-center text-slate-400 hover:text-red-700 hover:bg-red-100/50 transition-colors text-lg font-semibold">
+                        &times;
+                    </button>
                 </div>
             </div>
 
@@ -290,7 +307,15 @@
     </div>
 
     <!-- Table -->
-    <div class="premium-card">
+    <div id="nim-placeholder" class="premium-card p-12 text-center bg-white border border-slate-100 rounded-2xl shadow-sm" style="display: none; min-height: 280px; align-items: center; justify-content: center; flex-direction: column;">
+        <svg xmlns="http://www.w3.org/2000/svg" class="mx-auto h-16 w-16 text-slate-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+        </svg>
+        <h3 class="text-lg font-bold text-slate-700">Pencarian NIM Mahasiswa</h3>
+        <p class="mt-2 text-slate-500 max-w-md mx-auto text-sm leading-relaxed">Silakan masukkan NIM Mahasiswa terlebih dahulu pada form pencarian di atas untuk mengonfigurasi hak akses perizinan secara khusus.</p>
+    </div>
+
+    <div class="premium-card" id="permissions-container">
         <div class="overflow-x-auto">
             <table class="premium-table" id="features-table">
                 <thead>
@@ -455,36 +480,35 @@
         // State: ID user yang ditemukan via API (untuk sync permissions)
         let _foundUserId = null;
 
-        // ── Cari User via API berdasarkan NIM ─────────────────────────────────
-        let _nimSearchTimeout = null;
-        function searchUserByNim(nim) {
-            _foundUserId = null;
-            if (!nim || !window.axios) return;
+        // ── Cari & Pilih Mahasiswa secara Interaktif (Live Search) ────────────
+        let _searchTimeout = null;
+        const studentSearchResults = document.getElementById('student-search-results');
+        const selectedStudentPill = document.getElementById('selected-student-pill');
+        const selectedStudentName = document.getElementById('selected-student-name');
+        const selectedStudentNim = document.getElementById('selected-student-nim');
+        const btnDeselectStudent = document.getElementById('btn-deselect-student');
 
-            clearTimeout(_nimSearchTimeout);
-            _nimSearchTimeout = setTimeout(function () {
-                // GET /api/v1/users?role=Mahasiswa&nim=<nim> — belum tentu ada param nim,
-                // jadi kita ambil semua dan filter client-side
-                window.axios.get('users', { params: { role: 'Mahasiswa', per_page: 500 } })
-                    .then(function (res) {
-                        const users = res.data?.data || [];
-                        // Cari yang NIM-nya matching
-                        const found = users.find(function (u) {
-                            return (u.nim || '').toLowerCase() === nim.toLowerCase() ||
-                                   (u.username || '').toLowerCase() === nim.toLowerCase();
-                        });
-                        if (found) {
-                            _foundUserId = found.id_user;
-                            // Load permissions dari API untuk user ini
-                            return window.axios.get(`users/${found.id_user}/permissions`);
-                        }
-                    })
+        function selectStudent(id, nim, name) {
+            _foundUserId = id;
+            if (studentSearchResults) studentSearchResults.classList.add('hidden');
+            nimInput.value = nim; // Sync value to input so renderTable runs correctly
+            
+            // Set Selected Pill details
+            if (selectedStudentName) selectedStudentName.textContent = name;
+            if (selectedStudentNim) selectedStudentNim.textContent = `NIM: ${nim}`;
+            
+            // Hide Input Container, Show Selected Pill
+            const nimInputContainer = nimInput.closest('.input-container');
+            if (nimInputContainer) nimInputContainer.style.display = 'none';
+            if (selectedStudentPill) selectedStudentPill.classList.remove('hidden');
+
+            // Load permissions from API
+            if (window.axios) {
+                window.axios.get(`users/${id}/permissions`)
                     .then(function (res) {
                         if (res && res.data) {
-                            // permissions bisa berupa array langsung
-                            const permissions = res.data?.data?.permissions || res.data?.permissions || [];
-                            // Update localStorage
-                            const nim = nimInput.value.trim();
+                            // res.data.data is directly the permissions array of strings
+                            const permissions = res.data?.data || [];
                             const storageKey = `kontrol_akun_perms_Mahasiswa_NIM_${nim}`;
                             const permNames = permissions.map(function (p) {
                                 return typeof p === 'string' ? p : p.name;
@@ -494,10 +518,35 @@
                         }
                     })
                     .catch(function (err) {
-                        console.warn('[TOPKEMA] Gagal mencari user/permissions:', err.message);
+                        console.warn('[TOPKEMA] Gagal mengambil permissions user:', err.message);
+                        renderTable();
                     });
-            }, 600);
+            } else {
+                renderTable();
+            }
         }
+
+        if (btnDeselectStudent) {
+            btnDeselectStudent.addEventListener('click', function () {
+                _foundUserId = null;
+                nimInput.value = '';
+                
+                // Show Input Container, Hide Pill
+                const nimInputContainer = nimInput.closest('.input-container');
+                if (nimInputContainer) nimInputContainer.style.display = 'block';
+                if (selectedStudentPill) selectedStudentPill.classList.add('hidden');
+                if (studentSearchResults) studentSearchResults.classList.add('hidden');
+                
+                renderTable();
+            });
+        }
+
+        // Close search results dropdown on click outside
+        document.addEventListener('click', function (e) {
+            if (studentSearchResults && !nimInput.contains(e.target) && !studentSearchResults.contains(e.target)) {
+                studentSearchResults.classList.add('hidden');
+            }
+        });
 
         const himpunanOptions = [
             { value: 'HMIF', text: 'HMIF' },
@@ -530,6 +579,19 @@
             const nim = nimInput.value.trim();
             const isOrmawa = ['Ormawa Prodi', 'Ormawa Institusi'].includes(role);
             const isMahasiswa = role === 'Mahasiswa';
+            
+            const permissionsContainer = document.getElementById('permissions-container');
+            const nimPlaceholder = document.getElementById('nim-placeholder');
+
+            if (isMahasiswa && nim === '') {
+                if (permissionsContainer) permissionsContainer.style.display = 'none';
+                if (nimPlaceholder) nimPlaceholder.style.display = 'flex';
+                currentTargetLabel.textContent = role;
+                return;
+            } else {
+                if (permissionsContainer) permissionsContainer.style.display = 'block';
+                if (nimPlaceholder) nimPlaceholder.style.display = 'none';
+            }
             
             // Build the local storage key
             let storageKey = '';
@@ -718,6 +780,16 @@
             const isOrmawa = isOrmawaProdi || isOrmawaInstitusi;
             const isMahasiswa = role === 'Mahasiswa';
             
+            // Clear student selection state when changing roles
+            _foundUserId = null;
+            nimInput.value = '';
+            const nimInputContainer = nimInput.closest('.input-container');
+            const selectedStudentPill = document.getElementById('selected-student-pill');
+            const studentSearchResults = document.getElementById('student-search-results');
+            if (nimInputContainer) nimInputContainer.style.display = 'block';
+            if (selectedStudentPill) selectedStudentPill.classList.add('hidden');
+            if (studentSearchResults) studentSearchResults.classList.add('hidden');
+            
             const filterLabel = document.getElementById('himpunan-filter-label');
             
             if (isOrmawa) {
@@ -765,10 +837,72 @@
         // Event Listeners
         roleSelect.addEventListener('change', handleRoleChange);
         himpunanSelect.addEventListener('change', renderTable);
+        
         nimInput.addEventListener('input', function () {
-            renderTable();
-            const nim = nimInput.value.trim();
-            if (nim.length >= 8) searchUserByNim(nim);
+            const query = nimInput.value.trim();
+            if (query.length < 2) {
+                if (studentSearchResults) studentSearchResults.classList.add('hidden');
+                return;
+            }
+
+            clearTimeout(_searchTimeout);
+            _searchTimeout = setTimeout(function () {
+                if (studentSearchResults) {
+                    studentSearchResults.innerHTML = '<div class="p-3 text-xs text-slate-400 italic text-center">Mencari...</div>';
+                    studentSearchResults.classList.remove('hidden');
+                }
+
+                window.axios.get('users', { params: { role: 'Mahasiswa', search: query } })
+                    .then(function (res) {
+                        const users = res.data?.data || [];
+                        if (users.length === 0) {
+                            if (studentSearchResults) {
+                                studentSearchResults.innerHTML = '<div class="p-3 text-xs text-red-500 font-semibold text-center">Mahasiswa tidak ditemukan</div>';
+                            }
+                            return;
+                        }
+
+                        if (studentSearchResults) {
+                            studentSearchResults.innerHTML = '';
+                            users.forEach(function (u) {
+                                // Provide fallback if nama_depan/nama_belakang is null
+                                const first = u.nama_depan || '';
+                                const last = u.nama_belakang || '';
+                                const fullName = (first + ' ' + last).trim() || 'Nama Tidak Tersedia';
+                                const nim = u.nim || u.username || '-';
+                                
+                                const item = document.createElement('div');
+                                item.className = 'student-item p-3 hover:bg-slate-50 border-b border-slate-100 last:border-0 cursor-pointer flex justify-between items-center transition-colors';
+                                item.innerHTML = `
+                                    <div class="flex flex-col w-full">
+                                        <span class="font-bold text-slate-800 text-sm">${fullName}</span>
+                                        <div class="flex items-center gap-2 mt-1">
+                                            <span class="text-xs font-bold bg-red-50 text-red-700 border border-red-100 px-2 py-0.5 rounded-md">NIM: ${nim}</span>
+                                            <span class="text-xs text-slate-500">Prodi: ${u.prodi || '-'}</span>
+                                        </div>
+                                    </div>
+                                    <div class="text-slate-300">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                                        </svg>
+                                    </div>
+                                `;
+
+                                item.addEventListener('click', function () {
+                                    selectStudent(u.id_user, nim, fullName);
+                                });
+
+                                studentSearchResults.appendChild(item);
+                            });
+                        }
+                    })
+                    .catch(function (err) {
+                        console.warn('[TOPKEMA] Gagal memuat data pencarian:', err.message);
+                        if (studentSearchResults) {
+                            studentSearchResults.innerHTML = '<div class="p-3 text-xs text-red-500 text-center">Gagal memuat hasil pencarian</div>';
+                        }
+                    });
+            }, 300);
         });
         searchInput.addEventListener('input', filterFeatures);
         btnSave.addEventListener('click', savePermissions);

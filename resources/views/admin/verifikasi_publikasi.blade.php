@@ -48,19 +48,19 @@
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Menunggu Verifikasi</p>
-                <p class="mt-2 text-3xl font-bold text-gray-900">{{ $publikasis->where('status', 'Menunggu')->count() }}</p>
+                <p class="mt-2 text-3xl font-bold text-gray-900">{{ $publikasis->whereIn('status', ['Menunggu', 'Pending'])->count() }}</p>
             </div>
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Telah Disetujui</p>
-                <p class="mt-2 text-3xl font-bold text-green-600">{{ $publikasis->where('status', 'Disetujui')->count() }}</p>
+                <p class="mt-2 text-3xl font-bold text-green-600">{{ $publikasis->whereIn('status', ['Disetujui', 'Approved'])->count() }}</p>
             </div>
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Revisi</p>
-                <p class="mt-2 text-3xl font-bold text-amber-600">{{ $publikasis->where('status', 'Revisi')->count() }}</p>
+                <p class="mt-2 text-3xl font-bold text-amber-600">{{ $publikasis->whereIn('status', ['Revisi', 'Revision'])->count() }}</p>
             </div>
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
                 <p class="text-xs font-semibold uppercase tracking-wider text-gray-500">Ditolak</p>
-                <p class="mt-2 text-3xl font-bold text-red-600">{{ $publikasis->where('status', 'Ditolak')->count() }}</p>
+                <p class="mt-2 text-3xl font-bold text-red-600">{{ $publikasis->whereIn('status', ['Ditolak', 'Rejected'])->count() }}</p>
             </div>
         </div>
 
@@ -100,15 +100,27 @@
                                 </td>
                                 <td class="px-6 py-4 text-center">
                                     @php
+                                        $transMap = [
+                                            'Pending' => 'Menunggu',
+                                            'Approved' => 'Disetujui',
+                                            'Revision' => 'Revisi',
+                                            'Rejected' => 'Ditolak',
+                                            'Menunggu' => 'Menunggu',
+                                            'Disetujui' => 'Disetujui',
+                                            'Revisi' => 'Revisi',
+                                            'Ditolak' => 'Ditolak',
+                                        ];
+                                        $displayStatus = $transMap[$p->status] ?? $p->status;
+                                        
                                         $statusClass = [
                                             'Menunggu' => 'bg-blue-50 text-blue-700 border-blue-100',
                                             'Disetujui' => 'bg-emerald-50 text-emerald-700 border-emerald-100',
                                             'Revisi' => 'bg-amber-50 text-amber-700 border-amber-100',
                                             'Ditolak' => 'bg-rose-50 text-rose-700 border-rose-100',
-                                        ][$p->status] ?? 'bg-gray-50 text-gray-700 border-gray-100';
+                                        ][$displayStatus] ?? 'bg-gray-50 text-gray-700 border-gray-100';
                                     @endphp
                                     <span class="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium {{ $statusClass }}">
-                                        {{ $p->status }}
+                                        {{ $displayStatus }}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-right">
@@ -275,11 +287,11 @@
         document.getElementById('catatan').value = notes || '';
         document.getElementById('verify-modal-title-desc').innerText = `Publikasi: ${judul}`;
         
-        if (currentStatus === 'Disetujui') {
+        if (currentStatus === 'Disetujui' || currentStatus === 'Approved') {
             document.getElementById('status-setuju').checked = true;
-        } else if (currentStatus === 'Revisi') {
+        } else if (currentStatus === 'Revisi' || currentStatus === 'Revision') {
             document.getElementById('status-revisi').checked = true;
-        } else if (currentStatus === 'Ditolak') {
+        } else if (currentStatus === 'Ditolak' || currentStatus === 'Rejected') {
             document.getElementById('status-tolak').checked = true;
         } else {
             document.getElementById('status-setuju').checked = false;

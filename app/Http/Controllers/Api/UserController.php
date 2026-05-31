@@ -47,12 +47,27 @@ class UserController
 
         $query = User::query();
 
-        if ($request->has('role')) {
+        if ($request->filled('role')) {
             $query->where('role', $request->role);
+        }
+
+        if ($request->filled('nim')) {
+            $query->where('nim', $request->nim);
         }
 
         if ($request->has('is_active')) {
             $query->where('is_active', $request->boolean('is_active'));
+        }
+
+        if ($request->filled('search')) {
+            $q = $request->search;
+            $query->where(function ($sub) use ($q) {
+                $sub->where('nama_depan', 'like', '%' . $q . '%')
+                    ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                    ->orWhere('username', 'like', '%' . $q . '%')
+                    ->orWhere('nim', 'like', '%' . $q . '%')
+                    ->orWhere('email', 'like', '%' . $q . '%');
+            });
         }
 
         $users = $query->paginate($request->per_page ?? 15);
@@ -277,7 +292,7 @@ class UserController
         $data = $request->validated();
 
         // Clear ormawa fields if not assigning Ormawa role
-        if ($data['role'] !== 'Ormawa') {
+        if (!in_array($data['role'], ['Ormawa', 'Ormawa Institusi', 'Ormawa Prodi'])) {
             $data['ormawa_type'] = null;
             $data['ormawa_name'] = null;
         }

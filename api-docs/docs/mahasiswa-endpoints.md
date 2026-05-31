@@ -150,6 +150,10 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 **Query Parameters:**
 
 - `status_verifikasi`: Filter berdasarkan status (Menunggu, Revisi, Valid, Tidak Valid)
+- `mewakili_ormawa`: Filter berdasarkan partisipasi ormawa (ya/tidak)
+- `tingkat`: Filter berdasarkan level kompetisi (Regional, Nasional, Internasional)
+- `klaster`: Filter berdasarkan klaster kompetisi
+- `search`: Keyword pencarian (nama kompetisi, penyelenggara, capaian, nama mahasiswa, NIM)
 - `per_page`: Jumlah data per halaman (default: 15)
 
 **Deskripsi:** Mahasiswa hanya bisa melihat prestasi milik mereka sendiri. Admin (Kemahasiswaan) dapat melihat semua prestasi.

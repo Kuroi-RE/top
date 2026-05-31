@@ -8,9 +8,16 @@ class UpdateProposalRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $proposal = $this->route('proposal');
+        $proposalId = $this->route('proposal');
+        $proposal = \App\Models\ProposalKegiatan::find($proposalId);
+        if (!$proposal) {
+            $proposal = \App\Models\ProposalPrestasiMahasiswa::find($proposalId);
+        }
+        if (!$proposal) {
+            return false;
+        }
         return $this->user()->id_user === $proposal->id_user && 
-               ($proposal->status === 'Menunggu' || $proposal->status === 'Revisi');
+               ($proposal->status === 'Pending' || $proposal->status === 'Revision' || $proposal->status === 'Menunggu' || $proposal->status === 'Revisi');
     }
 
     public function rules(): array
