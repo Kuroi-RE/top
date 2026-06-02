@@ -74,7 +74,28 @@
 </style>
 
 @php
-    $prestasis = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'tidak')->latest()->get();
+    $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'tidak');
+    
+    if (request('tingkat')) {
+        $query->where('tingkat', request('tingkat'));
+    }
+    
+    if (request('search')) {
+        $q = request('search');
+        $query->where(function($sub) use ($q) {
+            $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
+                ->orWhere('penyelenggara', 'like', '%' . $q . '%')
+                ->orWhere('capaian', 'like', '%' . $q . '%')
+                ->orWhereHas('user', function($u) use ($q) {
+                    $u->where('nama_depan', 'like', '%' . $q . '%')
+                      ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                      ->orWhere('username', 'like', '%' . $q . '%')
+                      ->orWhere('nim', 'like', '%' . $q . '%');
+                });
+        });
+    }
+
+    $prestasi = $query->latest()->paginate(request('per_page', 10))->withQueryString();
     
     $studentProposals = \App\Models\ProposalPrestasiMahasiswa::with('user')
         ->latest()
@@ -145,10 +166,11 @@
             <div class="flex items-center gap-3">
                 <div class="relative">
                     <select class="rounded-xl border border-slate-200 bg-white text-sm font-bold text-slate-700 outline-none transition-all hover:border-slate-300 focus:border-red-500 cursor-pointer shadow-sm"
-                        style="appearance:none;-webkit-appearance:none;padding:0.5rem 2.5rem 0.5rem 1rem;">
-                        <option value="5">5</option>
-                        <option value="10">10</option>
-                        <option value="20">20</option>
+                        style="appearance:none;-webkit-appearance:none;padding:0.5rem 2.5rem 0.5rem 1rem;"
+                        onchange="window.location.href = '{{ route('admin.prestasi_mahasiswa') }}?per_page=' + this.value + '&search={{ request('search') }}&tingkat={{ request('tingkat') }}'">
+                        <option value="5" {{ request('per_page') == 5 ? 'selected' : '' }}>5</option>
+                        <option value="10" {{ request('per_page', 10) == 10 ? 'selected' : '' }}>10</option>
+                        <option value="20" {{ request('per_page') == 20 ? 'selected' : '' }}>20</option>
                     </select>
                     <div class="pointer-events-none text-slate-400" style="position:absolute;right:0.875rem;top:50%;transform:translateY(-50%);">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:1rem;height:1rem;">
@@ -159,7 +181,7 @@
                 <span class="text-sm font-medium text-slate-500">Record per page</span>
             </div>
 
-            <a href="{{ route('admin.prestasi_mahasiswa.export_pdf') }}" target="_blank" rel="noopener noreferrer"
+            <a href="{{ route('admin.prestasi_mahasiswa.export_pdf', request()->query()) }}" target="_blank" rel="noopener noreferrer"
                 class="inline-flex items-center gap-2 rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-red-700 hover:shadow-md focus:ring-4 focus:ring-red-500/20">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 -960 960 960" class="h-5 w-5 shrink-0">
                     <path d="M480-320 280-520l56-58 104 104v-326h80v326l104-104 56 58-200 200ZM240-160q-33 0-56.5-23.5T160-240v-120h80v120h480v-120h80v120q0 33-23.5 56.5T720-160H240Z"/>
@@ -207,9 +229,9 @@
 											<path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
 										</svg>
 									</a>
-									<form action="{{ route('admin.prestasi_mahasiswa.delete', $item->id_prestasi) }}" method="POST" style="display:inline;">
+									<form class="form-delete-prestasi" data-id="{{ $item->id_prestasi }}" data-event="{{ $item->nama_kompetisi }}" data-capaian="{{ $item->capaian }}" action="{{ route('admin.prestasi_mahasiswa.delete', $item->id_prestasi) }}" method="POST" style="display:inline;">
                                         @csrf @method('DELETE')
-                                        <button type="submit" class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed" title="Hapus" onclick="return confirm('Yakin ingin menghapus data prestasi ini?\n\nNama Event: {{ $item->nama_kompetisi }}\nCapaian: {{ $item->capaian }}\n\nAksi ini tidak dapat dibatalkan.');this.disabled=true;">
+                                        <button type="submit" class="btn-delete-prestasi inline-flex h-8 w-8 items-center justify-center rounded-md bg-rose-50 text-rose-700 transition hover:bg-rose-100 disabled:opacity-50 disabled:cursor-not-allowed" title="Hapus">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
                                                 <path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.22a51.964 51.964 0 00-3.32 0c-1.18.056-2.09 1.04-2.09 2.22v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
                                             </svg>
@@ -228,6 +250,11 @@
 				</tbody>
 			</table>
 		</div>
+        @if($prestasi->hasPages())
+        <div class="mt-4">
+            {{ $prestasi->links() }}
+        </div>
+        @endif
 	</div>
 	<div class="dashboard-card bg-white rounded-2xl p-6 shadow-sm mt-8">
         <div class="flex items-center justify-between mb-6">
@@ -290,4 +317,69 @@
     </div>
 </div>
 
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const token = localStorage.getItem('topkema_api_token');
+
+        // Handle delete via API
+        const deleteForms = document.querySelectorAll('.form-delete-prestasi');
+        deleteForms.forEach(function (form) {
+            form.addEventListener('submit', function (e) {
+                const id = form.dataset.id;
+                const eventName = form.dataset.event;
+                const capaian = form.dataset.capaian;
+
+                const confirmed = confirm(`Yakin ingin menghapus data prestasi ini?\n\nNama Event: ${eventName}\nCapaian: ${capaian}\n\nAksi ini tidak dapat dibatalkan.`);
+                if (!confirmed) {
+                    e.preventDefault();
+                    return;
+                }
+
+                if (!token || !id || !window.axios) {
+                    return; // Let standard form submit handle it
+                }
+
+                e.preventDefault();
+
+                const btn = form.querySelector('.btn-delete-prestasi');
+                if (btn) btn.disabled = true;
+
+                window.axios.delete(`prestasi/${id}`)
+                    .then(function () {
+                        showAlert('success', 'Data prestasi berhasil dihapus.');
+                        setTimeout(function () { window.location.reload(); }, 1000);
+                    })
+                    .catch(function (err) {
+                        const msg = err?.response?.data?.message || 'Gagal menghapus data prestasi.';
+                        showAlert('error', msg);
+                        if (btn) btn.disabled = false;
+                    });
+            });
+        });
+    });
+
+    // ── Simple Alert ─────────────────────────────────────────────────────────
+    function showAlert(type, message) {
+        const existing = document.getElementById('api-toast');
+        if (existing) existing.remove();
+
+        const colors = type === 'success'
+            ? { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534' }
+            : { bg: '#fef2f2', border: '#fecaca', text: '#991b1b' };
+
+        const toast = document.createElement('div');
+        toast.id = 'api-toast';
+        toast.style.cssText = `
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; background: ${colors.bg}; border: 1px solid ${colors.border};
+            color: ${colors.text}; padding: 14px 24px; border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-size: 14px; font-weight: 600;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(function () { if (toast.parentNode) toast.remove(); }, 4000);
+    }
+</script>
+@endpush
 @endsection

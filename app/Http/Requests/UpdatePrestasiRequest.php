@@ -24,6 +24,12 @@ class UpdatePrestasiRequest extends FormRequest
             'tingkat'        => 'sometimes|required|in:Regional,Nasional,Internasional',
             'capaian'        => 'sometimes|required|string|max:100',
             'kategori'       => 'sometimes|required|in:Individu,Kelompok',
+            'mewakili_ormawa' => 'sometimes|required|in:ya,tidak',
+            'pelaksanaan' => 'sometimes|nullable|string|max:50',
+            'waktu_kompetisi' => 'sometimes|nullable|date',
+            'tanggal_pengumuman' => 'sometimes|nullable|date',
+            'klaster' => 'sometimes|nullable|string|max:100',
+            'jumlah_negara' => 'sometimes|nullable|integer|min:1',
         ];
     }
 

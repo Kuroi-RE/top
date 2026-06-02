@@ -262,12 +262,18 @@
                 formData.set('nama_template', templateName);
                 formData.set('file', formData.get('dokumen'));
 
+                const token = localStorage.getItem('topkema_api_token');
+                const headers = {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                    },
+                    headers: headers,
                     body: formData,
                     credentials: 'same-origin',
                 });

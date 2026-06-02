@@ -323,12 +323,16 @@
 
         async function deleteTemplate(templateId) {
             const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const token = localStorage.getItem('topkema_api_token');
             const headers = {
                 'Accept': 'application/json',
                 'X-Requested-With': 'XMLHttpRequest',
             };
             if (csrfToken) {
                 headers['X-CSRF-TOKEN'] = csrfToken;
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
             }
 
             const response = await fetch(`/api/v1/template/${templateId}`, {
@@ -352,8 +356,14 @@
 
         async function loadTemplates() {
             try {
+                const token = localStorage.getItem('topkema_api_token');
+                const headers = { 'Accept': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
                 const response = await fetch('/api/v1/template?per_page=100', {
-                    headers: { 'Accept': 'application/json' },
+                    headers: headers,
                     credentials: 'same-origin',
                 });
 

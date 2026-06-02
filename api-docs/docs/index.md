@@ -11,10 +11,10 @@ REST API lengkap untuk Telkom University Purwokerto menggunakan Laravel 12 denga
 - [Role Hierarchy](#role-hierarchy)
 - [Setup Instalasi](#setup-instalasi)
 - [Konfigurasi Database](#konfigurasi-database)
-- [Authentication](#authentication)
+- [DPMBEM Role & Monitoring Flow (dpmbem.md)](dpmbem.md)
+- [Authentication](authentication.md)
 - [API Endpoints](#api-endpoints)
-- [Error Handling](#error-handling)
-- [Testing Endpoints](#testing-endpoints)
+- [Error Handling](error-handling.md)
 
 ---
 

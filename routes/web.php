@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 Route::get("/", function () {
-    $publikasis = \App\Models\PublikasiKegiatan::where('status', 'Disetujui')
+    $publikasis = \App\Models\PublikasiKegiatan::where('status', 'Approved')
         ->orderBy('created_at', 'desc')
         ->get();
     return view("landing", compact('publikasis'));
@@ -22,10 +22,12 @@ Route::get("/home", function () {
         // Redirect logic based on role
         if ($user->isAdmin() || $user->isSuperAdmin()) {
             $redirectRoute = 'admin.beranda_ormawa';
+        } elseif ($user->isDpmbem()) {
+            $redirectRoute = 'admin.beranda_dpmbem';
         } elseif ($user->isMahasiswa()) {
             $redirectRoute = 'organisasi.beranda_mahasiswa';
         } else {
-            // Default for DPMBEM, Ormawa Institusi, Ormawa Prodi, etc.
+            // Default for Ormawa Institusi, Ormawa Prodi, etc.
             $redirectRoute = 'organisasi.index';
         }
         
@@ -123,7 +125,7 @@ Route::middleware("guest")->group(function () {
             'email' => $validated['email'],
             'password' => $validated['password'],
             'role' => 'Mahasiswa',
-            'is_active' => true,
+            'is_active' => false,
         ]);
 
         try {
@@ -184,16 +186,14 @@ Route::middleware("guest")->group(function () {
             $redirectRoute = 'organisasi.index';
         }
 
-        try {
-              Log::info('Login: about to send 2FA to ' . $user->email);
-              $sendTwoFactorCode($user, $request, 'login', $redirectRoute);
-              Log::info('Login: sendTwoFactorCode returned for ' . $user->email);
-        } catch (\Throwable $e) {
-            Log::warning('Unable to send login 2FA code: ' . $e->getMessage());
-            return back()->withErrors(['username' => $e->getMessage() ?: 'Gagal mengirim kode verifikasi. Silakan coba lagi.'])->withInput($request->only('username'));
-        }
+        Auth::login($user);
+        $request->session()->regenerate();
+        $request->session()->put('dummy_user', array_merge(
+            $user->only(['id_user', 'username', 'nim', 'nama_depan', 'nama_belakang', 'prodi', 'email', 'role', 'is_active']),
+            ['display_name' => trim($user->nama_depan . ' ' . $user->nama_belakang)]
+        ));
 
-        return redirect()->route('twofactor.verify')->with('success', 'Kode verifikasi telah dikirim ke email Anda.');
+        return redirect()->route($redirectRoute)->with('success', 'Login berhasil.');
     })->name("login.post");
 
     Route::get('/verify-2fa', function (Request $request) {
@@ -241,6 +241,10 @@ Route::middleware("guest")->group(function () {
         if (!$user) {
             $request->session()->forget('pending_2fa');
             return redirect()->route('login')->with('error', 'Akun tidak ditemukan. Silakan login ulang.');
+        }
+
+        if (($pending['purpose'] ?? '') === 'register') {
+            $user->update(['is_active' => true]);
         }
 
         Auth::login($user);
@@ -299,6 +303,44 @@ Route::post("/logout", function (Request $request) {
 
 Route::get("/logout", fn() => redirect()->route("login"));
 
+// ── API Token Generator (Web Session → Sanctum Token) ────────────────────────
+// Memungkinkan JavaScript di halaman Blade mendapatkan Sanctum token
+// berdasarkan session web yang sudah aktif.
+Route::get('/api/token', function (Request $request) {
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthenticated'], 401);
+    }
+
+    $user = Auth::user();
+
+    // Cari token yang sudah ada dan masih aktif, atau buat baru
+    $existingToken = $user->tokens()
+        ->where('name', 'web-session-token')
+        ->latest()
+        ->first();
+
+    if ($existingToken) {
+        // Token Sanctum sudah ada — kembalikan plaintext token-nya tidak bisa,
+        // jadi kita hapus dan buat baru
+        $existingToken->delete();
+    }
+
+    $token = $user->createToken('web-session-token', ['*'])->plainTextToken;
+
+    return response()->json([
+        'token' => $token,
+        'user'  => [
+            'id'         => $user->id_user,
+            'username'   => $user->username,
+            'nama_depan' => $user->nama_depan,
+            'nama_belakang' => $user->nama_belakang,
+            'email'      => $user->email,
+            'role'       => $user->role,
+            'is_active'  => $user->is_active,
+        ],
+    ]);
+})->middleware('auth')->name('api.token');
+
 // ── Admin ────────────────────────────────────────────────────────────────────
 Route::middleware(['auth'])->prefix('admin')->group(function () {
 
@@ -314,10 +356,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             try {
                 $totalProposal = \App\Models\ProposalKegiatan::count();
                 $totalDiajukan = \App\Models\ProposalKegiatan::sum('besar_ajuan');
-                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Disetujui')->sum('anggaran_disetujui');
+                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
                 $totalLpj = \App\Models\LpjKegiatan::count();
-                $lpjDisetujui = \App\Models\LpjKegiatan::where('status_lpj', 'Disetujui')->count();
-                $lpjRevisi = \App\Models\LpjKegiatan::where('status_lpj', 'Revisi')->count();
+                $lpjDisetujui = \App\Models\LpjKegiatan::where('status_lpj', 'Approved')->count();
+                $lpjRevisi = \App\Models\LpjKegiatan::where('status_lpj', 'Revision')->count();
 
                 $proposals = \App\Models\ProposalKegiatan::with('user')
                     ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
@@ -346,10 +388,10 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             try {
                 $totalProposal  = \App\Models\ProposalKegiatan::count();
                 $totalDiajukan  = \App\Models\ProposalKegiatan::sum('besar_ajuan');
-                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Disetujui')->sum('anggaran_disetujui');
+                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
                 $totalLpj       = \App\Models\LpjKegiatan::count();
-                $lpjDisetujui   = \App\Models\LpjKegiatan::where('status_lpj', 'Disetujui')->count();
-                $lpjRevisi      = \App\Models\LpjKegiatan::where('status_lpj', 'Revisi')->count();
+                $lpjDisetujui   = \App\Models\LpjKegiatan::where('status_lpj', 'Approved')->count();
+                $lpjRevisi      = \App\Models\LpjKegiatan::where('status_lpj', 'Revision')->count();
 
                 $proposals = \App\Models\ProposalKegiatan::with('user')
                     ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
@@ -374,6 +416,116 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             $pdf = Pdf::loadView("admin.monitoring_anggaran_export_pdf", compact("summary", "proposals"));
             return $pdf->download("monitoring_anggaran_" . now()->format('YmdHis') . ".pdf");
         })->name("admin.monitoring_anggaran.export_pdf");
+
+        // DPMBEM dashboard
+        Route::get("/beranda-dpmbem", function () {
+            try {
+                $api = \App\Services\ApiService::getClient();
+                
+                // Fetch proposals
+                $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                $proposals = [];
+                if ($proposalResponse->successful()) {
+                    $proposals = $proposalResponse->json('data') ?? [];
+                }
+
+                // Filter proposals of category 'Ormawa'
+                $proposals = collect($proposals)->filter(function ($p) {
+                    return ($p['category'] ?? 'Ormawa') === 'Ormawa';
+                })->values();
+
+                $total = count($proposals);
+
+                // Fetch LPJs
+                $lpjResponse = $api->get('/lpj');
+                $lpjs = [];
+                $lpjCount = 0;
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                    $lpjCount = count($lpjs);
+                }
+
+                $lpjByProposalId = [];
+                foreach ($lpjs as $lpj) {
+                    $lpjByProposalId[$lpj['id_proposal']] = $lpj;
+                }
+
+                // Fetch publications
+                $publikasiResponse = $api->get('/publikasi');
+                $publikasiCount = 0;
+                if ($publikasiResponse->successful()) {
+                    $publikasiCount = count($publikasiResponse->json('data') ?? []);
+                }
+
+                $statusMap = [
+                    'Pending' => 'Menunggu',
+                    'Revision' => 'Revisi',
+                    'Approved' => 'Disetujui',
+                    'Rejected' => 'Ditolak',
+                    'Cek LPJ' => 'Cek LPJ',
+                    'Revisi LPJ' => 'Revisi LPJ',
+                    'Selesai' => 'Selesai',
+                ];
+
+                // Collection level filters from request query parameters
+                if (request('jenis_ormawa')) {
+                    $proposals = $proposals->filter(function ($p) {
+                        return strtolower($p['user']['jenis_organisasi'] ?? '') === strtolower(request('jenis_ormawa'));
+                    });
+                }
+
+                if (request('nama_ormawa')) {
+                    $q = strtolower(request('nama_ormawa'));
+                    $proposals = $proposals->filter(function ($p) use ($q) {
+                        return str_contains(strtolower($p['user']['nama_belakang'] ?? $p['user']['username'] ?? ''), $q);
+                    });
+                }
+
+                // Map proposals to $activities structure for the view
+                $activities = $proposals->take(10)->map(function ($p) use ($statusMap, $lpjByProposalId) {
+                    $rawStatus = $p['status'] ?? '';
+                    $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                    $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
+
+                    // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                        $mappedStatus = 'Cek LPJ';
+                    }
+
+                    $formattedDate = isset($p['waktu_kegiatan']) 
+                        ? \Carbon\Carbon::parse($p['waktu_kegiatan'])->format('d/m/Y') 
+                        : '-';
+
+                    return [
+                        'tw' => $p['ajuan_triwulan'] ?? '-',
+                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
+                        'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
+                        'resiko' => $p['risiko_proposal'] ?? '-',
+                        'waktu' => $formattedDate,
+                        'ajuan' => 'Rp ' . number_format((float) ($p['besar_ajuan'] ?? 0), 0, ',', '.'),
+                        'anggaran' => 'Rp ' . number_format((float) ($p['anggaran_disetujui'] ?? 0), 0, ',', '.'),
+                        'status' => $mappedStatus,
+                        'id' => $p['id_proposal'],
+                        'lpj_keu' => $p['file_lpj_keuangan'] ?? null,
+                        'lpj_keg' => $lpj ? $lpj['file_lpj'] : null,
+                    ];
+                });
+
+            } catch (\Throwable $e) {
+                $total = $lpjCount = $publikasiCount = 0;
+                $activities = collect();
+                \Log::error('API Error in DPMBEM dashboard: ' . $e->getMessage());
+            }
+
+            return view("admin.beranda_dpmbem", compact('total', 'lpjCount', 'publikasiCount', 'activities'));
+        })->name("admin.beranda_dpmbem");
+
+        // Detail Kegiatan - moved so DPMBEM also has access to view details of a proposal/activity
+        Route::get("/detail_kegiatan/{id}", function ($id) {
+            $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
+            return view("organisasi.show", compact("proposal"));
+        })->name("admin.detail_kegiatan");
     });
 
     // All other admin routes allow only Admin and Super Admin
@@ -385,42 +537,52 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         return $next($request);
     }]], function () {
         Route::get("/form_verifikasi/{id}", function ($id) {
-            $proposal = \App\Models\ProposalKegiatan::with('user')->findOrFail($id);
+            $proposal = \App\Models\ProposalKegiatan::with('user')->find($id);
+            if (!$proposal) {
+                $proposal = \App\Models\ProposalPrestasiMahasiswa::with('user')->findOrFail($id);
+            }
             return view("admin.form_verifikasi", compact("proposal"));
         })->name("admin.form_verifikasi");
 
-        Route::get("/detail_kegiatan/{id}", function ($id) {
-            $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
-            return view("organisasi.show", compact("proposal"));
-        })->name("admin.detail_kegiatan");
-
         Route::post("/form_verifikasi/{id}", function (Illuminate\Http\Request $request, $id) {
-            $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
+            $proposal = \App\Models\ProposalKegiatan::with('lpj')->find($id);
+            $isStudentProposal = false;
+            if (!$proposal) {
+                $proposal = \App\Models\ProposalPrestasiMahasiswa::with('lpj')->findOrFail($id);
+                $isStudentProposal = true;
+            }
             
             // Determine which phase we are in
             $lpj = $proposal->lpj->first();
-            $isLpjPhase = ($proposal->status == 'Disetujui' || $proposal->status == 'Selesai' || $proposal->status == 'Cek LPJ') && $lpj;
+            $isLpjPhase = ($proposal->status == 'Disetujui' || $proposal->status == 'Approved' || $proposal->status == 'Selesai' || $proposal->status == 'Cek LPJ' || $proposal->status == 'Revisi LPJ') && $lpj;
 
             if ($isLpjPhase) {
                 // Handling LPJ Verification
                 if ($request->status == 'Revisi') {
                     $lpj->update([
-                        'status_lpj' => 'Revisi',
+                        'status_lpj' => 'Revision',
                         'catatan_admin' => $request->revisi
                     ]);
                     $proposal->update(['status' => 'Revisi LPJ']);
                 } elseif ($request->status == 'Selesai') {
                     $lpj->update([
-                        'status_lpj' => 'Disetujui',
+                        'status_lpj' => 'Approved',
                         'catatan_admin' => null
                     ]);
                     $proposal->update(['status' => 'Selesai']);
                 }
             } else {
                 // Handling Proposal Verification
+                $mappedStatus = match($request->status) {
+                    'Disetujui' => 'Approved',
+                    'Revisi' => 'Revision',
+                    'Ditolak' => 'Rejected',
+                    default => $request->status,
+                };
+
                 $updateData = [
                     'anggaran_disetujui' => $request->besar_anggaran,
-                    'status' => $request->status,
+                    'status' => $mappedStatus,
                     'catatan_admin' => $request->revisi,
                 ];
 
@@ -435,6 +597,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 $proposal->update($updateData);
             }
             
+            if ($isStudentProposal) {
+                return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Verifikasi berhasil disimpan.');
+            }
             return redirect()->route('admin.beranda_ormawa')->with('success', 'Verifikasi berhasil disimpan.');
         })->name("admin.form_verifikasi.update");
 
@@ -455,62 +620,203 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::post("/users/{user}/toggle-active", [App\Http\Controllers\Admin\UserController::class, "toggleActive"])->name("admin.users.toggle_active");
 
         Route::get("/beranda_ormawa", function () {
-            return view("admin.beranda_ormawa");
+            try {
+                $api = \App\Services\ApiService::getClient();
+                
+                // Fetch proposals
+                $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                $proposals = [];
+                if ($proposalResponse->successful()) {
+                    $proposals = $proposalResponse->json('data') ?? [];
+                }
+
+                // Filter proposals of category 'Ormawa'
+                $proposals = collect($proposals)->filter(function ($p) {
+                    return ($p['category'] ?? 'Ormawa') === 'Ormawa';
+                })->values();
+
+                // Collection level filters from request query parameters
+                $jenisOrmawa = request('jenis_ormawa');
+                if ($jenisOrmawa) {
+                    $proposals = collect($proposals)->filter(function ($p) use ($jenisOrmawa) {
+                        $role = strtolower($p['user']['role'] ?? '');
+                        return str_contains($role, strtolower($jenisOrmawa));
+                    })->values();
+                }
+
+                $namaOrmawa = request('nama_ormawa');
+                if ($namaOrmawa) {
+                    $proposals = collect($proposals)->filter(function ($p) use ($namaOrmawa) {
+                        $name = strtolower(($p['user']['nama_depan'] ?? '') . ' ' . ($p['user']['nama_belakang'] ?? '') . ' ' . ($p['user']['username'] ?? ''));
+                        return str_contains($name, strtolower($namaOrmawa));
+                    })->values();
+                }
+
+                $total = $proposals->count();
+
+                // Fetch LPJs
+                $lpjResponse = $api->get('/lpj');
+                $lpjs = [];
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                }
+                
+                $lpjByProposalId = [];
+                foreach ($lpjs as $lpj) {
+                    $lpjByProposalId[$lpj['id_proposal']] = $lpj;
+                }
+
+                $lpjCount = collect($lpjs)->filter(function ($lpj) use ($proposals) {
+                    return $proposals->pluck('id_proposal')->contains($lpj['id_proposal']);
+                })->count();
+
+                // Fetch Publications
+                $publikasiResponse = $api->get('/publikasi');
+                $publikasiCount = 0;
+                if ($publikasiResponse->successful()) {
+                    $publikasiCount = count($publikasiResponse->json('data') ?? []);
+                }
+
+                $statusMap = [
+                    'Pending' => 'Menunggu',
+                    'Revision' => 'Revisi',
+                    'Approved' => 'Disetujui',
+                    'Rejected' => 'Ditolak',
+                    'Cek LPJ' => 'Cek LPJ',
+                    'Revisi LPJ' => 'Revisi LPJ',
+                    'Selesai' => 'Selesai',
+                ];
+
+                // Map proposals to $activities structure for the view
+                $activities = $proposals->take(10)->map(function ($p) use ($statusMap, $lpjByProposalId) {
+                    $rawStatus = $p['status'] ?? '';
+                    $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                    $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
+
+                    // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                        $mappedStatus = 'Cek LPJ';
+                    }
+
+                    $formattedDate = isset($p['waktu_kegiatan']) 
+                        ? \Carbon\Carbon::parse($p['waktu_kegiatan'])->format('d/m/Y') 
+                        : '-';
+
+                    return [
+                        'tw' => $p['ajuan_triwulan'] ?? '-',
+                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
+                        'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
+                        'resiko' => $p['risiko_proposal'] ?? '-',
+                        'waktu' => $formattedDate,
+                        'ajuan' => 'Rp ' . number_format((float) ($p['besar_ajuan'] ?? 0), 0, ',', '.'),
+                        'anggaran' => 'Rp ' . number_format((float) ($p['anggaran_disetujui'] ?? 0), 0, ',', '.'),
+                        'status' => $mappedStatus,
+                        'id' => $p['id_proposal'],
+                        'lpj_keu' => $p['file_lpj_keuangan'] ?? null,
+                        'lpj_keg' => $lpj ? $lpj['file_lpj'] : null,
+                    ];
+                });
+
+            } catch (\Throwable $e) {
+                $total = $lpjCount = $publikasiCount = 0;
+                $activities = collect();
+                \Log::error('API Error in admin beranda ormawa: ' . $e->getMessage());
+            }
+
+            return view("admin.beranda_ormawa", compact('total', 'lpjCount', 'publikasiCount', 'activities'));
         })->name("admin.beranda_ormawa");
 
         Route::get("/beranda_ormawa/export-pdf", function () {
-            $activities = [
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Selesai',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Tinggi',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Pencairan',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Acc',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Rendah',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Revisi',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Ajuan baru',
-                ],
-            ];
+            try {
+                $api = \App\Services\ApiService::getClient();
+                
+                // Fetch proposals
+                $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                $proposals = [];
+                if ($proposalResponse->successful()) {
+                    $proposals = $proposalResponse->json('data') ?? [];
+                }
+
+                // Filter proposals of category 'Ormawa'
+                $proposals = collect($proposals)->filter(function ($p) {
+                    return ($p['category'] ?? 'Ormawa') === 'Ormawa';
+                })->values();
+
+                // Collection level filters from request query parameters
+                $jenisOrmawa = request('jenis_ormawa');
+                if ($jenisOrmawa) {
+                    $proposals = collect($proposals)->filter(function ($p) use ($jenisOrmawa) {
+                        $role = strtolower($p['user']['role'] ?? '');
+                        return str_contains($role, strtolower($jenisOrmawa));
+                    })->values();
+                }
+
+                $namaOrmawa = request('nama_ormawa');
+                if ($namaOrmawa) {
+                    $proposals = collect($proposals)->filter(function ($p) use ($namaOrmawa) {
+                        $name = strtolower(($p['user']['nama_depan'] ?? '') . ' ' . ($p['user']['nama_belakang'] ?? '') . ' ' . ($p['user']['username'] ?? ''));
+                        return str_contains($name, strtolower($namaOrmawa));
+                    })->values();
+                }
+
+                // Fetch LPJs
+                $lpjResponse = $api->get('/lpj');
+                $lpjs = [];
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                }
+                
+                $lpjByProposalId = [];
+                foreach ($lpjs as $lpj) {
+                    $lpjByProposalId[$lpj['id_proposal']] = $lpj;
+                }
+
+                $statusMap = [
+                    'Pending' => 'Menunggu',
+                    'Revision' => 'Revisi',
+                    'Approved' => 'Disetujui',
+                    'Rejected' => 'Ditolak',
+                    'Cek LPJ' => 'Cek LPJ',
+                    'Revisi LPJ' => 'Revisi LPJ',
+                    'Selesai' => 'Selesai',
+                ];
+
+                // Map proposals to $activities structure for the view
+                $activities = $proposals->map(function ($p) use ($statusMap, $lpjByProposalId) {
+                    $rawStatus = $p['status'] ?? '';
+                    $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                    $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
+
+                    // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                        $mappedStatus = 'Cek LPJ';
+                    }
+
+                    $formattedDate = isset($p['waktu_kegiatan']) 
+                        ? \Carbon\Carbon::parse($p['waktu_kegiatan'])->format('d F Y') 
+                        : '-';
+
+                    return [
+                        'tw' => $p['ajuan_triwulan'] ?? '-',
+                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
+                        'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
+                        'resiko' => $p['risiko_proposal'] ?? '-',
+                        'waktu' => $formattedDate,
+                        'ajuan' => 'Rp ' . number_format((float) ($p['besar_ajuan'] ?? 0), 0, ',', '.'),
+                        'anggaran' => 'Rp ' . number_format((float) ($p['anggaran_disetujui'] ?? 0), 0, ',', '.'),
+                        'status' => $mappedStatus,
+                    ];
+                })->toArray();
+
+            } catch (\Throwable $e) {
+                $activities = [];
+                \Log::error('API Error in admin beranda ormawa export: ' . $e->getMessage());
+            }
+
+            $jenisOrmawaText = request('jenis_ormawa') ? 'Ormawa ' . ucfirst(request('jenis_ormawa')) : 'Semua Jenis Ormawa';
+            $namaOrmawaText = request('nama_ormawa') ?? 'Semua Ormawa';
 
             $statusStyles = [
                 'Selesai' => 'done',
@@ -520,7 +826,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 'Ajuan baru' => 'new',
             ];
 
-            $pdf = Pdf::loadView("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles"));
+            $pdf = Pdf::loadView("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles", "jenisOrmawaText", "namaOrmawaText"));
             return $pdf->download("beranda_ormawa_" . now()->format('YmdHis') . ".pdf");
         })->name("admin.beranda_ormawa.export_pdf");
 
@@ -529,26 +835,38 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.prestasi_mahasiswa");
 
         Route::get("/prestasi_mahasiswa/export-pdf", function () {
-            $prestasi = [
-                [
-                    'nim' => '23110401',
-                    'nama' => 'Melani',
-                    'prodi' => 'Rekayasa Perangkat Lunak',
-                    'prestasi' => 'Juara 3',
-                    'nama_event' => 'Sevent',
-                    'penyelenggara' => 'HMSE',
-                    'tingkat' => 'Nasional',
-                ],
-                [
-                    'nim' => '23110401',
-                    'nama' => 'Melani',
-                    'prodi' => 'Rekayasa Perangkat Lunak',
-                    'prestasi' => 'Juara 3',
-                    'nama_event' => 'Sevent',
-                    'penyelenggara' => 'HMSE',
-                    'tingkat' => 'Nasional',
-                ],
-            ];
+            $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'tidak');
+
+            if (request('tingkat')) {
+                $query->where('tingkat', request('tingkat'));
+            }
+
+            if (request('search')) {
+                $q = request('search');
+                $query->where(function($sub) use ($q) {
+                    $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
+                        ->orWhere('penyelenggara', 'like', '%' . $q . '%')
+                        ->orWhere('capaian', 'like', '%' . $q . '%')
+                        ->orWhereHas('user', function($u) use ($q) {
+                            $u->where('nama_depan', 'like', '%' . $q . '%')
+                              ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                              ->orWhere('username', 'like', '%' . $q . '%')
+                              ->orWhere('nim', 'like', '%' . $q . '%');
+                        });
+                });
+            }
+
+            $prestasi = $query->latest()->get()->map(function ($item) {
+                return [
+                    'nim' => $item->user->nim ?? $item->user->username ?? '-',
+                    'nama' => trim(($item->user->nama_depan ?? '') . ' ' . ($item->user->nama_belakang ?? '')),
+                    'prodi' => $item->user->prodi ?? '-',
+                    'prestasi' => $item->capaian,
+                    'nama_event' => $item->nama_kompetisi,
+                    'penyelenggara' => $item->penyelenggara,
+                    'tingkat' => $item->tingkat,
+                ];
+            });
 
             $pdf = Pdf::loadView("admin.prestasi_mahasiswa_export_pdf", compact("prestasi"));
             return $pdf->download("prestasi_mahasiswa_" . now()->format('YmdHis') . ".pdf");
@@ -559,18 +877,26 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.detail_prestasi");
 
         Route::post("/prestasi_mahasiswa/{id}/verify", function (Illuminate\Http\Request $request, $id) {
-            $prestasi = \App\Models\Prestasi::findOrFail($id);
-            $prestasi->update([
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->patch("/prestasi/{$id}/verifikasi", [
                 'status_verifikasi' => $request->status,
+                'catatan_admin' => $request->catatan,
             ]);
 
-            return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Status prestasi berhasil diperbarui.');
+            if ($response->successful()) {
+                return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Status prestasi berhasil diperbarui.');
+            }
+            return back()->withErrors(['message' => 'Gagal memverifikasi prestasi via API.']);
         })->name("admin.prestasi_mahasiswa.verify");
 
         Route::delete("/prestasi_mahasiswa/{id}", function ($id) {
-            \App\Models\Prestasi::findOrFail($id)->delete();
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->delete("/prestasi/{$id}");
 
-            return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Data prestasi berhasil dihapus.');
+            if ($response->successful()) {
+                return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Data prestasi berhasil dihapus.');
+            }
+            return back()->withErrors(['message' => 'Gagal menghapus prestasi via API.']);
         })->name("admin.prestasi_mahasiswa.delete");
 
         Route::get("/prestasi_ormawa", function () {
@@ -583,19 +909,30 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.verifikasi_publikasi");
 
         Route::post("/verifikasi-publikasi/{id}", function (Illuminate\Http\Request $request, $id) {
-            $publikasi = \App\Models\PublikasiKegiatan::findOrFail($id);
+            $api = \App\Services\ApiService::getClient();
             
-            $updateData = [
-                'status' => $request->status,
+            $mappedStatus = match($request->status) {
+                'Disetujui' => 'Approved',
+                'Revisi' => 'Revision',
+                'Ditolak' => 'Rejected',
+                default => $request->status,
+            };
+
+            $payload = [
+                'status' => $mappedStatus,
                 'catatan_admin' => $request->catatan,
             ];
-            
-            if ($request->status === 'Disetujui' && $request->has('placement')) {
-                $updateData['placement'] = $request->placement;
+
+            if ($mappedStatus === 'Approved' && $request->has('placement')) {
+                $payload['placement'] = $request->placement;
             }
-            
-            $publikasi->update($updateData);
-            return redirect()->route("admin.verifikasi_publikasi")->with("success", "Status publikasi berhasil diperbarui.");
+
+            $response = $api->patch("/publikasi/{$id}/verifikasi", $payload);
+
+            if ($response->successful()) {
+                return redirect()->route("admin.verifikasi_publikasi")->with("success", "Status publikasi berhasil diperbarui.");
+            }
+            return back()->withErrors(['message' => 'Gagal memverifikasi publikasi via API.']);
         })->name("admin.verifikasi_publikasi.update");
 
         Route::get("/atur-deadline", function () {
@@ -627,58 +964,39 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.atur_deadline.delete");
 
         Route::get("/prestasi_ormawa/export-pdf", function () {
-            $activities = [
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Selesai',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Tinggi',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Pencairan',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Acc',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Rendah',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Revisi',
-                ],
-                [
-                    'tw' => '1',
-                    'ormawa' => 'Manggala',
-                    'nama_kegiatan' => 'Buka Bersama Manggala',
-                    'resiko' => 'Sedang',
-                    'waktu' => '17 Maret 2026',
-                    'ajuan' => 'Rp 200.000',
-                    'anggaran' => 'Rp 200.000',
-                    'status' => 'Ajuan baru',
-                ],
-            ];
+            $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'ya');
+
+            if (request('tingkat')) {
+                $query->where('tingkat', request('tingkat'));
+            }
+
+            if (request('search')) {
+                $q = request('search');
+                $query->where(function($sub) use ($q) {
+                    $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
+                        ->orWhere('penyelenggara', 'like', '%' . $q . '%')
+                        ->orWhere('capaian', 'like', '%' . $q . '%')
+                        ->orWhereHas('user', function($u) use ($q) {
+                            $u->where('nama_depan', 'like', '%' . $q . '%')
+                              ->orWhere('nama_belakang', 'like', '%' . $q . '%')
+                              ->orWhere('username', 'like', '%' . $q . '%')
+                              ->orWhere('nim', 'like', '%' . $q . '%');
+                        });
+                });
+            }
+
+            $activities = $query->latest()->get()->map(function ($item) {
+                return [
+                    'tw' => $item->klaster ? substr($item->klaster, 0, 1) : '1',
+                    'ormawa' => trim(($item->user->nama_depan ?? '') . ' ' . ($item->user->nama_belakang ?? '')),
+                    'nama_kegiatan' => $item->nama_kompetisi,
+                    'resiko' => $item->tingkat,
+                    'waktu' => $item->waktu_kompetisi ? \Carbon\Carbon::parse($item->waktu_kompetisi)->format('d F Y') : '-',
+                    'ajuan' => $item->capaian,
+                    'anggaran' => $item->penyelenggara,
+                    'status' => $item->status_verifikasi == 'Valid' ? 'Selesai' : ($item->status_verifikasi == 'Menunggu' || $item->status_verifikasi == 'Pending' ? 'Ajuan baru' : ($item->status_verifikasi == 'Revisi' ? 'Revisi' : 'Acc')),
+                ];
+            })->toArray();
 
             $statusStyles = [
                 'Selesai' => 'done',
@@ -688,7 +1006,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 'Ajuan baru' => 'new',
             ];
 
-            return view("admin.prestasi_ormawa_export_pdf", compact("activities", "statusStyles"));
+            $pdf = Pdf::loadView("admin.prestasi_ormawa_export_pdf", compact("activities", "statusStyles"));
+            return $pdf->download("prestasi_ormawa_" . now()->format('YmdHis') . ".pdf");
         })->name("admin.prestasi_ormawa.export_pdf");
     });
 });
@@ -699,20 +1018,129 @@ Route::prefix("organisasi")
     ->name("organisasi.")
     ->group(function () {
         Route::get('/', function () {
-            $user = auth()->user();
             try {
-                $total = \App\Models\ProposalKegiatan::where('id_user', $user->id_user)->count();
-                $revisi = \App\Models\ProposalKegiatan::where('id_user', $user->id_user)->where('status', 'Revisi')->count();
-                $disetujui = \App\Models\ProposalKegiatan::where('id_user', $user->id_user)->where('status', 'Disetujui')->count();
-                $ditolak = \App\Models\ProposalKegiatan::where('id_user', $user->id_user)->where('status', 'Ditolak')->count();
-                $deadline = \App\Models\Deadline::where('is_active', true)->latest()->first();
-            } catch (\Throwable $e) {
-                $total = $revisi = $disetujui = $ditolak = 0;
+                $api = \App\Services\ApiService::getClient();
+                
+                // Fetch proposals
+                $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                $proposals = [];
+                $total = 0;
+                $revisi = 0;
+                $disetujui = 0;
+                $ditolak = 0;
+                
+                $statusMap = [
+                    'Pending' => 'Menunggu',
+                    'Revision' => 'Revisi',
+                    'Approved' => 'Disetujui',
+                    'Rejected' => 'Ditolak',
+                    'Cek LPJ' => 'Cek LPJ',
+                    'Revisi LPJ' => 'Revisi LPJ',
+                    'Selesai' => 'Selesai',
+                ];
+
+                if ($proposalResponse->successful()) {
+                    $proposals = $proposalResponse->json('data') ?? [];
+                    $total = count($proposals);
+                    foreach ($proposals as $p) {
+                        $rawStatus = $p['status'] ?? '';
+                        $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+                        if ($mappedStatus === 'Revisi') {
+                            $revisi++;
+                        } elseif ($mappedStatus === 'Disetujui') {
+                            $disetujui++;
+                        } elseif ($mappedStatus === 'Ditolak') {
+                            $ditolak++;
+                        }
+                    }
+                }
+
+                // Fetch LPJs to correlate
+                $lpjResponse = $api->get('/lpj');
+                $lpjs = [];
+                $lpjCount = 0;
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                    $lpjCount = count($lpjs);
+                }
+
+                $lpjByProposalId = [];
+                foreach ($lpjs as $lpj) {
+                    $lpjByProposalId[$lpj['id_proposal']] = $lpj;
+                }
+
+                // Fetch publications (using /api/v1/publikasi)
+                $publikasiResponse = $api->get('/publikasi');
+                $publikasiCount = 0;
+                if ($publikasiResponse->successful()) {
+                    $publikasiCount = count($publikasiResponse->json('data') ?? []);
+                }
+
+                // Fetch active deadline
+                $deadlineResponse = $api->get('/deadline');
                 $deadline = null;
+                if ($deadlineResponse->successful()) {
+                    $deadlineData = $deadlineResponse->json('data');
+                    if ($deadlineData) {
+                        $deadline = (object)[
+                            'id' => $deadlineData['id'],
+                            'title' => $deadlineData['title'],
+                            'deadline_at' => isset($deadlineData['deadline_at']) ? \Carbon\Carbon::parse($deadlineData['deadline_at']) : null,
+                        ];
+                    }
+                }
+
+                // Map proposals to $activities structure for the view
+                $activities = collect($proposals)->map(function ($p, $index) use ($statusMap, $lpjByProposalId) {
+                    $rawStatus = $p['status'] ?? '';
+                    $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                    $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
+
+                    // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                        $mappedStatus = 'Cek LPJ';
+                    }
+
+                    $formattedDate = isset($p['waktu_kegiatan']) 
+                        ? \Carbon\Carbon::parse($p['waktu_kegiatan'])->format('d/m/Y') 
+                        : '-';
+
+                    // Parse file_lpj path from url if possible
+                    $lpjKeuanganPath = null;
+                    if (isset($p['file_lpj_keuangan_url'])) {
+                        // Extract relative path from URL (e.g. storage/lpj_keuangan/xyz.pdf -> lpj_keuangan/xyz.pdf)
+                        $parts = explode('/storage/', $p['file_lpj_keuangan_url']);
+                        $lpjKeuanganPath = count($parts) > 1 ? $parts[1] : null;
+                    }
+
+                    return [
+                        'no' => $index + 1,
+                        'tw' => $p['ajuan_triwulan'] ?? '-',
+                        'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
+                        'pelaksanaan' => $formattedDate,
+                        'ajuan_dana' => 'Rp ' . number_format((float) ($p['besar_ajuan'] ?? 0), 0, ',', '.'),
+                        'anggaran' => 'Rp ' . number_format((float) ($p['anggaran_disetujui'] ?? 0), 0, ',', '.'),
+                        'status' => $mappedStatus,
+                        'lpj_keuangan' => $lpjKeuanganPath,
+                        'lpj_kegiatan_file' => $lpj ? (object)[
+                            'file_lpj' => $lpj['file_lpj']
+                        ] : null,
+                        'lpj_kegiatan_status' => $lpj ? ($statusMap[$lpj['status_lpj']] ?? $lpj['status_lpj']) : null,
+                        'lpj_kegiatan_notes' => $lpj['catatan_admin'] ?? null,
+                        'catatan_admin' => $p['catatan_admin'] ?? null,
+                        'id' => $p['id_proposal'],
+                    ];
+                });
+
+            } catch (\Throwable $e) {
+                $total = $revisi = $disetujui = $ditolak = $lpjCount = $publikasiCount = 0;
+                $deadline = null;
+                $activities = collect();
                 \Log::warning('Proposal counts or deadline unavailable: ' . $e->getMessage());
             }
 
-            return view('organisasi.index', compact('total', 'revisi', 'disetujui', 'ditolak', 'deadline'));
+            return view('organisasi.index', compact('total', 'revisi', 'disetujui', 'ditolak', 'deadline', 'lpjCount', 'publikasiCount', 'activities'));
         })->name('index');
         Route::get('/beranda-mahasiswa', fn() => view('organisasi.beranda_mahasiswa'))->name('beranda_mahasiswa');
         Route::get('/proposal/export', function () {
@@ -749,33 +1177,116 @@ Route::prefix("organisasi")
         Route::get(
             "/create_lpj",
             function () {
-                $user = auth()->user();
-                $proposals = \App\Models\ProposalKegiatan::with(['lpj'])
-                    ->where('id_user', $user->id_user)
-                    ->whereIn('status', ['Disetujui', 'Selesai'])
-                    ->get()
-                    ->map(function ($p) {
-                        $lpj = $p->lpj->first();
-                        return [
-                            'id' => $p->id_proposal,
-                            'nama_kegiatan' => $p->nama_kegiatan,
-                            'tw' => $p->ajuan_triwulan,
-                            'status' => $p->status,
-                            'lpj_status' => $lpj ? $lpj->status_lpj : 'Belum Upload',
-                            'lpj_file' => $lpj ? $lpj->file_lpj : null,
-                            'lpj_notes' => $lpj ? $lpj->catatan_admin : null,
-                        ];
-                    });
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    
+                    // Fetch proposals
+                    $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                    $proposalsData = [];
+                    if ($proposalResponse->successful()) {
+                        $proposalsData = $proposalResponse->json('data') ?? [];
+                    }
+
+                    // Fetch LPJs
+                    $lpjResponse = $api->get('/lpj');
+                    $lpjs = [];
+                    if ($lpjResponse->successful()) {
+                        $lpjs = $lpjResponse->json('data') ?? [];
+                    }
+
+                    $lpjByProposalId = [];
+                    foreach ($lpjs as $lpj) {
+                        $lpjByProposalId[$lpj['id_proposal']] = $lpj;
+                    }
+
+                    $statusMap = [
+                        'Pending' => 'Menunggu',
+                        'Revision' => 'Revisi',
+                        'Approved' => 'Disetujui',
+                        'Rejected' => 'Ditolak',
+                        'Cek LPJ' => 'Cek LPJ',
+                        'Revisi LPJ' => 'Revisi LPJ',
+                        'Selesai' => 'Selesai',
+                    ];
+
+                    $proposals = collect($proposalsData)
+                        ->filter(function ($p) use ($statusMap) {
+                            $rawStatus = $p['status'] ?? '';
+                            $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+                            return in_array($mappedStatus, ['Disetujui', 'Selesai', 'Cek LPJ', 'Revisi LPJ']);
+                        })
+                        ->map(function ($p) use ($statusMap, $lpjByProposalId) {
+                            $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
+                            $rawStatus = $p['status'] ?? '';
+                            $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                            // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
+                            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                                $mappedStatus = 'Cek LPJ';
+                            }
+
+                            return [
+                                'id' => $p['id_proposal'],
+                                'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
+                                'tw' => $p['ajuan_triwulan'] ?? '-',
+                                'status' => $mappedStatus,
+                                'lpj_status' => $lpj ? ($statusMap[$lpj['status_lpj']] ?? $lpj['status_lpj']) : null,
+                            ];
+                        });
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in lpj index: ' . $e->getMessage());
+                    $proposals = collect();
+                }
+
                 return view("organisasi.lpj_index", compact("proposals"));
-            },
+            }
         )->name("create_lpj");
         Route::get(
             "/publikasi",
             function () {
-                $user = auth()->user();
-                $publikasiItems = \App\Models\PublikasiKegiatan::where('id_user', $user->id_user)
-                    ->orderBy('created_at', 'desc')
-                    ->get();
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->get('/publikasi', ['per_page' => 100]);
+                    $itemsData = [];
+                    if ($response->successful()) {
+                        $itemsData = $response->json('data') ?? [];
+                    }
+
+                    $statusMap = [
+                        'Pending' => 'Menunggu',
+                        'Revision' => 'Revisi',
+                        'Approved' => 'Disetujui',
+                        'Rejected' => 'Ditolak',
+                    ];
+
+                    $publikasiItems = collect($itemsData)->map(function ($p) use ($statusMap) {
+                        $rawStatus = $p['status'] ?? '';
+                        $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+
+                        $posterPath = null;
+                        if (isset($p['poster_url'])) {
+                            $parts = explode('/storage/', $p['poster_url']);
+                            $posterPath = count($parts) > 1 ? $parts[1] : null;
+                        }
+
+                        return new \Illuminate\Support\Fluent([
+                            'id_publikasi' => $p['id_publikasi'],
+                            'judul' => $p['judul'],
+                            'caption' => $p['caption'],
+                            'link' => $p['link'],
+                            'status' => $mappedStatus,
+                            'catatan_admin' => $p['catatan_admin'],
+                            'poster' => $posterPath,
+                            'created_at' => isset($p['created_at']) ? \Carbon\Carbon::parse($p['created_at']) : now(),
+                        ]);
+                    });
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in publikasi list: ' . $e->getMessage());
+                    $publikasiItems = collect();
+                }
+
                 return view("organisasi.publikasi", compact("publikasiItems"));
             }
         )->name("publikasi");
@@ -789,9 +1300,24 @@ Route::prefix("organisasi")
         Route::get(
             "/publikasi/create",
             function () {
-                $weekCount = \App\Models\PublikasiKegiatan::where('id_user', auth()->user()->id_user)
-                    ->where('created_at', '>=', now()->startOfWeek())
-                    ->count();
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->get('/publikasi', ['per_page' => 100]);
+                    $itemsData = [];
+                    if ($response->successful()) {
+                        $itemsData = $response->json('data') ?? [];
+                    }
+
+                    $weekCount = collect($itemsData)->filter(function ($p) {
+                        $createdAt = isset($p['created_at']) ? \Carbon\Carbon::parse($p['created_at']) : null;
+                        return $createdAt && $createdAt->greaterThanOrEqualTo(now()->startOfWeek());
+                    })->count();
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in publikasi quota check: ' . $e->getMessage());
+                    $weekCount = 0;
+                }
+
                 return view("organisasi.publikasi_create", compact("weekCount"));
             }
         )->name("publikasi_create");
@@ -806,23 +1332,33 @@ Route::prefix("organisasi")
                     'poster' => 'required|image|max:5120',
                 ]);
 
-                $filePath = null;
-                if ($request->hasFile('poster')) {
-                    $file = $request->file('poster');
-                    $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                    $fileName = time() . '_' . $originalName;
-                    $filePath = $file->storeAs('posters', $fileName, 'public');
-                }
+                try {
+                    $api = \App\Services\ApiService::getClient();
 
-                \App\Models\PublikasiKegiatan::create([
-                    'id_user' => auth()->user()->id_user,
-                    'judul' => $request->judul,
-                    'ormawa' => $request->ormawa,
-                    'caption' => $request->caption,
-                    'link' => $request->link,
-                    'poster' => $filePath,
-                    'status' => 'Menunggu',
-                ]);
+                    $response = $api->attach(
+                        'poster',
+                        file_get_contents($request->file('poster')->getRealPath()),
+                        $request->file('poster')->getClientOriginalName(),
+                        ['Content-Type' => $request->file('poster')->getMimeType()]
+                    )->post('/publikasi', [
+                        'judul' => $request->judul,
+                        'ormawa' => $request->ormawa,
+                        'caption' => $request->caption,
+                        'link' => $request->link,
+                    ]);
+
+                    if ($response->status() === 422) {
+                        return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')])->withInput();
+                    }
+
+                    if (!$response->successful()) {
+                        return back()->withErrors(['error' => $response->json('message') ?? 'Gagal membuat publikasi via API'])->withInput();
+                    }
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in publikasi store: ' . $e->getMessage());
+                    return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()])->withInput();
+                }
 
                 return redirect()
                     ->route("organisasi.publikasi")
@@ -831,18 +1367,41 @@ Route::prefix("organisasi")
         );
 
         Route::get("/publikasi/{id}/edit", function ($id) {
-            $publikasi = \App\Models\PublikasiKegiatan::findOrFail($id);
-            if ($publikasi->id_user !== auth()->user()->id_user) {
-                abort(403);
+            try {
+                $api = \App\Services\ApiService::getClient();
+                $response = $api->get("/publikasi/{$id}");
+                
+                if (!$response->successful()) {
+                    abort(404, 'Publikasi tidak ditemukan');
+                }
+                
+                $p = $response->json('data') ?? [];
+
+                $posterPath = null;
+                if (isset($p['poster_url'])) {
+                    $parts = explode('/storage/', $p['poster_url']);
+                    $posterPath = count($parts) > 1 ? $parts[1] : null;
+                }
+
+                $publikasi = new \Illuminate\Support\Fluent([
+                    'id_publikasi' => $p['id_publikasi'],
+                    'judul' => $p['judul'],
+                    'ormawa' => $p['ormawa'],
+                    'caption' => $p['caption'],
+                    'link' => $p['link'],
+                    'status' => $p['status'],
+                    'poster' => $posterPath,
+                ]);
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in publikasi edit: ' . $e->getMessage());
+                abort(500, 'Gagal mengambil data dari API');
             }
+
             return view("organisasi.publikasi_edit", compact("publikasi"));
         })->name("publikasi_edit");
 
         Route::post("/publikasi/{id}/edit", function (Illuminate\Http\Request $request, $id) {
-            $publikasi = \App\Models\PublikasiKegiatan::findOrFail($id);
-            if ($publikasi->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
             $request->validate([
                 'judul' => 'required|string|max:255',
                 'ormawa' => 'required|string|max:255',
@@ -851,26 +1410,45 @@ Route::prefix("organisasi")
                 'poster' => 'nullable|image|max:5120',
             ]);
 
-            $data = [
-                'judul' => $request->judul,
-                'ormawa' => $request->ormawa,
-                'caption' => $request->caption,
-                'link' => $request->link,
-                'status' => 'Menunggu',
-            ];
+            try {
+                $api = \App\Services\ApiService::getClient();
 
-            if ($request->hasFile('poster')) {
-                if ($publikasi->poster) {
-                    Illuminate\Support\Facades\Storage::disk('public')->delete($publikasi->poster);
+                $params = [
+                    '_method' => 'PUT',
+                    'judul' => $request->judul,
+                    'ormawa' => $request->ormawa,
+                    'caption' => $request->caption,
+                    'link' => $request->link,
+                ];
+
+                if ($request->hasFile('poster')) {
+                    $response = $api->attach(
+                        'poster',
+                        file_get_contents($request->file('poster')->getRealPath()),
+                        $request->file('poster')->getClientOriginalName(),
+                        ['Content-Type' => $request->file('poster')->getMimeType()]
+                    )->post("/publikasi/{$id}", $params);
+                } else {
+                    $response = $api->put("/publikasi/{$id}", [
+                        'judul' => $request->judul,
+                        'ormawa' => $request->ormawa,
+                        'caption' => $request->caption,
+                        'link' => $request->link,
+                    ]);
                 }
-                $file = $request->file('poster');
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $fileName = time() . '_' . $originalName;
-                $filePath = $file->storeAs('posters', $fileName, 'public');
-                $data['poster'] = $filePath;
-            }
 
-            $publikasi->update($data);
+                if ($response->status() === 422) {
+                    return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')])->withInput();
+                }
+
+                if (!$response->successful()) {
+                    return back()->withErrors(['error' => $response->json('message') ?? 'Gagal memperbarui publikasi via API'])->withInput();
+                }
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in publikasi update: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()])->withInput();
+            }
 
             return redirect()
                 ->route("organisasi.publikasi")
@@ -878,14 +1456,19 @@ Route::prefix("organisasi")
         })->name("publikasi_update");
 
         Route::delete("/publikasi/{id}", function ($id) {
-            $publikasi = \App\Models\PublikasiKegiatan::findOrFail($id);
-            if ($publikasi->id_user !== auth()->user()->id_user) {
-                abort(403);
+            try {
+                $api = \App\Services\ApiService::getClient();
+                $response = $api->delete("/publikasi/{$id}");
+
+                if (!$response->successful()) {
+                    return back()->withErrors(['error' => $response->json('message') ?? 'Gagal menghapus publikasi via API']);
+                }
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in publikasi delete: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
             }
-            if ($publikasi->poster) {
-                Illuminate\Support\Facades\Storage::disk('public')->delete($publikasi->poster);
-            }
-            $publikasi->delete();
+
             return redirect()
                 ->route("organisasi.publikasi")
                 ->with("success", "Publikasi berhasil dihapus.");
@@ -898,8 +1481,6 @@ Route::prefix("organisasi")
         Route::post(
             "/",
             function (Illuminate\Http\Request $request) {
-                $user = auth()->user();
-
                 $request->validate([
                     'ajuan_tw' => 'required|string',
                     'resiko_proposal' => 'required|string',
@@ -913,42 +1494,42 @@ Route::prefix("organisasi")
                     'nama_rekening' => 'required|string',
                     'honor_pelatih' => 'required|string',
                     'proposal' => 'required|file|mimes:pdf|max:10240',
-                    'category' => 'nullable|string',
                 ]);
 
-                $filePath = null;
-                if ($request->hasFile('proposal')) {
-                    $file = $request->file('proposal');
-                    $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                    $fileName = time() . '_' . $originalName;
-                    $filePath = $file->storeAs('proposals', $fileName, 'public');
-                }
+                try {
+                    $api = \App\Services\ApiService::getClient();
 
-                $modelClass = \App\Models\ProposalKegiatan::class;
-                
-                if ($user->isMahasiswa()) {
-                    $modelClass = \App\Models\ProposalPrestasiMahasiswa::class;
-                } elseif ($request->category === 'Prestasi') {
-                    $modelClass = \App\Models\ProposalPrestasiOrmawa::class;
-                }
+                    $response = $api->attach(
+                        'file',
+                        file_get_contents($request->file('proposal')->getRealPath()),
+                        $request->file('proposal')->getClientOriginalName(),
+                        ['Content-Type' => 'application/pdf']
+                    )->post('/proposal', [
+                        'ajuan_triwulan' => $request->ajuan_tw,
+                        'risiko_proposal' => $request->resiko_proposal,
+                        'no_telepon' => $request->no_pic,
+                        'nama_kegiatan' => $request->nama_kegiatan,
+                        'waktu_kegiatan' => $request->mulai_kegiatan,
+                        'tempat_kegiatan' => $request->tempat_kegiatan,
+                        'besar_ajuan' => $request->besar_ajuan,
+                        'nomor_rekening' => $request->nomor_rekening,
+                        'nama_rekening' => $request->nama_rekening,
+                        'nama_bank' => $request->nama_bank,
+                        'honor_pelatih' => $request->honor_pelatih,
+                    ]);
 
-                $modelClass::create([
-                    'id_user' => $user->id_user,
-                    'ajuan_triwulan' => $request->ajuan_tw,
-                    'risiko_proposal' => $request->resiko_proposal,
-                    'no_telepon' => $request->no_pic,
-                    'nama_kegiatan' => $request->nama_kegiatan,
-                    'waktu_kegiatan' => $request->mulai_kegiatan,
-                    'tempat_kegiatan' => $request->tempat_kegiatan,
-                    'besar_ajuan' => $request->besar_ajuan,
-                    'nomor_rekening' => $request->nomor_rekening,
-                    'nama_bank' => $request->nama_bank,
-                    'nama_rekening' => $request->nama_rekening,
-                    'honor_pelatih' => $request->honor_pelatih,
-                    'file' => $filePath,
-                    'status' => 'Menunggu',
-                    'category' => $request->category ?? ($user->isMahasiswa() ? 'Prestasi' : 'Ormawa'),
-                ]);
+                    if ($response->status() === 422) {
+                        return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')])->withInput();
+                    }
+
+                    if (!$response->successful()) {
+                        return back()->withErrors(['error' => $response->json('message') ?? 'Gagal menyimpan proposal via API'])->withInput();
+                    }
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in proposal store: ' . $e->getMessage());
+                    return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()])->withInput();
+                }
 
                 return redirect()
                     ->route("organisasi.index")
@@ -958,44 +1539,140 @@ Route::prefix("organisasi")
         Route::get(
             "/{id}",
             function ($id) {
-                $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->get("/proposal/{$id}");
+                    
+                    if (!$response->successful()) {
+                        abort(404, 'Proposal tidak ditemukan');
+                    }
+                    
+                    $proposalData = $response->json('data') ?? [];
+                    
+                    // Fetch LPJ to correlate
+                    $lpjResponse = $api->get('/lpj');
+                    $lpjKeg = null;
+                    if ($lpjResponse->successful()) {
+                        $lpjs = $lpjResponse->json('data') ?? [];
+                        foreach ($lpjs as $lpj) {
+                            if ((int)$lpj['id_proposal'] === (int)$id) {
+                                $lpjKeg = (object)[
+                                    'file_lpj' => $lpj['file_lpj']
+                                ];
+                                break;
+                            }
+                        }
+                    }
+
+                    // Extract relative path from file_lpj_keuangan_url if present
+                    $lpjKeuanganPath = null;
+                    if (isset($proposalData['file_lpj_keuangan_url'])) {
+                        $parts = explode('/storage/', $proposalData['file_lpj_keuangan_url']);
+                        $lpjKeuanganPath = count($parts) > 1 ? $parts[1] : null;
+                    }
+
+                    // Map proposal data to an object so it behaves exactly like an Eloquent model
+                    $proposal = (object)[
+                        'id_proposal' => $proposalData['id_proposal'],
+                        'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
+                        'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
+                        'waktu_kegiatan' => $proposalData['waktu_kegiatan'] ?? null,
+                        'risiko_proposal' => $proposalData['risiko_proposal'] ?? '-',
+                        'besar_ajuan' => (float)($proposalData['besar_ajuan'] ?? 0),
+                        'anggaran_disetujui' => isset($proposalData['anggaran_disetujui']) ? (float)$proposalData['anggaran_disetujui'] : null,
+                        'file' => $proposalData['file'] ?? null,
+                        'file_lpj_keuangan' => $lpjKeuanganPath,
+                        'lpj' => collect($lpjKeg ? [$lpjKeg] : [])
+                    ];
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in proposal detail: ' . $e->getMessage());
+                    abort(500, 'Gagal mengambil data detail proposal dari API: ' . $e->getMessage());
+                }
+
                 return view("organisasi.show", compact("proposal"));
             },
         )->name("show");
         Route::get(
             "/{id}/edit",
             function ($id) {
-                $proposal = \App\Models\ProposalKegiatan::findOrFail($id);
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->get("/proposal/{$id}");
+                    
+                    if (!$response->successful()) {
+                        abort(404, 'Proposal tidak ditemukan');
+                    }
+                    
+                    $proposalData = $response->json('data') ?? [];
+                    
+                    $proposal = (object)[
+                        'id_proposal' => $proposalData['id_proposal'],
+                        'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
+                        'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
+                        'waktu_kegiatan' => $proposalData['waktu_kegiatan'] ?? null,
+                        'risiko_proposal' => $proposalData['risiko_proposal'] ?? '-',
+                        'besar_ajuan' => (float)($proposalData['besar_ajuan'] ?? 0),
+                        'honor_pelatih' => $proposalData['honor_pelatih'] ?? 'Tidak',
+                        'catatan_admin' => $proposalData['catatan_admin'] ?? null,
+                        'file' => $proposalData['file'] ?? null,
+                        'category' => $proposalData['category'] ?? 'Ormawa',
+                    ];
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in proposal edit: ' . $e->getMessage());
+                    abort(500, 'Gagal mengambil data proposal dari API: ' . $e->getMessage());
+                }
+
                 return view("organisasi.revisi", compact("proposal"));
             },
         )->name("edit");
         Route::put(
             "/{id}",
             function (Illuminate\Http\Request $request, $id) {
-                // Try to find the proposal in all possible tables
-                $proposal = \App\Models\ProposalPrestasiMahasiswa::find($id) 
-                         ?? \App\Models\ProposalPrestasiOrmawa::find($id) 
-                         ?? \App\Models\ProposalKegiatan::findOrFail($id);
-                
-                $data = [
-                    'ajuan_triwulan' => $request->ajuan_tw,
-                    'risiko_proposal' => $request->resiko_proposal,
-                    'nama_kegiatan' => $request->nama_kegiatan,
-                    'waktu_kegiatan' => $request->waktu_kegiatan,
-                    'besar_ajuan' => $request->besar_ajuan,
-                    'honor_pelatih' => $request->honor_pelatih,
-                    'status' => 'Menunggu', // Reset status to waiting after revision
-                ];
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    
+                    // If file is uploaded, attach it and do method spoofing POST with _method=PUT
+                    if ($request->hasFile('proposal')) {
+                        $response = $api->attach(
+                            'file',
+                            file_get_contents($request->file('proposal')->getRealPath()),
+                            $request->file('proposal')->getClientOriginalName(),
+                            ['Content-Type' => 'application/pdf']
+                        )->post("/proposal/{$id}", [
+                            '_method' => 'PUT',
+                            'ajuan_triwulan' => $request->ajuan_tw,
+                            'risiko_proposal' => $request->resiko_proposal,
+                            'nama_kegiatan' => $request->nama_kegiatan,
+                            'waktu_kegiatan' => $request->waktu_kegiatan,
+                            'besar_ajuan' => $request->besar_ajuan,
+                            'honor_pelatih' => $request->honor_pelatih,
+                        ]);
+                    } else {
+                        // If no file, do a direct PUT request
+                        $response = $api->put("/proposal/{$id}", [
+                            'ajuan_triwulan' => $request->ajuan_tw,
+                            'risiko_proposal' => $request->resiko_proposal,
+                            'nama_kegiatan' => $request->nama_kegiatan,
+                            'waktu_kegiatan' => $request->waktu_kegiatan,
+                            'besar_ajuan' => $request->besar_ajuan,
+                            'honor_pelatih' => $request->honor_pelatih,
+                        ]);
+                    }
 
-                if ($request->hasFile('proposal')) {
-                    $file = $request->file('proposal');
-                    $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                    $fileName = time() . '_' . $originalName;
-                    $filePath = $file->storeAs('proposals', $fileName, 'public');
-                    $data['file'] = $filePath;
+                    if ($response->status() === 422) {
+                        return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')])->withInput();
+                    }
+
+                    if (!$response->successful()) {
+                        return back()->withErrors(['error' => $response->json('message') ?? 'Gagal memperbarui proposal via API'])->withInput();
+                    }
+
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in proposal update: ' . $e->getMessage());
+                    return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()])->withInput();
                 }
-
-                $proposal->update($data);
 
                 return redirect()
                     ->route("organisasi.index")
@@ -1003,70 +1680,152 @@ Route::prefix("organisasi")
             },
         )->name("update");
         Route::get("/{id}/lpj", function ($id) {
-            $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
+            try {
+                $api = \App\Services\ApiService::getClient();
+                $response = $api->get("/proposal/{$id}");
+                
+                if (!$response->successful()) {
+                    abort(404, 'Proposal tidak ditemukan');
+                }
+                
+                $proposalData = $response->json('data') ?? [];
+                
+                $proposal = (object)[
+                    'id_proposal' => $proposalData['id_proposal'],
+                    'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
+                    'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
+                ];
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in GET LPJ route: ' . $e->getMessage());
+                abort(500, 'Gagal mengambil data dari API');
+            }
+
             return view("organisasi.create_lpj", compact("proposal"));
         })->name("lpj");
         Route::post("/{id}/lpj", function (Illuminate\Http\Request $request, $id) {
-            $proposal = \App\Models\ProposalKegiatan::findOrFail($id);
-            if ($request->hasFile('laporan')) {
-                $file = $request->file('laporan');
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $fileName = time() . '_' . $originalName;
-                $filePath = $file->storeAs('lpj_kegiatan', $fileName, 'public');
-                \App\Models\LpjKegiatan::updateOrCreate(
-                    ['id_proposal' => $proposal->id_proposal],
-                    [
-                        'file_lpj' => $filePath,
-                        'status_lpj' => 'Menunggu',
-                        'catatan_admin' => null,
-                        'tanggal_upload' => now(),
-                    ]
-                );
-                $proposal->status = 'Cek LPJ';
-                $proposal->save();
-            }
-            return redirect()->route('organisasi.create_lpj')->with('success', 'LPJ Kegiatan berhasil diupload.');
-        })->name("lpj.store");
-
-        Route::get("/lpj/{id}/revisi", function ($id) {
-            $proposal = \App\Models\ProposalKegiatan::with('lpj')->findOrFail($id);
-            if ($proposal->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
-            return view("organisasi.revisi_lpj", compact("proposal"));
-        })->name("lpj.revisi");
-
-        Route::put("/lpj/{id}/revisi", function (Illuminate\Http\Request $request, $id) {
-            $proposal = \App\Models\ProposalKegiatan::findOrFail($id);
-            if ($proposal->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
             $request->validate([
                 'laporan' => 'required|file|mimes:pdf|max:10240',
             ]);
 
-            $lpj = $proposal->lpj->first();
-            if ($request->hasFile('laporan')) {
-                if ($lpj && $lpj->file_lpj) {
-                    Illuminate\Support\Facades\Storage::disk('public')->delete($lpj->file_lpj);
+            try {
+                $api = \App\Services\ApiService::getClient();
+                
+                $response = $api->attach(
+                    'file_lpj',
+                    file_get_contents($request->file('laporan')->getRealPath()),
+                    $request->file('laporan')->getClientOriginalName(),
+                    ['Content-Type' => 'application/pdf']
+                )->post('/lpj', [
+                    'id_proposal' => $id,
+                    'tanggal_upload' => now()->toDateString(),
+                ]);
+
+                if ($response->status() === 422) {
+                    return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')]);
                 }
-                $file = $request->file('laporan');
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $fileName = time() . '_' . $originalName;
-                $filePath = $file->storeAs('lpj_kegiatan', $fileName, 'public');
 
-                \App\Models\LpjKegiatan::updateOrCreate(
-                    ['id_proposal' => $proposal->id_proposal],
-                    [
-                        'file_lpj' => $filePath,
-                        'status_lpj' => 'Menunggu',
-                        'catatan_admin' => null,
-                        'tanggal_upload' => now(),
-                    ]
-                );
+                if (!$response->successful()) {
+                    return back()->withErrors(['error' => $response->json('message') ?? 'Gagal mengupload LPJ via API']);
+                }
 
-                $proposal->status = 'Cek LPJ';
-                $proposal->save();
+            } catch (\Throwable $e) {
+                \Log::error('API Error in LPJ store: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
+            }
+
+            return redirect()->route('organisasi.create_lpj')->with('success', 'LPJ Kegiatan berhasil diupload.');
+        })->name("lpj.store");
+
+        Route::get("/lpj/{id}/revisi", function ($id) {
+            try {
+                $api = \App\Services\ApiService::getClient();
+                $response = $api->get("/proposal/{$id}");
+                
+                if (!$response->successful()) {
+                    abort(404, 'Proposal tidak ditemukan');
+                }
+                
+                $proposalData = $response->json('data') ?? [];
+
+                // Fetch LPJs
+                $lpjResponse = $api->get('/lpj');
+                $lpjKeg = null;
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                    foreach ($lpjs as $lpj) {
+                        if ((int)$lpj['id_proposal'] === (int)$id) {
+                            $lpjKeg = (object)[
+                                'id_lpj' => $lpj['id_lpj'],
+                                'file_lpj' => $lpj['file_lpj'],
+                                'status_lpj' => $lpj['status_lpj'],
+                                'catatan_admin' => $lpj['catatan_admin'] ?? null,
+                            ];
+                            break;
+                        }
+                    }
+                }
+
+                $proposal = (object)[
+                    'id_proposal' => $proposalData['id_proposal'],
+                    'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
+                    'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
+                    'lpj' => collect($lpjKeg ? [$lpjKeg] : [])
+                ];
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in LPJ revisi view: ' . $e->getMessage());
+                abort(500, 'Gagal mengambil data dari API: ' . $e->getMessage());
+            }
+
+            return view("organisasi.revisi_lpj", compact("proposal"));
+        })->name("lpj.revisi");
+
+        Route::put("/lpj/{id}/revisi", function (Illuminate\Http\Request $request, $id) {
+            $request->validate([
+                'laporan' => 'required|file|mimes:pdf|max:10240',
+            ]);
+
+            try {
+                $api = \App\Services\ApiService::getClient();
+                
+                // Fetch LPJs to find the correct id_lpj
+                $lpjResponse = $api->get('/lpj');
+                $idLpj = null;
+                if ($lpjResponse->successful()) {
+                    $lpjs = $lpjResponse->json('data') ?? [];
+                    foreach ($lpjs as $lpj) {
+                        if ((int)$lpj['id_proposal'] === (int)$id) {
+                            $idLpj = $lpj['id_lpj'];
+                            break;
+                        }
+                    }
+                }
+
+                if (!$idLpj) {
+                    return back()->withErrors(['error' => 'LPJ untuk proposal ini tidak ditemukan.']);
+                }
+
+                $response = $api->attach(
+                    'file_lpj',
+                    file_get_contents($request->file('laporan')->getRealPath()),
+                    $request->file('laporan')->getClientOriginalName(),
+                    ['Content-Type' => 'application/pdf']
+                )->post("/lpj/{$idLpj}/revisi", [
+                    'tanggal_upload' => now()->toDateString(),
+                ]);
+
+                if ($response->status() === 422) {
+                    return back()->withErrors($response->json('errors') ?? ['error' => $response->json('message')]);
+                }
+
+                if (!$response->successful()) {
+                    return back()->withErrors(['error' => $response->json('message') ?? 'Gagal mengupload revisi LPJ via API']);
+                }
+
+            } catch (\Throwable $e) {
+                \Log::error('API Error in LPJ revision update: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
             }
 
             return redirect()->route('organisasi.create_lpj')->with('success', 'Revisi LPJ berhasil dikirim.');
@@ -1074,9 +1833,23 @@ Route::prefix("organisasi")
 
         Route::delete(
             "/{id}",
-            fn() => redirect()
-                ->route("organisasi.index")
-                ->with("success", "Kegiatan berhasil dihapus."),
+            function ($id) {
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->delete("/proposal/{$id}");
+                    
+                    if (!$response->successful()) {
+                        return back()->withErrors(['error' => $response->json('message') ?? 'Gagal menghapus proposal via API']);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::error('API Error in proposal delete: ' . $e->getMessage());
+                    return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
+                }
+
+                return redirect()
+                    ->route("organisasi.index")
+                    ->with("success", "Kegiatan berhasil dihapus.");
+            }
         )->name("destroy");
     });
 
@@ -1087,54 +1860,14 @@ Route::prefix("prestasi")
     ->group(function () {
         Route::get("/", fn() => view("prestasi.index"))->name("index");
         Route::get("/input-proposal", fn() => view("prestasi.input_proposal"))->name("input_proposal");
-        Route::post("/input-proposal", function (Illuminate\Http\Request $request) {
-            $user = auth()->user();
-
-            $request->validate([
-                'nama_kegiatan' => 'required|string|max:255',
-                'tanggal_pelaksanaan' => 'required|date',
-                'total_anggaran' => 'required',
-                'nama_bank' => 'required|string',
-                'nomor_rekening' => 'required|string',
-                'atas_nama_rekening' => 'required|string',
-                'proposal' => 'required|file|mimes:pdf|max:10240',
-            ]);
-
-            $filePath = null;
-            if ($request->hasFile('proposal')) {
-                $file = $request->file('proposal');
-                $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                $fileName = time() . '_' . $originalName;
-                $filePath = $file->storeAs('proposals', $fileName, 'public');
-            }
-
-            // Map UI fields to database columns
-            \App\Models\ProposalKegiatan::create([
-                'id_user' => $user->id_user,
-                'ajuan_triwulan' => 'I', // Default
-                'risiko_proposal' => 'Sedang', // Default
-                'no_telepon' => $request->nomor_whatsapp ?? '-',
-                'nama_kegiatan' => $request->nama_kegiatan,
-                'waktu_kegiatan' => $request->tanggal_pelaksanaan,
-                'tempat_kegiatan' => $request->penyelenggara_event ?? '-',
-                'besar_ajuan' => (float) str_replace(['Rp', '.', ','], '', $request->total_anggaran),
-                'nomor_rekening' => $request->nomor_rekening,
-                'nama_bank' => $request->nama_bank,
-                'nama_rekening' => $request->atas_nama_rekening,
-                'honor_pelatih' => 'Tidak',
-                'file' => $filePath,
-                'status' => 'Menunggu',
-            ]);
-
-            return redirect()->route('prestasi.index')->with('success', 'Proposal berhasil diunggah dan sedang menunggu verifikasi.');
-        })->name("input_proposal.post");
         Route::get("/upload-lpj", fn() => view("prestasi.upload_lpj"))->name("upload_lpj");
         Route::get("/template-dokumen", fn() => view("prestasi.template_dokumen"))->name("template_dokumen");
-        Route::get("/laporan-prestasi/biodata", fn() => view("prestasi.laporan_prestasi.biodata"))->name("laporan_prestasi.biodata");
-        Route::get("/laporan-prestasi/detail-kompetisi", fn() => view("prestasi.laporan_prestasi.detail_kompetisi"))->name("laporan_prestasi.detail_kompetisi");
-        Route::get("/laporan-prestasi/capaian-prestasi", fn() => view("prestasi.laporan_prestasi.capaian_prestasi"))->name("laporan_prestasi.capaian_prestasi");
-        Route::get("/laporan-prestasi/informasi-dosen-pembimbing", fn() => view("prestasi.laporan_prestasi.informasi_dosen_pembimbing"))->name("laporan_prestasi.informasi_dosen_pembimbing");
-        Route::get("/laporan-prestasi/evidance", fn() => view("prestasi.laporan_prestasi.evidance"))->name("laporan_prestasi.evidance");
+        Route::get("/laporan-prestasi", fn() => view("prestasi.laporan_prestasi"))->name("laporan_prestasi");
+        Route::get("/laporan-prestasi/biodata", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.biodata");
+        Route::get("/laporan-prestasi/detail-kompetisi", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.detail_kompetisi");
+        Route::get("/laporan-prestasi/capaian-prestasi", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.capaian_prestasi");
+        Route::get("/laporan-prestasi/informasi-dosen-pembimbing", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.informasi_dosen_pembimbing");
+        Route::get("/laporan-prestasi/evidance", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.evidance");
             Route::get("/kartu-prestasi/{nim}", function (string $nim) {
                 $user = \App\Models\User::where('nim', $nim)->first();
 
@@ -1164,6 +1897,16 @@ Route::prefix("prestasi")
                 ));
             })->name('kartu_prestasi');
 
+        Route::get("/kartu-prestasi/{nim}/download-pdf", function (string $nim) {
+            $controller = app(\App\Http\Controllers\Api\CetakPrestasiController::class);
+            return $controller->cetakKartu(request(), $nim);
+        })->name('kartu_prestasi.download_pdf');
+
+        Route::get("/transkrip-prestasi/download-pdf", function () {
+            $controller = app(\App\Http\Controllers\Api\CetakPrestasiController::class);
+            return $controller->cetakTranskrip(request());
+        })->name('transkrip_prestasi.download_pdf');
+
         Route::get("/transkrip-prestasi", function () {
             $user = auth()->user();
 
@@ -1192,138 +1935,12 @@ Route::prefix("prestasi")
         })->name('transkrip_prestasi');
 
         Route::get("/revisi/{id}", function ($id) {
-            $prestasi = \App\Models\Prestasi::with(['anggota', 'dosen', 'dokumen'])->findOrFail($id);
-            if ($prestasi->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
-            return view("prestasi.revisi", compact("prestasi"));
+            return view("prestasi.revisi", compact("id"));
         })->name("revisi");
-
-        Route::post("/revisi/{id}", function (Illuminate\Http\Request $request, $id) {
-            $prestasi = \App\Models\Prestasi::findOrFail($id);
-            if ($prestasi->id_user !== auth()->user()->id_user) {
-                abort(403);
-            }
-
-            $request->validate([
-                'nama_kompetisi' => 'required|string|max:255',
-                'penyelenggara' => 'required|string|max:255',
-                'tingkat' => 'required|string|in:Internasional,Nasional,Regional',
-                'capaian' => 'required|string',
-                'kategori' => 'required|string|in:Individu,Kelompok',
-            ]);
-
-            // Update basic data
-            $prestasi->update([
-                'nama_kompetisi' => $request->nama_kompetisi,
-                'penyelenggara' => $request->penyelenggara,
-                'tingkat' => $request->tingkat,
-                'capaian' => $request->capaian,
-                'kategori' => $request->kategori,
-                'status_verifikasi' => 'Menunggu',
-            ]);
-
-            // Update Anggota
-            $prestasi->anggota()->delete();
-            if ($request->kategori === 'Kelompok' && $request->has('anggota_nim')) {
-                foreach ($request->anggota_nim as $key => $nim) {
-                    if (!empty($nim)) {
-                        \App\Models\AnggotaPrestasi::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'nim' => $nim,
-                            'nama' => $request->anggota_nama[$key] ?? '',
-                            'prodi' => $request->anggota_prodi[$key] ?? '',
-                        ]);
-                    }
-                }
-            }
-
-            // Update Dosen
-            $prestasi->dosen()->delete();
-            if ($request->has('dosen_nama')) {
-                foreach ($request->dosen_nama as $key => $nama) {
-                    if (!empty($nama)) {
-                        \App\Models\DosenPendamping::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'nama_dosen' => $nama,
-                            'nidn' => $request->dosen_nidn[$key] ?? null,
-                            'nip' => $request->dosen_nip[$key] ?? null,
-                            'prodi' => $request->dosen_prodi[$key] ?? '',
-                        ]);
-                    }
-                }
-            }
-
-            // Update existing documents and add new documents
-            if ($request->has('dokumen_id')) {
-                // Find all existing documents for this prestasi to handle deletions
-                $existingDocIds = $prestasi->dokumen->pluck('id_dokumen')->toArray();
-                $submittedDocIds = $request->dokumen_id;
-                $deletedDocIds = array_diff($existingDocIds, $submittedDocIds);
-
-                // Delete removed docs from storage and database
-                foreach ($deletedDocIds as $delId) {
-                    $delDoc = \App\Models\DokumenPrestasi::find($delId);
-                    if ($delDoc) {
-                        Illuminate\Support\Facades\Storage::disk('public')->delete($delDoc->file);
-                        $delDoc->delete();
-                    }
-                }
-
-                // Update kept docs
-                foreach ($submittedDocIds as $key => $docId) {
-                    $doc = \App\Models\DokumenPrestasi::find($docId);
-                    if ($doc && $doc->id_prestasi == $prestasi->id_prestasi) {
-                        if (isset($request->dokumen_jenis[$docId])) {
-                            $doc->jenis_dokumen = $request->dokumen_jenis[$docId];
-                        }
-                        
-                        // Check if file uploaded for this specific doc ID
-                        if ($request->hasFile('dokumen_file') && isset($request->file('dokumen_file')[$docId])) {
-                            Illuminate\Support\Facades\Storage::disk('public')->delete($doc->file);
-                            $file = $request->file('dokumen_file')[$docId];
-                            $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                            $fileName = time() . '_' . $originalName;
-                            $filePath = $file->storeAs('prestasi', $fileName, 'public');
-                            $doc->file = $filePath;
-                        }
-                        $doc->save();
-                    }
-                }
-            } else {
-                // If no dokumen_id sent, delete all existing docs
-                foreach ($prestasi->dokumen as $delDoc) {
-                    Illuminate\Support\Facades\Storage::disk('public')->delete($delDoc->file);
-                    $delDoc->delete();
-                }
-            }
-
-            // New documents
-            if ($request->has('dokumen_jenis_new')) {
-                foreach ($request->dokumen_jenis_new as $key => $jenis) {
-                    if ($request->hasFile('dokumen_file_new') && isset($request->file('dokumen_file_new')[$key])) {
-                        $file = $request->file('dokumen_file_new')[$key];
-                        $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                        $fileName = time() . '_' . $originalName;
-                        $filePath = $file->storeAs('prestasi', $fileName, 'public');
-
-                        \App\Models\DokumenPrestasi::create([
-                            'id_prestasi' => $prestasi->id_prestasi,
-                            'jenis_dokumen' => $jenis,
-                            'file' => $filePath,
-                        ]);
-                    }
-                }
-            }
-
-            return redirect()->route('prestasi.index')->with('success', 'Revisi prestasi berhasil dikirim.');
-        })->name("submit_revisi");
 
         Route::get(
             "/create",
-            fn() => redirect()
-                ->route("prestasi.index")
-                ->with("error", "Halaman belum tersedia."),
+            fn() => view("prestasi.laporan_prestasi"),
         )->name("create");
         Route::post(
             "/",

@@ -93,7 +93,7 @@
     
     // Check if we are in LPJ verification phase
     $lpj = $p->lpj->first();
-    $isLpjPhase = ($p->status == 'Disetujui' || $p->status == 'Selesai' || $p->status == 'Cek LPJ' || $p->status == 'Revisi LPJ') && $lpj;
+    $isLpjPhase = ($p->status == 'Disetujui' || $p->status == 'Approved' || $p->status == 'Selesai' || $p->status == 'Cek LPJ' || $p->status == 'Revisi LPJ') && $lpj;
 @endphp
 
 <div class="mx-auto max-w-4xl">
@@ -108,6 +108,26 @@
             @csrf
 
             <div class="verify-form text-slate-700">
+                @if($p->user)
+                    @if($p->user->isMahasiswa())
+                        <div class="verify-row bg-slate-50/50 p-4 rounded-2xl border border-slate-100 mb-2">
+                            <p class="verify-label font-bold text-slate-900">Profil Pengaju</p>
+                            <div class="verify-value flex flex-col">
+                                <span class="font-bold text-slate-900 text-base">{{ $p->user->nama_depan }} {{ $p->user->nama_belakang }}</span>
+                                <span class="text-xs text-slate-500 font-medium mt-0.5">NIM: {{ $p->user->nim ?: $p->user->username }} &bull; Program Studi: {{ $p->user->prodi ?? '-' }}</span>
+                            </div>
+                        </div>
+                    @else
+                        <div class="verify-row bg-slate-50/50 p-4 rounded-2xl border border-slate-100 mb-2">
+                            <p class="verify-label font-bold text-slate-900">Organisasi Pengaju</p>
+                            <div class="verify-value flex flex-col">
+                                <span class="font-bold text-slate-900 text-base">{{ $p->user->nama_belakang ?: $p->user->username }}</span>
+                                <span class="text-xs text-slate-500 font-medium mt-0.5">Tipe: {{ ucfirst($p->user->ormawa_type ?? 'Ormawa') }} &bull; PIC: {{ $p->user->nama_depan }}</span>
+                            </div>
+                        </div>
+                    @endif
+                @endif
+
                 <div class="verify-row">
                     <p class="verify-label font-medium">Ajuan TW</p>
                     <p class="verify-value">{{ $p->ajuan_triwulan }}</p>
@@ -173,15 +193,15 @@
                         <p class="verify-label font-medium">Status Verifikasi</p>
                         <div class="verify-value verify-status-wrap">
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Revisi" class="verify-radio" {{ $p->status == 'Revisi' ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Revisi" class="verify-radio" {{ in_array($p->status, ['Revisi', 'Revision']) ? 'checked' : '' }}>
                                 <span>Revisi</span>
                             </label>
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Disetujui" class="verify-radio" {{ $p->status == 'Disetujui' ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Disetujui" class="verify-radio" {{ in_array($p->status, ['Disetujui', 'Approved']) ? 'checked' : '' }}>
                                 <span>Setuju</span>
                             </label>
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Ditolak" class="verify-radio" {{ $p->status == 'Ditolak' ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Ditolak" class="verify-radio" {{ in_array($p->status, ['Ditolak', 'Rejected']) ? 'checked' : '' }}>
                                 <span>Tolak</span>
                             </label>
                         </div>
@@ -227,11 +247,11 @@
                         <p class="verify-label font-medium">Verifikasi Laporan</p>
                         <div class="verify-value verify-status-wrap">
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Revisi" class="verify-radio" {{ $lpj->status_lpj == 'Revisi' ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Revisi" class="verify-radio" {{ in_array($lpj->status_lpj, ['Revisi', 'Revision']) ? 'checked' : '' }}>
                                 <span>Perlu Revisi</span>
                             </label>
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Selesai" class="verify-radio" {{ $p->status == 'Selesai' ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Selesai" class="verify-radio" {{ in_array($p->status, ['Selesai', 'Approved']) ? 'checked' : '' }}>
                                 <span>Setuju (Selesai)</span>
                             </label>
                         </div>

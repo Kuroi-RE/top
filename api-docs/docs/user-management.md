@@ -11,7 +11,9 @@
 **Query Parameters:**
 
 - `role`: Filter by role (Super Admin, Kemahasiswaan, DPMBEM, Ormawa, Mahasiswa)
+- `nim`: Filter directly by user NIM (useful for Account Control)
 - `is_active`: Filter by status (true/false)
+- `search`: Search keyword matching nama_depan, nama_belakang, username, nim, or email
 - `per_page`: Jumlah data per halaman (default: 15)
 
 **Response (Success - 200):**

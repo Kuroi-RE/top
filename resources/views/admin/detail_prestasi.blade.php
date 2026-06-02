@@ -253,11 +253,11 @@
             <button type="button" onclick="openRevisionModal()" class="px-6 py-2.5 rounded-full border border-red-200 bg-red-50 text-red-600 text-sm font-bold hover:bg-red-100 transition shadow-sm">
                 Minta Revisi
             </button>
-            <form action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
+            <form id="form-verify-valid" action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
                 @csrf
                 <input type="hidden" name="status" value="Valid">
-                <button type="submit" class="px-8 py-2.5 rounded-full text-white text-sm font-bold hover:bg-green-700 transition shadow-lg" style="background-color: #16a34a; color: #ffffff; border: none; cursor: pointer;">
-                    Setujui & Verifikasi
+                <button id="btn-verify-valid" type="button" class="px-8 py-2.5 rounded-full text-white text-sm font-bold hover:bg-green-700 transition shadow-lg" style="background-color: #16a34a; color: #ffffff; border: none; cursor: pointer;">
+                    Setujui &amp; Verifikasi
                 </button>
             </form>
             @else
@@ -276,7 +276,7 @@
         <h3 class="text-lg font-bold text-gray-800 mb-2">Catatan Revisi</h3>
         <p class="text-sm text-gray-500 mb-4">Berikan alasan mengapa data ini perlu direvisi oleh mahasiswa.</p>
         
-        <form action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
+        <form id="form-revisi" action="{{ route('admin.prestasi_mahasiswa.verify', $prestasi->id_prestasi) }}" method="POST">
             @csrf
             <input type="hidden" name="status" value="Revisi">
             <textarea name="catatan" rows="4" class="w-full rounded-xl border border-gray-300 p-4 text-sm outline-none focus:border-red-500 focus:ring-2 focus:ring-red-100" placeholder="Contoh: Sertifikat juara tidak terbaca, mohon upload ulang..."></textarea>
@@ -292,6 +292,8 @@
 </div>
 
 <script>
+    const _prestasiId = {{ $prestasi->id_prestasi ?? 'null' }};
+
     function openRevisionModal() {
         document.getElementById('revisionModal').classList.remove('hidden');
         document.getElementById('revisionModal').classList.add('flex');
@@ -299,6 +301,98 @@
     function closeRevisionModal() {
         document.getElementById('revisionModal').classList.add('hidden');
         document.getElementById('revisionModal').classList.remove('flex');
+    }
+
+    // ── API: Verifikasi Prestasi ──────────────────────────────────────────────
+    document.addEventListener('DOMContentLoaded', function () {
+        const token = localStorage.getItem('topkema_api_token');
+
+        // ── Tombol "Setujui & Verifikasi" ─────────────────────────────────────
+        const btnVerify = document.getElementById('btn-verify-valid');
+        if (btnVerify) {
+            btnVerify.addEventListener('click', function (e) {
+                e.preventDefault();
+
+                if (!token || !_prestasiId || !window.axios) {
+                    // fallback ke form submit web
+                    document.getElementById('form-verify-valid')?.submit();
+                    return;
+                }
+
+                btnVerify.disabled = true;
+                btnVerify.textContent = 'Memverifikasi...';
+
+                window.axios.patch(`prestasi/${_prestasiId}/verifikasi`, {
+                    status_verifikasi: 'Valid'
+                })
+                .then(function () {
+                    showAlert('success', 'Prestasi berhasil diverifikasi sebagai Valid!');
+                    setTimeout(function () { window.location.reload(); }, 1500);
+                })
+                .catch(function (err) {
+                    const msg = err?.response?.data?.message || 'Gagal memverifikasi prestasi.';
+                    showAlert('error', msg);
+                    btnVerify.disabled = false;
+                    btnVerify.textContent = 'Setujui & Verifikasi';
+                });
+            });
+        }
+
+        // ── Form "Minta Revisi" ───────────────────────────────────────────────
+        const formRevisi = document.getElementById('form-revisi');
+        if (formRevisi) {
+            formRevisi.addEventListener('submit', function (e) {
+                if (!token || !_prestasiId || !window.axios) {
+                    return; // biarkan form submit web
+                }
+
+                e.preventDefault();
+
+                const catatan = formRevisi.querySelector('[name="catatan"]')?.value || '';
+                const submitBtn = formRevisi.querySelector('[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Mengirim...';
+
+                window.axios.patch(`prestasi/${_prestasiId}/verifikasi`, {
+                    status_verifikasi: 'Revisi',
+                    catatan_admin: catatan,
+                })
+                .then(function () {
+                    closeRevisionModal();
+                    showAlert('success', 'Catatan revisi berhasil dikirimkan ke mahasiswa.');
+                    setTimeout(function () { window.location.reload(); }, 1500);
+                })
+                .catch(function (err) {
+                    const msg = err?.response?.data?.message || 'Gagal mengirimkan revisi.';
+                    showAlert('error', msg);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = originalText;
+                });
+            });
+        }
+    });
+
+    // ── Simple Alert ─────────────────────────────────────────────────────────
+    function showAlert(type, message) {
+        const existing = document.getElementById('verify-toast');
+        if (existing) existing.remove();
+
+        const colors = type === 'success'
+            ? { bg: '#f0fdf4', border: '#bbf7d0', text: '#166534' }
+            : { bg: '#fef2f2', border: '#fecaca', text: '#991b1b' };
+
+        const toast = document.createElement('div');
+        toast.id = 'verify-toast';
+        toast.style.cssText = `
+            position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+            z-index: 9999; background: ${colors.bg}; border: 1px solid ${colors.border};
+            color: ${colors.text}; padding: 14px 24px; border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); font-size: 14px; font-weight: 600;
+        `;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(function () { if (toast.parentNode) toast.remove(); }, 4000);
     }
 </script>
 @endsection

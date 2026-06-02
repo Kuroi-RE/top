@@ -6,11 +6,12 @@
 
 @php
     $currentUser = auth()->user();
-    // Stat cards — dihitung dari data yang sudah di-pass dari route
-    $totalPrestasi = $myPrestasi->count();
-    $internasional = $myPrestasi->where('tingkat', 'Internasional')->count();
-    $nasional      = $myPrestasi->where('tingkat', 'Nasional')->count();
-    $regional      = $myPrestasi->where('tingkat', 'Regional')->count();
+    // Direct DB queries removed to strictly align with Frontend consuming Backend API architecture.
+    // The data is fetched dynamically via Axios in the script below.
+    $totalPrestasi = 0;
+    $internasional = 0;
+    $nasional      = 0;
+    $regional      = 0;
 @endphp
 
 @section('content')
@@ -37,7 +38,7 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Total Prestasi</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $totalPrestasi }}</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800" id="stat-total-prestasi">{{ $totalPrestasi }}</p>
                 <p class="mt-1 text-[11px] text-green-500 font-medium">Data Terverifikasi</p>
             </div>
         </div>
@@ -55,7 +56,7 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Internasional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $internasional }}</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800" id="stat-internasional">{{ $internasional }}</p>
                 <p class="mt-1 text-[11px] text-blue-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
@@ -75,7 +76,7 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Nasional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $nasional }}</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800" id="stat-nasional">{{ $nasional }}</p>
                 <p class="mt-1 text-[11px] text-yellow-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
@@ -93,7 +94,7 @@
             </div>
             <div>
                 <p class="text-xs font-medium text-gray-400">Regional</p>
-                <p class="mt-0.5 text-2xl font-extrabold text-gray-800">{{ $regional }}</p>
+                <p class="mt-0.5 text-2xl font-extrabold text-gray-800" id="stat-regional">{{ $regional }}</p>
                 <p class="mt-1 text-[11px] text-green-500 font-medium">Tingkat Prestasi</p>
             </div>
         </div>
@@ -164,73 +165,16 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100" id="prestasi-tbody">
-                    @forelse ($myPrestasi as $index => $item)
-                    <tr class="hover:bg-gray-50/70 transition-colors prestasi-row"
-                        data-nama="{{ strtolower($currentUser->nama_depan . ' ' . $currentUser->nama_belakang) }}"
-                        data-kompetisi="{{ strtolower($item->nama_kompetisi) }}"
-                        data-tingkat="{{ strtolower($item->tingkat) }}"
-                        data-capaian="{{ strtolower($item->capaian ?? '') }}">
-                        <td class="px-5 py-3.5 text-gray-400 font-medium">{{ $index + 1 }}</td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-3">
-                                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-700">
-                                    {{ strtoupper(substr($currentUser->nama_depan, 0, 1) . substr($currentUser->nama_belakang ?? '', 0, 1)) }}
-                                </div>
-                                <span class="font-medium text-gray-800">{{ $currentUser->nama_depan }} {{ $currentUser->nama_belakang }}</span>
-                            </div>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">{{ $currentUser->nim ?? $currentUser->username }}</td>
-                        <td class="px-5 py-3.5 text-gray-700 max-w-xs truncate">{{ $item->nama_kompetisi }}</td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                                {{ $item->tingkat }}
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
-                                🏆 {{ $item->capaian }}
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-gray-500">{{ $item->created_at->format('Y') }}</td>
-                        <td class="px-5 py-3.5 text-center">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
-                                {{ $item->status_verifikasi == 'Valid' ? 'bg-green-100 text-green-700' : ($item->status_verifikasi == 'Menunggu' ? 'bg-blue-100 text-blue-700' : ($item->status_verifikasi == 'Revisi' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700')) }}">
-                                {{ $item->status_verifikasi ?? 'Menunggu' }}
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5">
-                            <div class="flex items-center gap-1.5">
-                                <a href="javascript:void(0)" 
-                                   onclick="showDetailModal(this)"
-                                   data-id="{{ $item->id_prestasi }}"
-                                   data-kompetisi="{{ $item->nama_kompetisi }}"
-                                   data-penyelenggara="{{ $item->penyelenggara }}"
-                                   data-tingkat="{{ $item->tingkat }}"
-                                   data-capaian="{{ $item->capaian }}"
-                                   data-kategori="{{ $item->kategori }}"
-                                   data-tahun="{{ $item->created_at->format('Y') }}"
-                                   data-status="{{ $item->status_verifikasi ?? 'Menunggu' }}"
-                                   data-catatan="{{ $item->catatan_admin ?? 'Tidak ada catatan revisi.' }}"
-                                   data-dosen="{{ $item->dosen->map(fn($d) => $d->nama_dosen . ' (' . ($d->nidn_nip ?? '-') . ')')->implode(', ') ?: 'Tidak ada' }}"
-                                   data-anggota="{{ $item->anggota->map(fn($a) => $a->nama . ' (' . ($a->nim ?? '-') . ')')->implode(', ') ?: 'Tidak ada' }}"
-                                   data-dokumen='@json($item->dokumen)'
-                                   class="rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 transition-colors" 
-                                   title="Detail">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-                                    </svg>
-                                </a>
-                            </div>
+                    <tr id="prestasi-loading-row">
+                        <td colspan="9" class="px-5 py-10 text-center text-gray-400 italic">
+                            Sedang memuat data prestasi...
                         </td>
                     </tr>
-                    @empty
-                    <tr id="prestasi-empty-row">
+                    <tr id="prestasi-empty-row" style="display:none;">
                         <td colspan="9" class="px-5 py-10 text-center text-gray-400 italic">
                             Belum ada data prestasi terverifikasi.
                         </td>
                     </tr>
-                    @endforelse
                     <tr id="prestasi-no-results" style="display:none;">
                         <td colspan="9" class="px-5 py-10 text-center text-gray-400 italic">
                             Tidak ada data yang cocok dengan pencarian.
@@ -244,7 +188,7 @@
         <div class="flex flex-col items-center justify-between gap-3 border-t border-gray-100 px-5 py-3.5 sm:flex-row">
             <p class="text-xs text-gray-400">
                 Menampilkan <span class="font-semibold text-gray-600" id="prestasi-showing-from">0</span>&ndash;<span class="font-semibold text-gray-600" id="prestasi-showing-to">0</span>
-                dari <span class="font-semibold text-gray-600" id="prestasi-total">{{ $myPrestasi->count() }}</span> data
+                dari <span class="font-semibold text-gray-600" id="prestasi-total">0</span> data
             </p>
             <div class="flex items-center gap-1" id="prestasi-pagination-buttons">
                 {{-- Rendered by JS --}}
@@ -272,34 +216,12 @@
                         <th class="px-5 py-3 text-xs font-semibold uppercase text-gray-500 text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody class="divide-y divide-gray-100">
-                    @forelse ($myProposals as $index => $prop)
-                    <tr class="hover:bg-gray-50/70 transition-colors">
-                        <td class="px-5 py-3.5 text-gray-400">{{ $index + 1 }}</td>
-                        <td class="px-5 py-3.5 font-medium text-gray-800">{{ $prop->nama_kegiatan }}</td>
-                        <td class="px-5 py-3.5 text-gray-600">{{ \Carbon\Carbon::parse($prop->waktu_kegiatan)->format('d M Y') }}</td>
-                        <td class="px-5 py-3.5 text-gray-600">Rp {{ number_format($prop->besar_ajuan, 0, ',', '.') }}</td>
-                        <td class="px-5 py-3.5 text-center">
-                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold 
-                                {{ $prop->status == 'Disetujui' ? 'bg-green-100 text-green-700' : ($prop->status == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700') }}">
-                                {{ $prop->status }}
-                            </span>
-                        </td>
-                        <td class="px-5 py-3.5 text-center">
-                            @if($prop->file)
-                            <a href="{{ asset('storage/' . $prop->file) }}" target="_blank" class="text-blue-500 hover:underline text-xs">Lihat File</a>
-                            @else
-                            <span class="text-gray-400">-</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
+                <tbody class="divide-y divide-gray-100" id="proposal-tbody">
                     <tr>
                         <td colspan="6" class="px-5 py-10 text-center text-gray-400 italic">
-                            Belum ada pengajuan ajuan dana prestasi.
+                            Sedang memuat data proposal...
                         </td>
                     </tr>
-                    @endforelse
                 </tbody>
             </table>
     </div>
@@ -398,26 +320,154 @@
 
 @push('scripts')
 <script>
-(function () {
+document.addEventListener('DOMContentLoaded', function () {
     'use strict';
 
-    const ALL_ROWS = Array.from(document.querySelectorAll('.prestasi-row'));
-    const emptyRow = document.getElementById('prestasi-empty-row');
-    const noResults = document.getElementById('prestasi-no-results');
-    let _filtered = [...ALL_ROWS];
+    let ALL_DATA = [];
+    let _filtered = [];
     let _perPage = 10;
     let _page = 1;
 
-    // Hook into search input
+    const token = localStorage.getItem('topkema_api_token');
+    if (!token || !window.axios) {
+        return;
+    }
+
+    // ── API: Load Prestasi ────────────────────────────────────────────────────
+    window.axios.get('prestasi')
+        .then(function (res) {
+            ALL_DATA = res.data.data || [];
+            _filtered = [...ALL_DATA];
+            
+            // Hide loading row
+            const loadingRow = document.getElementById('prestasi-loading-row');
+            if (loadingRow) loadingRow.style.display = 'none';
+
+            // Update stats
+            updateStats(ALL_DATA);
+
+            // Initial render
+            _page = 1;
+            render();
+        })
+        .catch(function (err) {
+            console.error('Failed to load user prestasi via API:', err);
+            const tbody = document.getElementById('prestasi-tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="9" class="px-5 py-10 text-center text-red-500 italic">
+                            Gagal memuat data prestasi dari API.
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
+    // ── API: Load Proposal ────────────────────────────────────────────────────
+    window.axios.get('proposal')
+        .then(function (res) {
+            const list = res.data.data || [];
+            updateProposalTable(list);
+        })
+        .catch(function (err) {
+            console.error('Failed to load proposals via API:', err);
+            const tbody = document.getElementById('proposal-tbody');
+            if (tbody) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="px-5 py-10 text-center text-red-500 italic">
+                            Gagal memuat data proposal dari API.
+                        </td>
+                    </tr>
+                `;
+            }
+        });
+
+    function updateStats(list) {
+        const total = list.length;
+        const internasional = list.filter(p => p.tingkat === 'Internasional').length;
+        const nasional = list.filter(p => p.tingkat === 'Nasional').length;
+        const regional = list.filter(p => p.tingkat === 'Regional').length;
+
+        const elTotal = document.getElementById('stat-total-prestasi');
+        const elInternasional = document.getElementById('stat-internasional');
+        const elNasional = document.getElementById('stat-nasional');
+        const elRegional = document.getElementById('stat-regional');
+
+        if (elTotal) elTotal.textContent = total;
+        if (elInternasional) elInternasional.textContent = internasional;
+        if (elNasional) elNasional.textContent = nasional;
+        if (elRegional) elRegional.textContent = regional;
+    }
+
+    function updateProposalTable(list) {
+        const tbody = document.getElementById('proposal-tbody');
+        if (!tbody) return;
+
+        if (list.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="px-5 py-10 text-center text-gray-400 italic">
+                        Belum ada pengajuan ajuan dana prestasi.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = '';
+        list.forEach(function (prop, index) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50/70 transition-colors';
+
+            const statusClass = prop.status === 'Disetujui' ? 'bg-green-100 text-green-700' :
+                                (prop.status === 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700');
+
+            let dateStr = '-';
+            if (prop.waktu_kegiatan) {
+                try {
+                    const dateObj = new Date(prop.waktu_kegiatan);
+                    dateStr = dateObj.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+                } catch (e) {}
+            }
+
+            const amount = prop.besar_ajuan ? parseFloat(prop.besar_ajuan) : 0;
+            const amountFormatted = 'Rp ' + amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+
+            let fileLink = '<span class="text-gray-400">-</span>';
+            if (prop.file) {
+                fileLink = `<a href="/storage/${prop.file}" target="_blank" class="text-blue-500 hover:underline text-xs">Lihat File</a>`;
+            }
+
+            tr.innerHTML = `
+                <td class="px-5 py-3.5 text-gray-400">${index + 1}</td>
+                <td class="px-5 py-3.5 font-medium text-gray-800">${prop.nama_kegiatan || '-'}</td>
+                <td class="px-5 py-3.5 text-gray-600">${dateStr}</td>
+                <td class="px-5 py-3.5 text-gray-600">${amountFormatted}</td>
+                <td class="px-5 py-3.5 text-center">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass}">
+                        ${prop.status || 'Menunggu'}
+                    </span>
+                </td>
+                <td class="px-5 py-3.5 text-center">
+                    ${fileLink}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // Hook search input
     const searchInput = document.querySelector('input[placeholder="Cari prestasi..."]');
     if (searchInput) {
         searchInput.addEventListener('input', function () {
             const q = this.value.trim().toLowerCase();
-            _filtered = ALL_ROWS.filter(row =>
-                (row.dataset.nama || '').includes(q) ||
-                (row.dataset.kompetisi || '').includes(q) ||
-                (row.dataset.tingkat || '').includes(q) ||
-                (row.dataset.capaian || '').includes(q)
+            _filtered = ALL_DATA.filter(p =>
+                (p.nama_kompetisi || '').toLowerCase().includes(q) ||
+                (p.tingkat || '').toLowerCase().includes(q) ||
+                (p.capaian || '').toLowerCase().includes(q) ||
+                (p.penyelenggara || '').toLowerCase().includes(q)
             );
             _page = 1;
             render();
@@ -425,30 +475,150 @@
     }
 
     function render() {
+        const tbody = document.getElementById('prestasi-tbody');
+        if (!tbody) return;
+
+        // Clear existing dynamic rows
+        const rows = tbody.querySelectorAll('.prestasi-row');
+        rows.forEach(r => r.remove());
+
         const total = _filtered.length;
+        
+        // Update total indicator
+        const totalEl = document.getElementById('prestasi-total');
+        if (totalEl) totalEl.textContent = total;
+
+        const emptyRow = document.getElementById('prestasi-empty-row');
+        const noResults = document.getElementById('prestasi-no-results');
+
+        if (ALL_DATA.length === 0) {
+            if (emptyRow) emptyRow.style.display = '';
+            if (noResults) noResults.style.display = 'none';
+            updatePagination(0);
+            return;
+        }
+
+        if (total === 0) {
+            if (emptyRow) emptyRow.style.display = 'none';
+            if (noResults) noResults.style.display = '';
+            updatePagination(0);
+            return;
+        }
+
+        if (emptyRow) emptyRow.style.display = 'none';
+        if (noResults) noResults.style.display = 'none';
+
         const pages = Math.max(1, Math.ceil(total / _perPage));
         _page = Math.min(_page, pages);
 
         const start = (_page - 1) * _perPage;
         const end = Math.min(start + _perPage, total);
 
-        ALL_ROWS.forEach(r => r.style.display = 'none');
-        _filtered.slice(start, end).forEach(r => r.style.display = '');
-
-        // Empty / no results
-        if (emptyRow) emptyRow.style.display = (ALL_ROWS.length === 0) ? '' : 'none';
-        if (noResults) noResults.style.display = (ALL_ROWS.length > 0 && total === 0) ? '' : 'none';
-
         // Count text
         const fromEl = document.getElementById('prestasi-showing-from');
         const toEl = document.getElementById('prestasi-showing-to');
-        if (fromEl) fromEl.textContent = total === 0 ? 0 : start + 1;
+        if (fromEl) fromEl.textContent = start + 1;
         if (toEl) toEl.textContent = end;
 
-        // Pagination buttons
+        const displayed = _filtered.slice(start, end);
+        displayed.forEach(function (item, index) {
+            const tr = document.createElement('tr');
+            tr.className = 'hover:bg-gray-50/70 transition-colors prestasi-row';
+            
+            const num = start + index + 1;
+            const user = item.user || {};
+            const namaMhs = (user.nama_depan || '') + ' ' + (user.nama_belakang || '');
+            const avatarInitials = ((user.nama_depan || '').substring(0, 1) + (user.nama_belakang || '').substring(0, 1)).toUpperCase() || 'M';
+            const nimMhs = user.nim || '-';
+            const year = item.created_at ? new Date(item.created_at).getFullYear() : '-';
+
+            const statusClass = item.status_verifikasi == 'Valid' ? 'bg-green-100 text-green-700' : 
+                               (item.status_verifikasi == 'Menunggu' ? 'bg-blue-100 text-blue-700' : 
+                               (item.status_verifikasi == 'Revisi' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'));
+
+            // Prep detailed dataset for modal
+            const dosenStr = item.dosen && item.dosen.length > 0
+                ? item.dosen.map(d => (d.nama_dosen || d.nama || '-') + ' (' + (d.nip || d.nidn || '-') + ')').join(', ')
+                : 'Tidak ada';
+                
+            const anggotaStr = item.anggota && item.anggota.length > 0
+                ? item.anggota.map(a => a.nama + ' (' + (a.nim || '-') + ')').join(', ')
+                : 'Tidak ada';
+
+            const docsJson = JSON.stringify(item.dokumen || []);
+
+            tr.innerHTML = `
+                <td class="px-5 py-3.5 text-gray-400 font-medium">${num}</td>
+                <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-3">
+                        <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-red-100 text-xs font-bold text-red-700">
+                            ${avatarInitials}
+                        </div>
+                        <span class="font-medium text-gray-800">${namaMhs}</span>
+                    </div>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500 font-mono text-xs">${nimMhs}</td>
+                <td class="px-5 py-3.5 text-gray-700 max-w-xs truncate">${item.nama_kompetisi || '-'}</td>
+                <td class="px-5 py-3.5">
+                    <span class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                        ${item.tingkat || '-'}
+                    </span>
+                </td>
+                <td class="px-5 py-3.5">
+                    <span class="inline-flex items-center gap-1 rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-semibold text-yellow-700">
+                        🏆 ${item.capaian || '-'}
+                    </span>
+                </td>
+                <td class="px-5 py-3.5 text-gray-500">${year}</td>
+                <td class="px-5 py-3.5 text-center">
+                    <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusClass}">
+                        ${item.status_verifikasi || 'Menunggu'}
+                    </span>
+                </td>
+                <td class="px-5 py-3.5">
+                    <div class="flex items-center gap-1.5">
+                        <a href="javascript:void(0)" 
+                           class="btn-detail rounded-lg p-1.5 text-blue-500 hover:bg-blue-50 transition-colors" 
+                           title="Detail">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </a>
+                    </div>
+                </td>
+            `;
+
+            // Attach event listener for detail click
+            tr.querySelector('.btn-detail').addEventListener('click', function() {
+                showDetailModal({
+                    id: item.id_prestasi,
+                    kompetisi: item.nama_kompetisi,
+                    penyelenggara: item.penyelenggara,
+                    tingkat: item.tingkat,
+                    capaian: item.capaian,
+                    kategori: item.kategori,
+                    tahun: year,
+                    status: item.status_verifikasi,
+                    catatan: item.catatan_admin || 'Tidak ada catatan revisi.',
+                    anggota: anggotaStr,
+                    dosen: dosenStr,
+                    dokumen: docsJson
+                });
+            });
+
+            tbody.appendChild(tr);
+        });
+
+        updatePagination(pages);
+    }
+
+    function updatePagination(pages) {
         const btnContainer = document.getElementById('prestasi-pagination-buttons');
         if (!btnContainer) return;
         btnContainer.innerHTML = '';
+
+        if (pages <= 1) return;
 
         const prev = document.createElement('button');
         prev.className = 'rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-40';
@@ -477,124 +647,121 @@
         btnContainer.appendChild(next);
     }
 
-    // Init
-    render();
-})();
-
-function showDetailModal(el) {
-    const modal = document.getElementById('detailPrestasiModal');
-    const container = modal.querySelector('.transform');
-    
-    // Set text values
-    document.getElementById('modal-kompetisi').textContent = el.dataset.kompetisi;
-    document.getElementById('modal-penyelenggara').textContent = el.dataset.penyelenggara;
-    document.getElementById('modal-tingkat').textContent = el.dataset.tingkat;
-    document.getElementById('modal-capaian').textContent = el.dataset.capaian;
-    document.getElementById('modal-kategori').textContent = el.dataset.kategori;
-    document.getElementById('modal-tahun').textContent = el.dataset.tahun;
-    
-    // Set status badge
-    const status = el.dataset.status;
-    const statusEl = document.getElementById('modal-status');
-    statusEl.textContent = status;
-    statusEl.className = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold';
-    
-    if (status === 'Valid') {
-        statusEl.classList.add('bg-green-100', 'text-green-700');
-    } else if (status === 'Menunggu') {
-        statusEl.classList.add('bg-blue-100', 'text-blue-700');
-    } else if (status === 'Revisi') {
-        statusEl.classList.add('bg-amber-100', 'text-amber-700');
-    } else {
-        statusEl.classList.add('bg-red-100', 'text-red-700');
-    }
-    
-    // Set Catatan
-    const catatanContainer = document.getElementById('modal-catatan-container');
-    if (status === 'Revisi' || (el.dataset.catatan && el.dataset.catatan !== 'Tidak ada catatan revisi.')) {
-        document.getElementById('modal-catatan').textContent = el.dataset.catatan;
-        catatanContainer.classList.remove('hidden');
-    } else {
-        catatanContainer.classList.add('hidden');
-    }
-    
-    // Set Revisi Button (show only if status = Revisi)
-    const revisiBtn = document.getElementById('revisi-button');
-    if (status === 'Revisi') {
-        revisiBtn.href = `/prestasi/revisi/${el.dataset.id}`;
-        revisiBtn.style.display = '';
-    } else {
-        revisiBtn.style.display = 'none';
-    }
-    
-    // Set Anggota & Dosen
-    document.getElementById('modal-anggota').textContent = el.dataset.anggota;
-    document.getElementById('modal-dosen').textContent = el.dataset.dosen;
-    
-    // Set Documents
-    const docsContainer = document.getElementById('modal-dokumen');
-    docsContainer.innerHTML = '';
-    
-    try {
-        const docs = JSON.parse(el.dataset.dokumen);
-        if (docs && docs.length > 0) {
-            docs.forEach(doc => {
-                const fileUrl = `/storage/${doc.file}`;
-                const ext = doc.file.split('.').pop().toLowerCase();
-                const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
-                
-                const docLink = document.createElement('a');
-                docLink.href = fileUrl;
-                docLink.target = '_blank';
-                docLink.className = 'flex items-center gap-2 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition group';
-                
-                docLink.innerHTML = `
-                    <div class="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-lg ${isImage ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}">
-                        ${isImage ? `
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                        </svg>
-                        ` : `
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
-                        </svg>
-                        `}
-                    </div>
-                    <div class="overflow-hidden min-w-0 flex-1">
-                        <p class="text-xs font-semibold text-gray-700 truncate group-hover:text-red-600 transition">${doc.jenis_dokumen}</p>
-                        <p class="text-[9px] text-gray-400 uppercase">${ext}</p>
-                    </div>
-                `;
-                docsContainer.appendChild(docLink);
-            });
+    function showDetailModal(el) {
+        const modal = document.getElementById('detailPrestasiModal');
+        const container = modal.querySelector('.transform');
+        
+        // Set text values
+        document.getElementById('modal-kompetisi').textContent = el.kompetisi;
+        document.getElementById('modal-penyelenggara').textContent = el.penyelenggara;
+        document.getElementById('modal-tingkat').textContent = el.tingkat;
+        document.getElementById('modal-capaian').textContent = el.capaian;
+        document.getElementById('modal-kategori').textContent = el.kategori;
+        document.getElementById('modal-tahun').textContent = el.tahun;
+        
+        // Set status badge
+        const status = el.status;
+        const statusEl = document.getElementById('modal-status');
+        statusEl.textContent = status;
+        statusEl.className = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold';
+        
+        if (status === 'Valid') {
+            statusEl.classList.add('bg-green-100', 'text-green-700');
+        } else if (status === 'Menunggu') {
+            statusEl.classList.add('bg-blue-100', 'text-blue-700');
+        } else if (status === 'Revisi') {
+            statusEl.classList.add('bg-amber-100', 'text-amber-700');
         } else {
+            statusEl.classList.add('bg-red-100', 'text-red-700');
+        }
+        
+        // Set Catatan
+        const catatanContainer = document.getElementById('modal-catatan-container');
+        if (status === 'Revisi' || (el.catatan && el.catatan !== 'Tidak ada catatan revisi.')) {
+            document.getElementById('modal-catatan').textContent = el.catatan;
+            catatanContainer.classList.remove('hidden');
+        } else {
+            catatanContainer.classList.add('hidden');
+        }
+        
+        // Set Revisi Button (show only if status = Revisi)
+        const revisiBtn = document.getElementById('revisi-button');
+        if (status === 'Revisi') {
+            revisiBtn.href = `/prestasi/revisi/${el.id}`;
+            revisiBtn.style.display = '';
+        } else {
+            revisiBtn.style.display = 'none';
+        }
+        
+        // Set Anggota & Dosen
+        document.getElementById('modal-anggota').textContent = el.anggota;
+        document.getElementById('modal-dosen').textContent = el.dosen;
+        
+        // Set Documents
+        const docsContainer = document.getElementById('modal-dokumen');
+        docsContainer.innerHTML = '';
+        
+        try {
+            const docs = JSON.parse(el.dokumen);
+            if (docs && docs.length > 0) {
+                docs.forEach(doc => {
+                    const fileUrl = `/storage/${doc.file}`;
+                    const ext = doc.file.split('.').pop().toLowerCase();
+                    const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext);
+                    
+                    const docLink = document.createElement('a');
+                    docLink.href = fileUrl;
+                    docLink.target = '_blank';
+                    docLink.className = 'flex items-center gap-2 p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition group';
+                    
+                    docLink.innerHTML = `
+                        <div class="h-8 w-8 flex-shrink-0 flex items-center justify-center rounded-lg ${isImage ? 'bg-blue-50 text-blue-600' : 'bg-red-50 text-red-600'}">
+                            ${isImage ? `
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            ` : `
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                            </svg>
+                            `}
+                        </div>
+                        <div class="overflow-hidden min-w-0 flex-1">
+                            <p class="text-xs font-semibold text-gray-700 truncate group-hover:text-red-600 transition">${doc.jenis_dokumen}</p>
+                            <p class="text-[9px] text-gray-400 uppercase">${ext}</p>
+                        </div>
+                    `;
+                    docsContainer.appendChild(docLink);
+                });
+            } else {
+                docsContainer.innerHTML = '<p class="text-xs text-gray-400 italic">Tidak ada dokumen evidence</p>';
+            }
+        } catch (e) {
             docsContainer.innerHTML = '<p class="text-xs text-gray-400 italic">Tidak ada dokumen evidence</p>';
         }
-    } catch (e) {
-        docsContainer.innerHTML = '<p class="text-xs text-gray-400 italic">Tidak ada dokumen evidence</p>';
+        
+        // Open modal
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        setTimeout(() => {
+            container.classList.remove('scale-95');
+            container.classList.add('scale-100');
+        }, 10);
     }
-    
-    // Open modal
-    modal.classList.remove('hidden');
-    modal.classList.add('flex');
-    setTimeout(() => {
-        container.classList.remove('scale-95');
-        container.classList.add('scale-100');
-    }, 10);
-}
 
-function closeDetailModal() {
-    const modal = document.getElementById('detailPrestasiModal');
-    const container = modal.querySelector('.transform');
-    
-    container.classList.remove('scale-100');
-    container.classList.add('scale-95');
-    
-    setTimeout(() => {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    }, 150);
-}
-})();
+    // Expose closeDetailModal globally
+    window.closeDetailModal = function() {
+        const modal = document.getElementById('detailPrestasiModal');
+        const container = modal.querySelector('.transform');
+        
+        container.classList.remove('scale-100');
+        container.classList.add('scale-95');
+        
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 150);
+    };
+});
 </script>
 @endpush

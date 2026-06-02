@@ -9,37 +9,43 @@ return [
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi', 'Delete Prestasi', 'Approve Prestasi', 'Reject Prestasi',
             'View Users', 'Create Users', 'Edit Users', 'Delete Users',
             'Manage Template Dokumen', 'View Template Dokumen',
-            'View Reports', 'Export Reports'
+            'View Reports', 'Export Reports',
+            'Create Publikasi', 'View Publikasi', 'Edit Publikasi', 'Delete Publikasi', 'Approve Publikasi',
         ],
         'Admin / Kemahasiswaan' => [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
             'View Revisi Proposal', 'Approve Revisi Proposal',
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports'
+            'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
+            'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
         ],
         'Kemahasiswaan' => [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
             'View Revisi Proposal', 'Approve Revisi Proposal',
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
-            'View Users', 'View Template Dokumen', 'View Reports', 'Export Reports'
+            'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
+            'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
         ],
         'DPMBEM' => [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
-            'View LPJ Kegiatan', 'View Prestasi', 'View Users', 'View Template Dokumen', 'View Reports'
+            'View LPJ Kegiatan', 'View Prestasi', 'View Users', 'View Template Dokumen', 'View Reports',
+            'View Publikasi',
         ],
         'Ormawa Institusi' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
             'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
-            'View Template Dokumen'
+            'View Template Dokumen',
+            'Create Publikasi', 'View Publikasi', 'Edit Publikasi',
         ],
         'Ormawa Prodi' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
             'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
-            'View Template Dokumen'
+            'View Template Dokumen',
+            'Create Publikasi', 'View Publikasi', 'Edit Publikasi',
         ],
         'Mahasiswa' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan',

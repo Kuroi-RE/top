@@ -38,7 +38,7 @@ class LpjController
         $query = LpjKegiatan::query();
 
         // Filter berdasarkan role
-        if ($user->isOrmawa()) {
+        if ($user->isOrmawa() || $user->isMahasiswa()) {
             $query->whereHas('proposal', fn($q) => $q->where('id_user', $user->id_user));
         }
 
@@ -93,22 +93,27 @@ class LpjController
             ], 404);
         }
 
-        if ($proposal->status !== 'Disetujui') {
+        if (!in_array($proposal->status, ['Approved', 'Revisi LPJ'])) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'LPJ hanya bisa diupload untuk proposal yang sudah disetujui',
-                'errors' => ['proposal' => 'Status proposal harus Disetujui'],
+                'message' => 'LPJ hanya bisa diupload untuk proposal yang sudah disetujui atau revisi LPJ',
+                'errors' => ['proposal' => 'Status proposal harus Approved atau Revisi LPJ'],
             ], 422);
         }
 
         $filePath = $request->file('file_lpj')->store('lpj', 'public');
 
-        $lpj = LpjKegiatan::create([
-            'id_proposal' => $request->id_proposal,
-            'file_lpj' => $filePath,
-            'status_lpj' => 'Menunggu',
-            'tanggal_upload' => $request->tanggal_upload,
-        ]);
+        $lpj = LpjKegiatan::updateOrCreate(
+            ['id_proposal' => $request->id_proposal],
+            [
+                'file_lpj' => $filePath,
+                'status_lpj' => 'Pending',
+                'catatan_admin' => null,
+                'tanggal_upload' => $request->tanggal_upload ?? now()->toDateString(),
+            ]
+        );
+
+        $proposal->update(['status' => 'Cek LPJ']);
 
         return response()->json([
             'status' => 'success',
@@ -132,7 +137,7 @@ class LpjController
      */
     public function show(Request $request, LpjKegiatan $lpj): JsonResponse
     {
-        if ($request->user()->isOrmawa() && $request->user()->id_user !== $lpj->proposal->id_user) {
+        if (($request->user()->isOrmawa() || $request->user()->isMahasiswa()) && $request->user()->id_user !== $lpj->proposal->id_user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses ke LPJ ini',
@@ -168,7 +173,7 @@ class LpjController
 
         $lpj->update([
             'file_lpj' => $filePath,
-            'status_lpj' => 'Menunggu',
+            'status_lpj' => 'Pending',
             'tanggal_upload' => $request->tanggal_upload,
         ]);
 
@@ -196,7 +201,20 @@ class LpjController
      */
     public function verify(VerifyLpjRequest $request, LpjKegiatan $lpj): JsonResponse
     {
-        $lpj->update(['status_lpj' => $request->status_lpj]);
+        $lpj->update([
+            'status_lpj' => $request->status_lpj,
+            'catatan_admin' => $request->catatan_admin,
+        ]);
+
+        // Auto-update status proposal induk
+        $proposal = $lpj->proposal;
+        if ($proposal) {
+            if ($request->status_lpj === 'Approved') {
+                $proposal->update(['status' => 'Selesai']);
+            } elseif ($request->status_lpj === 'Revision') {
+                $proposal->update(['status' => 'Revisi LPJ']);
+            }
+        }
 
         return response()->json([
             'status' => 'success',

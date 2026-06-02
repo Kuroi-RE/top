@@ -1341,5 +1341,51 @@
 
 @stack('scripts')
 
+<script>
+/**
+ * TOPKEMA API Token Initializer (Ormawa Layout)
+ * Otomatis mengambil Sanctum token dari server berdasarkan session web aktif
+ * dan menyimpannya ke localStorage agar bisa digunakan oleh AJAX calls.
+ */
+(function () {
+    'use strict';
+
+    const TOKEN_KEY = 'topkema_api_token';
+
+    function initApiToken() {
+        fetch('/api/token', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+        })
+        .then(function (res) {
+            if (!res.ok) throw new Error('Token fetch failed: ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            if (data && data.token) {
+                localStorage.setItem(TOKEN_KEY, data.token);
+                if (window.axios) {
+                    window.axios.defaults.headers.common['Authorization'] = 'Bearer ' + data.token;
+                }
+            }
+        })
+        .catch(function (err) {
+            console.warn('[TOPKEMA] Gagal memperbarui API token:', err.message);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApiToken);
+    } else {
+        initApiToken();
+    }
+})();
+</script>
+
 </body>
 </html>

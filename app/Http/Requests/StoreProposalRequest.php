@@ -8,7 +8,7 @@ class StoreProposalRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isOrmawa() || $this->user()->isAdmin();
+        return $this->user()->isOrmawa() || $this->user()->isAdmin() || $this->user()->isMahasiswa();
     }
 
     public function rules(): array

@@ -40,10 +40,11 @@ class ProposalController
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = ProposalKegiatan::query();
+        $modelClass = $user->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : ProposalKegiatan::class;
+        $query = $modelClass::query();
 
         // Filter berdasarkan role
-        if ($user->isOrmawa()) {
+        if ($user->isOrmawa() || $user->isMahasiswa()) {
             $query->where('id_user', $user->id_user);
         }
 
@@ -55,6 +56,19 @@ class ProposalController
         // Filter berdasarkan triwulan
         if ($request->has('triwulan')) {
             $query->where('ajuan_triwulan', $request->triwulan);
+        }
+
+        // Filter berdasarkan ormawa_id
+        if ($request->has('ormawa_id')) {
+            $query->where('id_user', $request->ormawa_id);
+        }
+
+        // Filter berdasarkan ormawa_name
+        if ($request->has('ormawa_name')) {
+            $query->whereHas('user', function ($q) use ($request) {
+                $q->where('nama_belakang', 'like', '%' . $request->ormawa_name . '%')
+                  ->orWhere('username', 'like', '%' . $request->ormawa_name . '%');
+            });
         }
 
         $proposals = $query->with('user')->paginate($request->per_page ?? 15);
@@ -105,8 +119,9 @@ class ProposalController
     public function store(StoreProposalRequest $request): JsonResponse
     {
         $filePath = $request->file('file')->store('proposals', 'public');
+        $modelClass = $request->user()->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : ProposalKegiatan::class;
 
-        $proposal = ProposalKegiatan::create([
+        $proposal = $modelClass::create([
             'id_user' => $request->user()->id_user,
             'ajuan_triwulan' => $request->ajuan_triwulan,
             'risiko_proposal' => $request->risiko_proposal,
@@ -120,7 +135,7 @@ class ProposalController
             'nama_bank' => $request->nama_bank,
             'honor_pelatih' => $request->honor_pelatih,
             'file' => $filePath,
-            'status' => 'Menunggu',
+            'status' => 'Pending',
         ]);
 
         return response()->json([
@@ -148,9 +163,44 @@ class ProposalController
      *   "message": "Proposal tidak ditemukan"
      * }
      */
-    public function show(Request $request, ProposalKegiatan $proposal): JsonResponse
+    private function resolveProposal(Request $request, $id)
     {
-        if ($request->user()->isOrmawa() && $request->user()->id_user !== $proposal->id_user) {
+        $user = $request->user();
+        if ($user->isMahasiswa()) {
+            return \App\Models\ProposalPrestasiMahasiswa::findOrFail($id);
+        }
+        
+        $proposal = ProposalKegiatan::find($id);
+        if ($proposal) {
+            return $proposal;
+        }
+        
+        return \App\Models\ProposalPrestasiMahasiswa::findOrFail($id);
+    }
+
+    /**
+     * Lihat detail proposal
+     * 
+     * Menampilkan detail proposal berdasarkan ID.
+     * Ormawa hanya dapat melihat proposal mereka sendiri.
+     *
+     * @urlParam id integer required ID Proposal
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Detail proposal kegiatan",
+     *   "data": {...}
+     * }
+     * @response 404 {
+     *   "status": "error",
+     *   "message": "Proposal tidak ditemukan"
+     * }
+     */
+    public function show(Request $request, $proposal): JsonResponse
+    {
+        $proposal = $this->resolveProposal($request, $proposal);
+
+        if (($request->user()->isOrmawa() || $request->user()->isMahasiswa()) && $request->user()->id_user !== $proposal->id_user) {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Anda tidak memiliki akses ke proposal ini',
@@ -184,9 +234,11 @@ class ProposalController
      *   "message": "Proposal tidak dapat diedit"
      * }
      */
-    public function update(UpdateProposalRequest $request, ProposalKegiatan $proposal): JsonResponse
+    public function update(UpdateProposalRequest $request, $proposal): JsonResponse
     {
-        if ($proposal->status !== 'Menunggu' && $proposal->status !== 'Revisi') {
+        $proposal = $this->resolveProposal($request, $proposal);
+
+        if ($proposal->status !== 'Pending' && $proposal->status !== 'Revision') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Proposal tidak dapat diedit pada status saat ini',
@@ -226,9 +278,11 @@ class ProposalController
      *   "message": "Proposal tidak dapat dihapus"
      * }
      */
-    public function destroy(Request $request, ProposalKegiatan $proposal): JsonResponse
+    public function destroy(Request $request, $proposal): JsonResponse
     {
-        if ($proposal->status === 'Disetujui') {
+        $proposal = $this->resolveProposal($request, $proposal);
+
+        if ($proposal->status === 'Approved') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Proposal yang sudah disetujui tidak dapat dihapus',
@@ -262,8 +316,10 @@ class ProposalController
      *   }
      * }
      */
-    public function checkStatus(Request $request, ProposalKegiatan $proposal): JsonResponse
+    public function checkStatus(Request $request, $proposal): JsonResponse
     {
+        $proposal = $this->resolveProposal($request, $proposal);
+
         return response()->json([
             'status' => 'success',
             'message' => 'Status proposal kegiatan',
@@ -296,8 +352,9 @@ class ProposalController
      *   "data": {...}
      * }
      */
-    public function submitRevision(ReviseProposalRequest $request, ProposalKegiatan $proposal): JsonResponse
+    public function submitRevision(ReviseProposalRequest $request, $proposal): JsonResponse
     {
+        $proposal = $this->resolveProposal($request, $proposal);
         $filePath = $request->file('file')->store('revisions', 'public');
 
         $revision = RevisiProposal::create([
@@ -311,7 +368,7 @@ class ProposalController
             'file' => $filePath,
         ]);
 
-        $proposal->update(['status' => 'Menunggu']);
+        $proposal->update(['status' => 'Pending']);
 
         return response()->json([
             'status' => 'success',
@@ -344,13 +401,25 @@ class ProposalController
      *   "message": "Unauthorized"
      * }
      */
-    public function verify(VerifyProposalRequest $request, ProposalKegiatan $proposal): JsonResponse
+    public function verify(VerifyProposalRequest $request, $proposal): JsonResponse
     {
-        $proposal->update([
+        $proposal = $this->resolveProposal($request, $proposal);
+
+        $updateData = [
             'status' => $request->status,
             'catatan_admin' => $request->catatan_admin,
-            'anggaran_disetujui' => $request->status === 'Disetujui' ? $request->anggaran_disetujui : null,
-        ]);
+            'anggaran_disetujui' => $request->status === 'Approved' ? $request->anggaran_disetujui : null,
+        ];
+
+        if ($request->hasFile('file_lpj_keuangan')) {
+            if ($proposal->file_lpj_keuangan) {
+                Storage::disk('public')->delete($proposal->file_lpj_keuangan);
+            }
+            $updateData['file_lpj_keuangan'] = $request->file('file_lpj_keuangan')
+                ->store('lpj_keuangan', 'public');
+        }
+
+        $proposal->update($updateData);
 
         return response()->json([
             'status' => 'success',

@@ -10,6 +10,10 @@ use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\Api\InformasiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MonitoringController;
+use App\Http\Controllers\Api\DokumenPrestasiController;
+use App\Http\Controllers\Api\CetakPrestasiController;
+use App\Http\Controllers\Api\DeadlineController;
+use App\Http\Controllers\Api\PublikasiController;
 
 /**
  * TOP KEMA Telkom - Organisasi dan Prestasi Kemahasiswaan
@@ -89,6 +93,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{prestasi}', [PrestasiController::class, 'destroy'])->middleware('permission:Delete Prestasi')->name('destroy')->where('prestasi', '[0-9]+');
             Route::delete('/{prestasi}/anggota/{anggota}', [PrestasiController::class, 'deleteAnggota'])->middleware('permission:Delete Prestasi')->name('delete-anggota')->where(['prestasi' => '[0-9]+', 'anggota' => '[0-9]+']);
             Route::delete('/{prestasi}/dosen/{dosen}', [PrestasiController::class, 'deleteDosen'])->middleware('permission:Delete Prestasi')->name('delete-dosen')->where(['prestasi' => '[0-9]+', 'dosen' => '[0-9]+']);
+            Route::post('/{prestasi}/dokumen', [DokumenPrestasiController::class, 'store'])->middleware('permission:Create Prestasi')->name('add-dokumen')->where('prestasi', '[0-9]+');
+            Route::delete('/{prestasi}/dokumen/{dokumen}', [DokumenPrestasiController::class, 'destroy'])->middleware('permission:Delete Prestasi')->name('delete-dokumen')->where(['prestasi' => '[0-9]+', 'dokumen' => '[0-9]+']);
+            Route::get('/cetak/transkrip', [CetakPrestasiController::class, 'cetakTranskrip'])->middleware('permission:View Prestasi')->name('cetak.transkrip');
+            Route::get('/cetak/kartu/{nim}', [CetakPrestasiController::class, 'cetakKartu'])->name('cetak.kartu');
         });
 
         // ========================================================
@@ -132,6 +140,28 @@ Route::prefix('v1')->group(function () {
         });
 
         // ========================================================
+        // PUBLIKASI KEGIATAN ROUTES
+        // ========================================================
+        Route::prefix('publikasi')->name('publikasi.')->group(function () {
+            Route::get('/', [PublikasiController::class, 'index'])->middleware('permission:View Publikasi')->name('index');
+            Route::post('/', [PublikasiController::class, 'store'])->middleware('permission:Create Publikasi')->name('store');
+            Route::get('/{publikasi}', [PublikasiController::class, 'show'])->middleware('permission:View Publikasi')->name('show')->where('publikasi', '[0-9]+');
+            Route::post('/{publikasi}', [PublikasiController::class, 'update'])->middleware('permission:Edit Publikasi')->name('update')->where('publikasi', '[0-9]+');
+            Route::delete('/{publikasi}', [PublikasiController::class, 'destroy'])->middleware('permission:Delete Publikasi')->name('destroy')->where('publikasi', '[0-9]+');
+            Route::patch('/{publikasi}/verifikasi', [PublikasiController::class, 'verify'])->middleware('permission:Approve Publikasi')->name('verify')->where('publikasi', '[0-9]+');
+        });
+
+        // ========================================================
+        // DEADLINE ROUTES
+        // ========================================================
+        Route::prefix('deadline')->name('deadline.')->group(function () {
+            Route::get('/', [DeadlineController::class, 'index'])->name('index');
+            Route::get('/all', [DeadlineController::class, 'all'])->name('all');
+            Route::post('/', [DeadlineController::class, 'store'])->name('store');
+            Route::delete('/{deadline}', [DeadlineController::class, 'destroy'])->name('destroy')->where('deadline', '[0-9]+');
+        });
+
+        // ========================================================
         // MONITORING ROUTES (Super Admin + DPMBEM + Kemahasiswaan only)
         // ========================================================
         Route::prefix('monitoring')->name('monitoring.')->middleware('permission:View Reports')->group(function () {
@@ -140,6 +170,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/lpj', [MonitoringController::class, 'lpjList'])->name('lpj');
             Route::get('/kegiatan/{proposal}', [MonitoringController::class, 'activityDetail'])->name('activity-detail')->where('proposal', '[0-9]+');
             Route::get('/statistics', [MonitoringController::class, 'statistics'])->name('statistics');
+            Route::get('/prestasi', [MonitoringController::class, 'prestasiStats'])->name('prestasi');
         });
 
     });

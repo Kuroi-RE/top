@@ -8,7 +8,7 @@ class StoreLpjRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isOrmawa() || $this->user()->isAdmin();
+        return $this->user()->isOrmawa() || $this->user()->isAdmin() || $this->user()->isMahasiswa();
     }
 
     public function rules(): array
@@ -16,7 +16,7 @@ class StoreLpjRequest extends FormRequest
         return [
             'id_proposal' => 'required|exists:proposal_kegiatan,id_proposal',
             'file_lpj' => 'required|file|mimes:pdf|max:5120',
-            'tanggal_upload' => 'required|date',
+            'tanggal_upload' => 'nullable|date',
         ];
     }
 

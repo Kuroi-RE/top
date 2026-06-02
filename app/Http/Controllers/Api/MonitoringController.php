@@ -53,6 +53,18 @@ class MonitoringController
             $query->where('ajuan_triwulan', $request->ajuan_triwulan);
         }
 
+        if ($request->has('ormawa_name')) {
+            $query->whereHas('user', fn($q) => $q->where('ormawa_name', $request->ormawa_name));
+        }
+
+        if ($request->has('ormawa_type')) {
+            $query->whereHas('user', fn($q) => $q->where('ormawa_type', $request->ormawa_type));
+        }
+
+        if ($request->has('by_ormawa')) {
+            $query->where('id_user', $request->by_ormawa);
+        }
+
         $proposals = $query->paginate($request->per_page ?? 20);
 
         return response()->json([
@@ -94,10 +106,10 @@ class MonitoringController
 
         // Summary keseluruhan
         $totalDiajukan = ProposalKegiatan::sum('besar_ajuan');
-        $totalDisetujui = ProposalKegiatan::where('status', 'Disetujui')->sum('anggaran_disetujui');
-        $totalDitolak = ProposalKegiatan::where('status', 'Ditolak')->count();
-        $totalMenunggu = ProposalKegiatan::where('status', 'Menunggu')->count();
-        $totalRevisi = ProposalKegiatan::where('status', 'Revisi')->count();
+        $totalDisetujui = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+        $totalDitolak = ProposalKegiatan::where('status', 'Rejected')->count();
+        $totalMenunggu = ProposalKegiatan::where('status', 'Pending')->count();
+        $totalRevisi = ProposalKegiatan::where('status', 'Revision')->count();
 
         // Breakdown per triwulan
         $byTriwulan = [];
@@ -105,11 +117,11 @@ class MonitoringController
             $proposals = ProposalKegiatan::where('ajuan_triwulan', $triwulan)->get();
             $byTriwulan[$triwulan] = [
                 'total_diajukan' => $proposals->sum('besar_ajuan'),
-                'total_disetujui' => $proposals->where('status', 'Disetujui')->sum('anggaran_disetujui'),
+                'total_disetujui' => $proposals->where('status', 'Approved')->sum('anggaran_disetujui'),
                 'total_persentase_persetujuan' => $proposals->count() > 0 ? 
-                    round(($proposals->where('status', 'Disetujui')->count() / $proposals->count()) * 100, 2) : 0,
+                    round(($proposals->where('status', 'Approved')->count() / $proposals->count()) * 100, 2) : 0,
                 'proposal_count' => $proposals->count(),
-                'approved_count' => $proposals->where('status', 'Disetujui')->count(),
+                'approved_count' => $proposals->where('status', 'Approved')->count(),
             ];
         }
 
@@ -121,7 +133,7 @@ class MonitoringController
                     'total_anggaran_diajukan' => $totalDiajukan,
                     'total_anggaran_disetujui' => $totalDisetujui,
                     'persentase_persetujuan' => ProposalKegiatan::count() > 0 ?
-                        round((ProposalKegiatan::where('status', 'Disetujui')->count() / ProposalKegiatan::count()) * 100, 2) : 0,
+                        round((ProposalKegiatan::where('status', 'Approved')->count() / ProposalKegiatan::count()) * 100, 2) : 0,
                     'total_proposal_menunggu' => $totalMenunggu,
                     'total_proposal_revisi' => $totalRevisi,
                     'total_proposal_ditolak' => $totalDitolak,
@@ -235,18 +247,18 @@ class MonitoringController
         }
 
         $totalProposal = ProposalKegiatan::count();
-        $disetujui = ProposalKegiatan::where('status', 'Disetujui')->count();
-        $ditolak = ProposalKegiatan::where('status', 'Ditolak')->count();
-        $menunggu = ProposalKegiatan::where('status', 'Menunggu')->count();
-        $revisi = ProposalKegiatan::where('status', 'Revisi')->count();
+        $disetujui = ProposalKegiatan::where('status', 'Approved')->count();
+        $ditolak = ProposalKegiatan::where('status', 'Rejected')->count();
+        $menunggu = ProposalKegiatan::where('status', 'Pending')->count();
+        $revisi = ProposalKegiatan::where('status', 'Revision')->count();
 
         $totalLpj = LpjKegiatan::count();
-        $lpjDisetujui = LpjKegiatan::where('status_lpj', 'Disetujui')->count();
-        $lpjMenunggu = LpjKegiatan::where('status_lpj', 'Menunggu')->count();
-        $lpjRevisi = LpjKegiatan::where('status_lpj', 'Revisi')->count();
+        $lpjDisetujui = LpjKegiatan::where('status_lpj', 'Approved')->count();
+        $lpjMenunggu = LpjKegiatan::where('status_lpj', 'Pending')->count();
+        $lpjRevisi = LpjKegiatan::where('status_lpj', 'Revision')->count();
 
         $totalAnggaran = ProposalKegiatan::sum('besar_ajuan');
-        $totalDisetujuiAgg = ProposalKegiatan::where('status', 'Disetujui')->sum('anggaran_disetujui');
+        $totalDisetujuiAgg = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
 
         return response()->json([
             'status' => 'success',
@@ -275,6 +287,55 @@ class MonitoringController
                     'budget_utilization_rate' => $totalAnggaran > 0 ? 
                         round(($totalDisetujuiAgg / $totalAnggaran) * 100, 2) : 0,
                 ],
+            ],
+        ], 200);
+    }
+
+    /**
+     * Statistik prestasi mahasiswa
+     * 
+     * Mendapatkan statistik lengkap prestasi mahasiswa keseluruhan.
+     *
+     * @response 200 {
+     *   "status": "success",
+     *   "message": "Statistik prestasi mahasiswa",
+     *   "data": {...}
+     * }
+     */
+    public function prestasiStats(Request $request): JsonResponse
+    {
+        if (!($request->user()->isDpmbem() || $request->user()->isAdmin())) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden - Hanya DPMBEM dan Admin yang dapat mengakses',
+            ], 403);
+        }
+
+        $total = \App\Models\Prestasi::count();
+        $valid = \App\Models\Prestasi::where('status_verifikasi', 'Valid')->count();
+        $pending = \App\Models\Prestasi::where('status_verifikasi', 'Pending')->count();
+        $revisi = \App\Models\Prestasi::where('status_verifikasi', 'Revisi')->count();
+
+        $byTingkat = \App\Models\Prestasi::selectRaw('tingkat, count(*) as count')
+            ->groupBy('tingkat')
+            ->get()
+            ->pluck('count', 'tingkat');
+
+        $byKategori = \App\Models\Prestasi::selectRaw('kategori, count(*) as count')
+            ->groupBy('kategori')
+            ->get()
+            ->pluck('count', 'kategori');
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Statistik prestasi mahasiswa',
+            'data' => [
+                'total' => $total,
+                'valid' => $valid,
+                'pending' => $pending,
+                'revision_needed' => $revisi,
+                'by_tingkat' => $byTingkat,
+                'by_kategori' => $byKategori,
             ],
         ], 200);
     }

@@ -88,40 +88,10 @@
 	$displayName = $displayName !== '' ? $displayName : ($currentUser?->username ?? 'teman');
 
 	$summaryCards = [
-		['title' => 'Proposal Kegiatan', 'count' => \App\Models\ProposalKegiatan::where('category', 'Ormawa')->count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'LPJ Kegiatan', 'count' => \App\Models\LpjKegiatan::whereHas('proposal', fn($q) => $q->where('category', 'Ormawa'))->count(), 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
-		['title' => 'Publikasi Kegiatan', 'count' => \App\Models\InformasiKegiatan::whereHas('user', function($q) {
-            $q->where('role', 'like', '%Ormawa%')->orWhere('role', 'DPMBEM');
-        })->count(), 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253'],
+		['title' => 'Proposal Kegiatan', 'count' => $total ?? 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'LPJ Kegiatan', 'count' => $lpjCount ?? 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+		['title' => 'Publikasi Kegiatan', 'count' => $publikasiCount ?? 0, 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253'],
 	];
-
-	$activities = \App\Models\ProposalKegiatan::with(['user', 'lpj'])
-        ->where('category', 'Ormawa')
-		->latest('id_proposal')
-		->take(10)
-		->get()
-		->map(function ($proposal, $index) {
-			$formattedDate = data_get($proposal, 'waktu_kegiatan');
-			if ($formattedDate instanceof \Carbon\Carbon) {
-                $formattedDate = $formattedDate->format('d/m/Y');
-            } elseif (!$formattedDate) {
-				$formattedDate = optional($proposal->created_at)->format('d/m/Y') ?? '-';
-			}
-
-			return [
-				'tw' => data_get($proposal, 'ajuan_triwulan', '-'),
-				'ormawa' => data_get($proposal, 'user.nama_belakang', data_get($proposal, 'user.username', 'Ormawa')),
-				'nama_kegiatan' => data_get($proposal, 'nama_kegiatan', '-'),
-				'resiko' => data_get($proposal, 'risiko_proposal', '-'),
-				'waktu' => $formattedDate,
-				'ajuan' => 'Rp ' . number_format((float) data_get($proposal, 'besar_ajuan', 0), 0, ',', '.'),
-				'anggaran' => 'Rp ' . number_format((float) data_get($proposal, 'anggaran_disetujui', 0), 0, ',', '.'),
-				'status' => ($proposal->status == 'Disetujui' && $proposal->lpj->where('status_lpj', 'Menunggu')->count() > 0) ? 'Cek LPJ' : data_get($proposal, 'status', 'Ajuan baru'),
-				'id' => data_get($proposal, 'id_proposal'),
-                'lpj_keu' => data_get($proposal, 'file_lpj_keuangan'),
-                'lpj_keg' => optional($proposal->lpj->first())->file_lpj,
-			];
-		});
 
 	$statusStyles = [
 		'Selesai' => 'bg-emerald-100 text-emerald-700',
