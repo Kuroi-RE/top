@@ -24,13 +24,22 @@ class ApiService
 
         // Retrieve existing token from session, or create a new one
         $token = session('api_token');
-        if (!$token) {
+        $tokenValid = false;
+        if ($token) {
+            $tokenParts = explode('|', $token);
+            $tokenId = count($tokenParts) > 1 ? $tokenParts[0] : $token;
+            if (is_numeric($tokenId)) {
+                $tokenValid = $user->tokens()->where('id', $tokenId)->exists();
+            }
+        }
+
+        if (!$token || !$tokenValid) {
             // Delete any existing tokens named 'web-session-token' to prevent clutter
             $user->tokens()->where('name', 'web-session-token')->delete();
             $token = $user->createToken('web-session-token')->plainTextToken;
             session(['api_token' => $token]);
         }
 
-        return Http::withToken($token)->baseUrl($baseUrl);
+        return Http::withToken($token)->acceptJson()->baseUrl($baseUrl);
     }
 }

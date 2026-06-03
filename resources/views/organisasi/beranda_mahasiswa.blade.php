@@ -551,8 +551,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const tr = document.createElement('tr');
             tr.className = 'hover:bg-gray-50/50 transition-colors';
 
-            const statusClass = prop.status === 'Disetujui' ? 'bg-green-100 text-green-700' :
-                                (prop.status === 'Menunggu' ? 'bg-blue-100 text-blue-700' : 'bg-red-100 text-red-700');
+            const statusClass = prop.status === 'Disetujui' || prop.status === 'Approved' || prop.status === 'Selesai' ? 'bg-green-100 text-green-700' :
+                                (prop.status === 'Menunggu' || prop.status === 'Pending' || prop.status === 'Cek LPJ' ? 'bg-blue-100 text-blue-700' : 
+                                 (prop.status === 'Revisi' || prop.status === 'Revisi LPJ' || prop.status === 'Revision' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'));
 
             let dateStr = '-';
             if (prop.waktu_kegiatan) {
@@ -568,7 +569,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const amountFormatted = 'Rp ' + amount.toLocaleString('id-ID', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
 
             let actionHtml = '-';
-            if (prop.status === 'Menunggu' || prop.status === 'Revisi') {
+            if (prop.status === 'Menunggu' || prop.status === 'Revisi' || prop.status === 'Pending' || prop.status === 'Revision') {
                 actionHtml = `
                     <a href="/organisasi/${prop.id_proposal}/edit" 
                        class="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-blue-50 text-blue-600 transition hover:bg-blue-100" 
@@ -576,6 +577,22 @@ document.addEventListener('DOMContentLoaded', function () {
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
                             <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" />
                         </svg>
+                    </a>
+                `;
+            } else if (prop.status === 'Disetujui' || prop.status === 'Approved') {
+                actionHtml = `
+                    <a href="/organisasi/${prop.id_proposal}/lpj?type=mahasiswa" 
+                       class="inline-flex h-8 px-2.5 items-center justify-center rounded-lg bg-green-50 text-green-600 font-semibold text-xs transition hover:bg-green-100" 
+                       title="Upload LPJ">
+                       Upload LPJ
+                    </a>
+                `;
+            } else if (prop.status === 'Revisi LPJ') {
+                actionHtml = `
+                    <a href="/organisasi/lpj/${prop.id_proposal}/revisi?type=mahasiswa" 
+                       class="inline-flex h-8 px-2.5 items-center justify-center rounded-lg bg-amber-50 text-amber-600 font-semibold text-xs transition hover:bg-amber-100" 
+                       title="Revisi LPJ">
+                       Revisi LPJ
                     </a>
                 `;
             }

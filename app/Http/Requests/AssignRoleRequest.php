@@ -28,11 +28,11 @@ class AssignRoleRequest extends FormRequest
 
         // Super Admin can assign any role
         if ($requester->isSuperAdmin()) {
-            $allowedRoles = ['Super Admin', 'Kemahasiswaan', 'DPMBEM', 'Ormawa', 'Mahasiswa'];
+            $allowedRoles = ['Super Admin', 'Kemahasiswaan', 'DPMBEM', 'Ormawa', 'Ormawa Institusi', 'Ormawa Prodi', 'Mahasiswa'];
         }
         // Kemahasiswaan can only assign Ormawa, Mahasiswa, DPMBEM (not Super Admin)
         elseif ($requester->isAdmin()) {
-            $allowedRoles = ['Ormawa', 'Mahasiswa', 'DPMBEM'];
+            $allowedRoles = ['Ormawa', 'Ormawa Institusi', 'Ormawa Prodi', 'Mahasiswa', 'DPMBEM'];
         }
 
         return [
@@ -51,7 +51,7 @@ class AssignRoleRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:100',
-                'required_if:role,Ormawa',
+                'required_if:role,Ormawa,Ormawa Institusi,Ormawa Prodi',
             ],
         ];
     }

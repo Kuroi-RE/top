@@ -14,6 +14,7 @@ class ProposalKegiatanResource extends JsonResource
             'id_proposal' => $this->id_proposal,
             'id_user' => $this->id_user,
             'user' => new UserResource($this->whenLoaded('user')),
+            'lpj' => LpjKegiatanResource::collection($this->whenLoaded('lpj')),
             'ajuan_triwulan' => $this->ajuan_triwulan,
             'risiko_proposal' => $this->risiko_proposal,
             'no_telepon' => $this->no_telepon,

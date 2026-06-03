@@ -7,6 +7,7 @@ use App\Models\ProposalKegiatan;
 use App\Models\LpjKegiatan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 /**
  * @group Monitoring Anggaran
@@ -338,5 +339,127 @@ class MonitoringController
                 'by_kategori' => $byKategori,
             ],
         ], 200);
+    }
+
+    /**
+     * Export PDF Monitoring Anggaran
+     */
+    public function exportAnggaranPdf(Request $request)
+    {
+        if (!($request->user()->isDpmbem() || $request->user()->isAdmin())) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden - Hanya DPMBEM dan Admin yang dapat mengakses',
+            ], 403);
+        }
+
+        $totalProposal  = ProposalKegiatan::count();
+        $totalDiajukan  = ProposalKegiatan::sum('besar_ajuan');
+        $totalDisetujui = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+        $totalLpj       = LpjKegiatan::count();
+        $lpjDisetujui   = LpjKegiatan::where('status_lpj', 'Approved')->count();
+        $lpjRevisi      = LpjKegiatan::where('status_lpj', 'Revision')->count();
+
+        $proposals = ProposalKegiatan::with('user')
+            ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
+            ->orderByDesc('id_proposal')
+            ->limit(8)
+            ->get();
+
+        $summary = [
+            'totalProposal'  => $totalProposal,
+            'totalDiajukan'  => $totalDiajukan,
+            'totalDisetujui' => $totalDisetujui,
+            'totalLpj'       => $totalLpj,
+            'lpjDisetujui'   => $lpjDisetujui,
+            'lpjRevisi'      => $lpjRevisi,
+        ];
+
+        $pdf = Pdf::loadView("admin.monitoring_anggaran_export_pdf", compact("summary", "proposals"));
+        return $pdf->download("monitoring_anggaran_" . now()->format('YmdHis') . ".pdf");
+    }
+
+    /**
+     * Export PDF Beranda Ormawa
+     */
+    public function exportBerandaOrmawaPdf(Request $request)
+    {
+        if (!($request->user()->isDpmbem() || $request->user()->isAdmin())) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Forbidden - Hanya DPMBEM dan Admin yang dapat mengakses',
+            ], 403);
+        }
+
+        $query = ProposalKegiatan::with('user')->where('category', 'Ormawa')->orWhereNull('category');
+        
+        $proposals = $query->get()->filter(function ($p) {
+            return ($p->category ?? 'Ormawa') === 'Ormawa';
+        });
+
+        if ($request->has('jenis_ormawa') && $request->jenis_ormawa) {
+            $proposals = $proposals->filter(function ($p) use ($request) {
+                $role = strtolower($p->user->role ?? '');
+                return str_contains($role, strtolower($request->jenis_ormawa));
+            });
+        }
+
+        if ($request->has('nama_ormawa') && $request->nama_ormawa) {
+            $proposals = $proposals->filter(function ($p) use ($request) {
+                $name = strtolower(($p->user->nama_depan ?? '') . ' ' . ($p->user->nama_belakang ?? '') . ' ' . ($p->user->username ?? ''));
+                return str_contains($name, strtolower($request->nama_ormawa));
+            });
+        }
+
+        $lpjs = LpjKegiatan::whereIn('id_proposal', $proposals->pluck('id_proposal'))->get()->keyBy('id_proposal');
+
+        $statusMap = [
+            'Pending' => 'Menunggu',
+            'Revision' => 'Revisi',
+            'Approved' => 'Disetujui',
+            'Rejected' => 'Ditolak',
+            'Cek LPJ' => 'Cek LPJ',
+            'Revisi LPJ' => 'Revisi LPJ',
+            'Selesai' => 'Selesai',
+        ];
+
+        $activities = $proposals->map(function ($p) use ($statusMap, $lpjs) {
+            $rawStatus = $p->status ?? '';
+            $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
+            $lpj = $lpjs->get($p->id_proposal);
+
+            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj->status_lpj ?? '') === 'Pending') {
+                $mappedStatus = 'Cek LPJ';
+            }
+
+            $formattedDate = $p->waktu_kegiatan 
+                ? \Carbon\Carbon::parse($p->waktu_kegiatan)->format('d F Y') 
+                : '-';
+
+            return [
+                'tw' => $p->ajuan_triwulan ?? '-',
+                'ormawa' => $p->user->nama_belakang ?? $p->user->username ?? 'Ormawa',
+                'nama_kegiatan' => $p->nama_kegiatan ?? '-',
+                'resiko' => $p->risiko_proposal ?? '-',
+                'waktu' => $formattedDate,
+                'ajuan' => 'Rp ' . number_format((float) ($p->besar_ajuan ?? 0), 0, ',', '.'),
+                'anggaran' => 'Rp ' . number_format((float) ($p->anggaran_disetujui ?? 0), 0, ',', '.'),
+                'status' => $mappedStatus,
+            ];
+        })->toArray();
+
+        $jenisOrmawaText = $request->jenis_ormawa ? 'Ormawa ' . ucfirst($request->jenis_ormawa) : 'Semua Jenis Ormawa';
+        $namaOrmawaText = $request->nama_ormawa ?? 'Semua Ormawa';
+
+        $statusStyles = [
+            'Selesai' => 'done',
+            'Pencairan' => 'pending',
+            'Acc' => 'info',
+            'Revisi' => 'revisi',
+            'Ajuan baru' => 'new',
+        ];
+
+        $pdf = Pdf::loadView("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles", "jenisOrmawaText", "namaOrmawaText"));
+        return $pdf->download("beranda_ormawa_" . now()->format('YmdHis') . ".pdf");
     }
 }

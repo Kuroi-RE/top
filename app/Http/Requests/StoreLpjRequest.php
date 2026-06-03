@@ -13,8 +13,15 @@ class StoreLpjRequest extends FormRequest
 
     public function rules(): array
     {
+        $type = $this->input('type', $this->query('type'));
+        if ($type === 'mahasiswa' || ($this->user() && $this->user()->isMahasiswa())) {
+            $proposalTable = 'proposal_prestasi_mahasiswa';
+        } else {
+            $proposalTable = 'proposal_kegiatan';
+        }
+
         return [
-            'id_proposal' => 'required|exists:proposal_kegiatan,id_proposal',
+            'id_proposal' => "required|exists:{$proposalTable},id_proposal",
             'file_lpj' => 'required|file|mimes:pdf|max:5120',
             'tanggal_upload' => 'nullable|date',
         ];

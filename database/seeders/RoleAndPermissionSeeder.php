@@ -24,14 +24,16 @@ class RoleAndPermissionSeeder extends Seeder
             'kemahasiswaan' => 'Kemahasiswaan',
             'dpmbem' => 'DPMBEM',
             'ormawa' => 'Ormawa',
+            'ormawa_institusi' => 'Ormawa Institusi',
+            'ormawa_prodi' => 'Ormawa Prodi',
             'mahasiswa' => 'Mahasiswa',
         ];
 
         // Create roles
         foreach ($roles as $slug => $name) {
             Role::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'api'],
-                ['name' => $name, 'guard_name' => 'api']
+                ['name' => $name, 'guard_name' => 'web'],
+                ['name' => $name, 'guard_name' => 'web']
             );
         }
 
@@ -42,8 +44,8 @@ class RoleAndPermissionSeeder extends Seeder
         // Create permissions
         foreach ($allPermissions as $name) {
             Permission::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'api'],
-                ['name' => $name, 'guard_name' => 'api']
+                ['name' => $name, 'guard_name' => 'web'],
+                ['name' => $name, 'guard_name' => 'web']
             );
         }
 
@@ -84,6 +86,12 @@ class RoleAndPermissionSeeder extends Seeder
             } elseif ($user->role === 'Ormawa') {
                 $roleName = 'Ormawa';
                 $configKey = 'Ormawa Institusi';
+            } elseif ($user->role === 'Ormawa Institusi') {
+                $roleName = 'Ormawa Institusi';
+                $configKey = 'Ormawa Institusi';
+            } elseif ($user->role === 'Ormawa Prodi') {
+                $roleName = 'Ormawa Prodi';
+                $configKey = 'Ormawa Prodi';
             } elseif ($user->role === 'Mahasiswa') {
                 $roleName = 'Mahasiswa';
                 $configKey = 'Mahasiswa';

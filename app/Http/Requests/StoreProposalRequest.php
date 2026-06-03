@@ -14,6 +14,7 @@ class StoreProposalRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'type' => 'nullable|string|in:mahasiswa,ormawa',
             'ajuan_triwulan' => 'required|in:I,II,III,IV',
             'risiko_proposal' => 'required|in:Rendah,Sedang,Tinggi',
             'no_telepon' => 'required|string|max:15',

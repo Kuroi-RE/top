@@ -53,6 +53,6 @@ class ProposalPrestasiMahasiswa extends Model
 
     public function lpj(): HasMany
     {
-        return $this->hasMany(LpjKegiatan::class, 'id_proposal', 'id_proposal');
+        return $this->hasMany(LpjPrestasiMahasiswa::class, 'id_proposal', 'id_proposal');
     }
 }

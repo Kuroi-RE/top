@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
+use Carbon\Carbon;
 
 Route::get("/", function () {
     $publikasis = \App\Models\PublikasiKegiatan::where('status', 'Approved')
@@ -289,6 +293,107 @@ Route::middleware("guest")->group(function () {
 
         return back()->with('success', 'Kode verifikasi baru telah dikirim ke email Anda.');
     })->name('twofactor.verify.resend')->middleware('throttle:3,5');
+
+    // ── Forgot / Reset Password ───────────────────────────────────────────────
+    Route::get('/forgot-password', fn() => view('auth.forgot_password'))->name('password.request');
+
+    Route::post('/forgot-password', function (Request $request) {
+        $request->validate([
+            'email' => 'required|email|exists:users,email',
+        ], [
+            'email.required' => 'Email tidak boleh kosong.',
+            'email.email' => 'Format email tidak valid.',
+            'email.exists' => 'Email tidak terdaftar dalam sistem.',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+        if (!$user) {
+            return back()->withErrors(['email' => 'User tidak ditemukan.']);
+        }
+
+        $token = Str::random(60);
+
+        DB::table('password_reset_tokens')->updateOrInsert(
+            ['email' => $user->email],
+            [
+                'token' => Hash::make($token),
+                'created_at' => now(),
+            ]
+        );
+
+        $resetUrl = URL::temporarySignedRoute(
+            'password.reset',
+            now()->addMinutes(30),
+            ['token' => $token, 'email' => $user->email]
+        );
+
+        if (config('mail.default') === 'log') {
+            Log::info(sprintf('Reset Password link for %s: %s', $user->email, $resetUrl));
+        } else {
+            try {
+                Mail::raw(
+                    "Halo {$user->nama_depan},\n\nAnda menerima email ini karena kami menerima permintaan reset password untuk akun Anda.\n\nSilakan klik link di bawah ini untuk mereset password Anda (Link ini berlaku selama 30 menit):\n\n{$resetUrl}\n\nJika Anda tidak meminta reset password, abaikan email ini.",
+                    function ($message) use ($user) {
+                        $message->to($user->email)
+                            ->subject('Reset Password Akun TOPKEMA Anda');
+                    }
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Unable to send reset password email: ' . $e->getMessage());
+                return back()->withErrors(['email' => 'Gagal mengirim email reset password. Silakan coba lagi nanti.']);
+            }
+        }
+
+        return back()->with('success', 'Link reset password telah dikirim ke email Anda.');
+    })->name('password.email');
+
+    Route::get('/reset-password/{token}', function (Request $request, $token) {
+        if (! $request->hasValidSignature()) {
+            return redirect()->route('login')->with('error', 'Link reset password tidak valid atau telah kedaluwarsa.');
+        }
+
+        return view('auth.reset_password', [
+            'token' => $token,
+            'email' => $request->query('email')
+        ]);
+    })->name('password.reset');
+
+    Route::post('/reset-password', function (Request $request) {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ], [
+            'token.required' => 'Token tidak boleh kosong.',
+            'email.required' => 'Email tidak boleh kosong.',
+            'email.email' => 'Format email tidak valid.',
+            'password.required' => 'Password tidak boleh kosong.',
+            'password.min' => 'Password minimal 8 karakter.',
+            'password.confirmed' => 'Konfirmasi password tidak cocok.',
+        ]);
+
+        $record = DB::table('password_reset_tokens')->where('email', $request->email)->first();
+
+        if (! $record || ! Hash::check($request->token, $record->token)) {
+            return redirect()->route('login')->with('error', 'Token reset password tidak valid.');
+        }
+
+        if (Carbon::parse($record->created_at)->addMinutes(30)->isPast()) {
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            return redirect()->route('login')->with('error', 'Token reset password sudah kedaluwarsa.');
+        }
+
+        $user = User::where('email', $request->email)->first();
+        if ($user) {
+            $user->update([
+                'password' => $request->password
+            ]);
+            DB::table('password_reset_tokens')->where('email', $request->email)->delete();
+            return redirect()->route('login')->with('success', 'Password Anda berhasil diperbarui. Silakan login.');
+        }
+
+        return back()->withErrors(['email' => 'Pengguna tidak ditemukan.']);
+    })->name('password.update');
 });
 
 // ── Logout ────────────────────────────────────────────────────────────────────
@@ -313,19 +418,27 @@ Route::get('/api/token', function (Request $request) {
 
     $user = Auth::user();
 
-    // Cari token yang sudah ada dan masih aktif, atau buat baru
-    $existingToken = $user->tokens()
-        ->where('name', 'web-session-token')
-        ->latest()
-        ->first();
+    // Cek jika token sudah ada di web session dan masih valid di database
+    $token = session()->get('web_session_api_token');
+    $tokenIsValid = false;
 
-    if ($existingToken) {
-        // Token Sanctum sudah ada — kembalikan plaintext token-nya tidak bisa,
-        // jadi kita hapus dan buat baru
-        $existingToken->delete();
+    if ($token) {
+        $accessToken = \Laravel\Sanctum\PersonalAccessToken::findToken($token);
+        if ($accessToken && $accessToken->tokenable_id === $user->id_user) {
+            $tokenIsValid = true;
+        }
     }
 
-    $token = $user->createToken('web-session-token', ['*'])->plainTextToken;
+    if (!$tokenIsValid) {
+        // Hapus token lama jika ada
+        $user->tokens()->where('name', 'web-session-token')->delete();
+
+        // Buat token baru
+        $token = $user->createToken('web-session-token', ['*'])->plainTextToken;
+
+        // Simpan plaintext token di web session
+        session()->put('web_session_api_token', $token);
+    }
 
     return response()->json([
         'token' => $token,
@@ -385,36 +498,18 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.monitoring_anggaran");
 
         Route::get("/monitoring-anggaran/export-pdf", function () {
-            try {
-                $totalProposal  = \App\Models\ProposalKegiatan::count();
-                $totalDiajukan  = \App\Models\ProposalKegiatan::sum('besar_ajuan');
-                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
-                $totalLpj       = \App\Models\LpjKegiatan::count();
-                $lpjDisetujui   = \App\Models\LpjKegiatan::where('status_lpj', 'Approved')->count();
-                $lpjRevisi      = \App\Models\LpjKegiatan::where('status_lpj', 'Revision')->count();
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->get('/monitoring/anggaran/export-pdf');
 
-                $proposals = \App\Models\ProposalKegiatan::with('user')
-                    ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
-                    ->orderByDesc('id_proposal')
-                    ->limit(8)
-                    ->get();
-            } catch (\Throwable $e) {
-                \Log::warning('Monitoring anggaran export unavailable: ' . $e->getMessage());
-                $totalProposal = $totalDiajukan = $totalDisetujui = $totalLpj = $lpjDisetujui = $lpjRevisi = 0;
-                $proposals = collect();
+            if ($response->successful()) {
+                $filename = "monitoring_anggaran_" . now()->format('YmdHis') . ".pdf";
+                return response($response->body(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
             }
 
-            $summary = [
-                'totalProposal'  => $totalProposal,
-                'totalDiajukan'  => $totalDiajukan,
-                'totalDisetujui' => $totalDisetujui,
-                'totalLpj'       => $totalLpj,
-                'lpjDisetujui'   => $lpjDisetujui,
-                'lpjRevisi'      => $lpjRevisi,
-            ];
-
-            $pdf = Pdf::loadView("admin.monitoring_anggaran_export_pdf", compact("summary", "proposals"));
-            return $pdf->download("monitoring_anggaran_" . now()->format('YmdHis') . ".pdf");
+            return redirect()->back()->with('error', 'Gagal menghasilkan PDF dari API.');
         })->name("admin.monitoring_anggaran.export_pdf");
 
         // DPMBEM dashboard
@@ -537,70 +632,90 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         return $next($request);
     }]], function () {
         Route::get("/form_verifikasi/{id}", function ($id) {
-            $proposal = \App\Models\ProposalKegiatan::with('user')->find($id);
-            if (!$proposal) {
+            $type = request('type');
+            if ($type === 'mahasiswa') {
                 $proposal = \App\Models\ProposalPrestasiMahasiswa::with('user')->findOrFail($id);
+            } elseif ($type === 'ormawa') {
+                $proposal = \App\Models\ProposalKegiatan::with('user')->findOrFail($id);
+            } else {
+                $proposal = \App\Models\ProposalKegiatan::with('user')->find($id);
+                if (!$proposal) {
+                    $proposal = \App\Models\ProposalPrestasiMahasiswa::with('user')->findOrFail($id);
+                }
             }
             return view("admin.form_verifikasi", compact("proposal"));
         })->name("admin.form_verifikasi");
 
         Route::post("/form_verifikasi/{id}", function (Illuminate\Http\Request $request, $id) {
-            $proposal = \App\Models\ProposalKegiatan::with('lpj')->find($id);
-            $isStudentProposal = false;
-            if (!$proposal) {
-                $proposal = \App\Models\ProposalPrestasiMahasiswa::with('lpj')->findOrFail($id);
-                $isStudentProposal = true;
+            $api = \App\Services\ApiService::getClient();
+            $type = $request->input('type', $request->query('type'));
+            
+            $payload = [
+                'status' => $request->status,
+                'catatan_admin' => $request->revisi,
+                'anggaran_disetujui' => $request->besar_anggaran
+            ];
+
+            if ($type) {
+                $payload['type'] = $type;
+            }
+
+            // Setup multipart if file exists
+            $apiReq = $api;
+            if ($request->hasFile('lpj_keuangan')) {
+                $file = $request->file('lpj_keuangan');
+                $apiReq = $apiReq->attach(
+                    'file_lpj_keuangan',
+                    file_get_contents($file->getRealPath()),
+                    $file->getClientOriginalName()
+                );
+            }
+
+            // Fetch proposal with type parameter to avoid collision
+            $queryParams = [];
+            if ($type) {
+                $queryParams['type'] = $type;
+            }
+            $proposalResponse = $api->get("/proposal/{$id}", $queryParams);
+            
+            if ($proposalResponse->successful()) {
+                $data = $proposalResponse->json('data');
+                $isLpjPhase = in_array($data['status'], ['Disetujui', 'Approved', 'Selesai', 'Cek LPJ', 'Revisi LPJ']) && !empty($data['lpj']);
+                
+                if ($isLpjPhase) {
+                    $lpjId = $data['lpj'][0]['id_lpj'] ?? null;
+                    if ($lpjId) {
+                        $res = $apiReq->patch("/lpj/{$lpjId}/verifikasi", $payload);
+                    } else {
+                        return back()->withErrors(['message' => 'LPJ tidak ditemukan.'])->withInput();
+                    }
+                } else {
+                    $res = $apiReq->patch("/proposal/{$id}/verifikasi", $payload);
+                }
+                
+                if (isset($res) && $res->successful()) {
+                    $redirectRoute = $type === 'mahasiswa' ? 'admin.prestasi_mahasiswa' : 'admin.beranda_ormawa';
+                    return redirect()->route($redirectRoute)->with('success', 'Verifikasi kegiatan berhasil disimpan.');
+                }
+                
+                $errMsg = isset($res) ? ($res->json('message') ?? 'Gagal menyimpan verifikasi via API.') : 'Gagal memproses request.';
+                $errors = isset($res) ? ($res->json('errors') ?? []) : [];
+                return back()->withErrors(array_merge(['message' => $errMsg], $errors))->withInput();
             }
             
-            // Determine which phase we are in
-            $lpj = $proposal->lpj->first();
-            $isLpjPhase = ($proposal->status == 'Disetujui' || $proposal->status == 'Approved' || $proposal->status == 'Selesai' || $proposal->status == 'Cek LPJ' || $proposal->status == 'Revisi LPJ') && $lpj;
-
-            if ($isLpjPhase) {
-                // Handling LPJ Verification
-                if ($request->status == 'Revisi') {
-                    $lpj->update([
-                        'status_lpj' => 'Revision',
-                        'catatan_admin' => $request->revisi
-                    ]);
-                    $proposal->update(['status' => 'Revisi LPJ']);
-                } elseif ($request->status == 'Selesai') {
-                    $lpj->update([
-                        'status_lpj' => 'Approved',
-                        'catatan_admin' => null
-                    ]);
-                    $proposal->update(['status' => 'Selesai']);
-                }
-            } else {
-                // Handling Proposal Verification
-                $mappedStatus = match($request->status) {
-                    'Disetujui' => 'Approved',
-                    'Revisi' => 'Revision',
-                    'Ditolak' => 'Rejected',
-                    default => $request->status,
-                };
-
-                $updateData = [
-                    'anggaran_disetujui' => $request->besar_anggaran,
-                    'status' => $mappedStatus,
-                    'catatan_admin' => $request->revisi,
-                ];
-
-                if ($request->hasFile('lpj_keuangan')) {
-                    $file = $request->file('lpj_keuangan');
-                    $originalName = str_replace(' ', '_', $file->getClientOriginalName());
-                    $fileName = time() . '_' . $originalName;
-                    $filePath = $file->storeAs('lpj_keuangan', $fileName, 'public');
-                    $updateData['file_lpj_keuangan'] = $filePath;
-                }
-
-                $proposal->update($updateData);
+            // If proposal not found, it might be a prestasi mahasiswa
+            $res = $apiReq->patch("/prestasi/{$id}/verifikasi", [
+                'status_verifikasi' => $request->status,
+                'catatan_admin' => $request->revisi,
+            ]);
+            
+            if ($res->successful()) {
+                return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Verifikasi prestasi berhasil disimpan.');
             }
             
-            if ($isStudentProposal) {
-                return redirect()->route('admin.prestasi_mahasiswa')->with('success', 'Verifikasi berhasil disimpan.');
-            }
-            return redirect()->route('admin.beranda_ormawa')->with('success', 'Verifikasi berhasil disimpan.');
+            $errMsg = $res->json('message') ?? 'Gagal memverifikasi prestasi via API.';
+            $errors = $res->json('errors') ?? [];
+            return back()->withErrors(array_merge(['message' => $errMsg], $errors))->withInput();
         })->name("admin.form_verifikasi.update");
 
         Route::get("/input_template_dokumen", function () {
@@ -728,106 +843,23 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.beranda_ormawa");
 
         Route::get("/beranda_ormawa/export-pdf", function () {
-            try {
-                $api = \App\Services\ApiService::getClient();
-                
-                // Fetch proposals
-                $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
-                $proposals = [];
-                if ($proposalResponse->successful()) {
-                    $proposals = $proposalResponse->json('data') ?? [];
-                }
+            $api = \App\Services\ApiService::getClient();
+            
+            $params = [];
+            if (request('jenis_ormawa')) $params['jenis_ormawa'] = request('jenis_ormawa');
+            if (request('nama_ormawa')) $params['nama_ormawa'] = request('nama_ormawa');
+            
+            $response = $api->get('/monitoring/beranda_ormawa/export-pdf', $params);
 
-                // Filter proposals of category 'Ormawa'
-                $proposals = collect($proposals)->filter(function ($p) {
-                    return ($p['category'] ?? 'Ormawa') === 'Ormawa';
-                })->values();
-
-                // Collection level filters from request query parameters
-                $jenisOrmawa = request('jenis_ormawa');
-                if ($jenisOrmawa) {
-                    $proposals = collect($proposals)->filter(function ($p) use ($jenisOrmawa) {
-                        $role = strtolower($p['user']['role'] ?? '');
-                        return str_contains($role, strtolower($jenisOrmawa));
-                    })->values();
-                }
-
-                $namaOrmawa = request('nama_ormawa');
-                if ($namaOrmawa) {
-                    $proposals = collect($proposals)->filter(function ($p) use ($namaOrmawa) {
-                        $name = strtolower(($p['user']['nama_depan'] ?? '') . ' ' . ($p['user']['nama_belakang'] ?? '') . ' ' . ($p['user']['username'] ?? ''));
-                        return str_contains($name, strtolower($namaOrmawa));
-                    })->values();
-                }
-
-                // Fetch LPJs
-                $lpjResponse = $api->get('/lpj');
-                $lpjs = [];
-                if ($lpjResponse->successful()) {
-                    $lpjs = $lpjResponse->json('data') ?? [];
-                }
-                
-                $lpjByProposalId = [];
-                foreach ($lpjs as $lpj) {
-                    $lpjByProposalId[$lpj['id_proposal']] = $lpj;
-                }
-
-                $statusMap = [
-                    'Pending' => 'Menunggu',
-                    'Revision' => 'Revisi',
-                    'Approved' => 'Disetujui',
-                    'Rejected' => 'Ditolak',
-                    'Cek LPJ' => 'Cek LPJ',
-                    'Revisi LPJ' => 'Revisi LPJ',
-                    'Selesai' => 'Selesai',
-                ];
-
-                // Map proposals to $activities structure for the view
-                $activities = $proposals->map(function ($p) use ($statusMap, $lpjByProposalId) {
-                    $rawStatus = $p['status'] ?? '';
-                    $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
-
-                    $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
-
-                    // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
-                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
-                        $mappedStatus = 'Cek LPJ';
-                    }
-
-                    $formattedDate = isset($p['waktu_kegiatan']) 
-                        ? \Carbon\Carbon::parse($p['waktu_kegiatan'])->format('d F Y') 
-                        : '-';
-
-                    return [
-                        'tw' => $p['ajuan_triwulan'] ?? '-',
-                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
-                        'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
-                        'resiko' => $p['risiko_proposal'] ?? '-',
-                        'waktu' => $formattedDate,
-                        'ajuan' => 'Rp ' . number_format((float) ($p['besar_ajuan'] ?? 0), 0, ',', '.'),
-                        'anggaran' => 'Rp ' . number_format((float) ($p['anggaran_disetujui'] ?? 0), 0, ',', '.'),
-                        'status' => $mappedStatus,
-                    ];
-                })->toArray();
-
-            } catch (\Throwable $e) {
-                $activities = [];
-                \Log::error('API Error in admin beranda ormawa export: ' . $e->getMessage());
+            if ($response->successful()) {
+                $filename = "beranda_ormawa_" . now()->format('YmdHis') . ".pdf";
+                return response($response->body(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
             }
 
-            $jenisOrmawaText = request('jenis_ormawa') ? 'Ormawa ' . ucfirst(request('jenis_ormawa')) : 'Semua Jenis Ormawa';
-            $namaOrmawaText = request('nama_ormawa') ?? 'Semua Ormawa';
-
-            $statusStyles = [
-                'Selesai' => 'done',
-                'Pencairan' => 'pending',
-                'Acc' => 'info',
-                'Revisi' => 'revisi',
-                'Ajuan baru' => 'new',
-            ];
-
-            $pdf = Pdf::loadView("admin.beranda_ormawa_export_pdf", compact("activities", "statusStyles", "jenisOrmawaText", "namaOrmawaText"));
-            return $pdf->download("beranda_ormawa_" . now()->format('YmdHis') . ".pdf");
+            return redirect()->back()->with('error', 'Gagal menghasilkan PDF dari API.');
         })->name("admin.beranda_ormawa.export_pdf");
 
         Route::get("/prestasi_mahasiswa", function () {
@@ -835,41 +867,23 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.prestasi_mahasiswa");
 
         Route::get("/prestasi_mahasiswa/export-pdf", function () {
-            $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'tidak');
+            $api = \App\Services\ApiService::getClient();
+            
+            $params = ['mewakili_ormawa' => 'tidak'];
+            if (request('tingkat')) $params['tingkat'] = request('tingkat');
+            if (request('search')) $params['search'] = request('search');
+            
+            $response = $api->get('/prestasi/export-pdf', $params);
 
-            if (request('tingkat')) {
-                $query->where('tingkat', request('tingkat'));
+            if ($response->successful()) {
+                $filename = "prestasi_mahasiswa_" . now()->format('YmdHis') . ".pdf";
+                return response($response->body(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
             }
 
-            if (request('search')) {
-                $q = request('search');
-                $query->where(function($sub) use ($q) {
-                    $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
-                        ->orWhere('penyelenggara', 'like', '%' . $q . '%')
-                        ->orWhere('capaian', 'like', '%' . $q . '%')
-                        ->orWhereHas('user', function($u) use ($q) {
-                            $u->where('nama_depan', 'like', '%' . $q . '%')
-                              ->orWhere('nama_belakang', 'like', '%' . $q . '%')
-                              ->orWhere('username', 'like', '%' . $q . '%')
-                              ->orWhere('nim', 'like', '%' . $q . '%');
-                        });
-                });
-            }
-
-            $prestasi = $query->latest()->get()->map(function ($item) {
-                return [
-                    'nim' => $item->user->nim ?? $item->user->username ?? '-',
-                    'nama' => trim(($item->user->nama_depan ?? '') . ' ' . ($item->user->nama_belakang ?? '')),
-                    'prodi' => $item->user->prodi ?? '-',
-                    'prestasi' => $item->capaian,
-                    'nama_event' => $item->nama_kompetisi,
-                    'penyelenggara' => $item->penyelenggara,
-                    'tingkat' => $item->tingkat,
-                ];
-            });
-
-            $pdf = Pdf::loadView("admin.prestasi_mahasiswa_export_pdf", compact("prestasi"));
-            return $pdf->download("prestasi_mahasiswa_" . now()->format('YmdHis') . ".pdf");
+            return redirect()->back()->with('error', 'Gagal menghasilkan PDF dari API.');
         })->name("admin.prestasi_mahasiswa.export_pdf");
 
         Route::get("/detail_prestasi/{id}", function ($id) {
@@ -904,7 +918,18 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         })->name("admin.prestasi_ormawa");
 
         Route::get("/verifikasi-publikasi", function () {
-            $publikasis = \App\Models\PublikasiKegiatan::with('user')->orderBy('created_at', 'desc')->get();
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->get('/publikasi');
+            $publikasis = [];
+            if ($response->successful()) {
+                // Convert array to objects for blade compatibility if needed, 
+                // or the blade might just expect arrays if we refactor it.
+                // Assuming blade uses $p->judul, we cast it to object.
+                $data = $response->json('data') ?? [];
+                $publikasis = collect($data)->map(function ($item) {
+                    return json_decode(json_encode($item));
+                });
+            }
             return view("admin.verifikasi_publikasi", compact("publikasis"));
         })->name("admin.verifikasi_publikasi");
 
@@ -932,11 +957,22 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
             if ($response->successful()) {
                 return redirect()->route("admin.verifikasi_publikasi")->with("success", "Status publikasi berhasil diperbarui.");
             }
-            return back()->withErrors(['message' => 'Gagal memverifikasi publikasi via API.']);
+            
+            $errMsg = $response->json('message') ?? 'Gagal memverifikasi publikasi via API.';
+            $errors = $response->json('errors') ?? [];
+            return back()->withErrors(array_merge(['message' => $errMsg], $errors))->withInput();
         })->name("admin.verifikasi_publikasi.update");
 
         Route::get("/atur-deadline", function () {
-            $deadline = \App\Models\Deadline::where('is_active', true)->latest()->first();
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->get('/deadline');
+            $deadline = null;
+            if ($response->successful()) {
+                $deadlineData = $response->json('data');
+                if ($deadlineData) {
+                    $deadline = (object) $deadlineData;
+                }
+            }
             return view("admin.atur_deadline", compact('deadline'));
         })->name("admin.atur_deadline");
 
@@ -946,68 +982,50 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 'deadline_at' => 'required|date',
             ]);
 
-            \App\Models\Deadline::where('is_active', true)->update(['is_active' => false]);
-
-            \App\Models\Deadline::create([
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->post('/deadline', [
                 'title' => $request->title,
                 'deadline_at' => $request->deadline_at,
-                'is_active' => true,
             ]);
 
-            return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil diperbarui.");
+            if ($response->successful()) {
+                return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil diperbarui.");
+            }
+            return redirect()->route("admin.atur_deadline")->withErrors(['message' => 'Gagal memperbarui deadline via API.']);
         })->name("admin.atur_deadline.post");
 
         Route::delete("/atur-deadline", function () {
-            \App\Models\Deadline::where('is_active', true)->delete();
-
-            return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil dihapus.");
+            // Need to get the active deadline ID first
+            $api = \App\Services\ApiService::getClient();
+            $response = $api->get('/deadline');
+            if ($response->successful() && $response->json('data')) {
+                $id = $response->json('data.id');
+                $deleteResponse = $api->delete("/deadline/{$id}");
+                if ($deleteResponse->successful()) {
+                    return redirect()->route("admin.atur_deadline")->with("success", "Deadline berhasil dihapus.");
+                }
+            }
+            return redirect()->route("admin.atur_deadline")->withErrors(['message' => 'Gagal menghapus deadline via API.']);
         })->name("admin.atur_deadline.delete");
 
         Route::get("/prestasi_ormawa/export-pdf", function () {
-            $query = \App\Models\Prestasi::with('user')->where('mewakili_ormawa', 'ya');
+            $api = \App\Services\ApiService::getClient();
+            
+            $params = ['mewakili_ormawa' => 'ya'];
+            if (request('tingkat')) $params['tingkat'] = request('tingkat');
+            if (request('search')) $params['search'] = request('search');
+            
+            $response = $api->get('/prestasi/export-pdf', $params);
 
-            if (request('tingkat')) {
-                $query->where('tingkat', request('tingkat'));
+            if ($response->successful()) {
+                $filename = "prestasi_ormawa_" . now()->format('YmdHis') . ".pdf";
+                return response($response->body(), 200, [
+                    'Content-Type' => 'application/pdf',
+                    'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+                ]);
             }
 
-            if (request('search')) {
-                $q = request('search');
-                $query->where(function($sub) use ($q) {
-                    $sub->where('nama_kompetisi', 'like', '%' . $q . '%')
-                        ->orWhere('penyelenggara', 'like', '%' . $q . '%')
-                        ->orWhere('capaian', 'like', '%' . $q . '%')
-                        ->orWhereHas('user', function($u) use ($q) {
-                            $u->where('nama_depan', 'like', '%' . $q . '%')
-                              ->orWhere('nama_belakang', 'like', '%' . $q . '%')
-                              ->orWhere('username', 'like', '%' . $q . '%')
-                              ->orWhere('nim', 'like', '%' . $q . '%');
-                        });
-                });
-            }
-
-            $activities = $query->latest()->get()->map(function ($item) {
-                return [
-                    'tw' => $item->klaster ? substr($item->klaster, 0, 1) : '1',
-                    'ormawa' => trim(($item->user->nama_depan ?? '') . ' ' . ($item->user->nama_belakang ?? '')),
-                    'nama_kegiatan' => $item->nama_kompetisi,
-                    'resiko' => $item->tingkat,
-                    'waktu' => $item->waktu_kompetisi ? \Carbon\Carbon::parse($item->waktu_kompetisi)->format('d F Y') : '-',
-                    'ajuan' => $item->capaian,
-                    'anggaran' => $item->penyelenggara,
-                    'status' => $item->status_verifikasi == 'Valid' ? 'Selesai' : ($item->status_verifikasi == 'Menunggu' || $item->status_verifikasi == 'Pending' ? 'Ajuan baru' : ($item->status_verifikasi == 'Revisi' ? 'Revisi' : 'Acc')),
-                ];
-            })->toArray();
-
-            $statusStyles = [
-                'Selesai' => 'done',
-                'Pencairan' => 'pending',
-                'Acc' => 'info',
-                'Revisi' => 'revisi',
-                'Ajuan baru' => 'new',
-            ];
-
-            $pdf = Pdf::loadView("admin.prestasi_ormawa_export_pdf", compact("activities", "statusStyles"));
-            return $pdf->download("prestasi_ormawa_" . now()->format('YmdHis') . ".pdf");
+            return redirect()->back()->with('error', 'Gagal menghasilkan PDF dari API.');
         })->name("admin.prestasi_ormawa.export_pdf");
     });
 });
@@ -1176,19 +1194,20 @@ Route::prefix("organisasi")
         )->name("create");
         Route::get(
             "/create_lpj",
-            function () {
+            function (Illuminate\Http\Request $request) {
                 try {
                     $api = \App\Services\ApiService::getClient();
+                    $type = $request->input('type');
                     
                     // Fetch proposals
-                    $proposalResponse = $api->get('/proposal', ['per_page' => 100]);
+                    $proposalResponse = $api->get('/proposal', ['per_page' => 100, 'type' => $type]);
                     $proposalsData = [];
                     if ($proposalResponse->successful()) {
                         $proposalsData = $proposalResponse->json('data') ?? [];
                     }
 
                     // Fetch LPJs
-                    $lpjResponse = $api->get('/lpj');
+                    $lpjResponse = $api->get('/lpj', ['type' => $type]);
                     $lpjs = [];
                     if ($lpjResponse->successful()) {
                         $lpjs = $lpjResponse->json('data') ?? [];
@@ -1679,30 +1698,55 @@ Route::prefix("organisasi")
                     ->with("success", "Kegiatan berhasil diperbarui.");
             },
         )->name("update");
-        Route::get("/{id}/lpj", function ($id) {
+        Route::get("/{id}/lpj", function (Illuminate\Http\Request $request, $id) {
             try {
                 $api = \App\Services\ApiService::getClient();
-                $response = $api->get("/proposal/{$id}");
+                $type = $request->input('type');
+                $response = $api->get("/proposal/{$id}", ['type' => $type]);
+                
+                \Log::info("GET LPJ /proposal/{$id} result: Status = " . $response->status() . " Body = " . $response->body());
                 
                 if (!$response->successful()) {
-                    abort(404, 'Proposal tidak ditemukan');
+                    abort($response->status(), $response->json('message') ?? 'Proposal tidak ditemukan');
                 }
                 
                 $proposalData = $response->json('data') ?? [];
                 
+                // Fetch LPJs
+                $lpjResponse = $api->get('/lpj', ['type' => $type]);
+                
+                \Log::info("GET LPJ /lpj result: Status = " . $lpjResponse->status() . " Body = " . $lpjResponse->body());
+                
+                $lpjs = [];
+                if ($lpjResponse->successful()) {
+                    $lpjs = collect($lpjResponse->json('data') ?? [])
+                        ->filter(fn($lpj) => (int)$lpj['id_proposal'] === (int)$id)
+                        ->values()
+                        ->all();
+                }
+
                 $proposal = (object)[
                     'id_proposal' => $proposalData['id_proposal'],
                     'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
                     'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
+                    'lpj' => collect($lpjs)->map(fn($l) => (object)[
+                        'id_lpj' => $l['id_lpj'],
+                        'file_lpj' => $l['file_lpj'],
+                        'status_lpj' => $l['status_lpj'],
+                        'catatan_admin' => $l['catatan_admin'] ?? null,
+                    ]),
                 ];
 
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                throw $e;
             } catch (\Throwable $e) {
                 \Log::error('API Error in GET LPJ route: ' . $e->getMessage());
-                abort(500, 'Gagal mengambil data dari API');
+                abort(500, 'Gagal mengambil data dari API: ' . $e->getMessage());
             }
 
             return view("organisasi.create_lpj", compact("proposal"));
         })->name("lpj");
+
         Route::post("/{id}/lpj", function (Illuminate\Http\Request $request, $id) {
             $request->validate([
                 'laporan' => 'required|file|mimes:pdf|max:10240',
@@ -1710,6 +1754,7 @@ Route::prefix("organisasi")
 
             try {
                 $api = \App\Services\ApiService::getClient();
+                $type = $request->input('type');
                 
                 $response = $api->attach(
                     'file_lpj',
@@ -1719,6 +1764,7 @@ Route::prefix("organisasi")
                 )->post('/lpj', [
                     'id_proposal' => $id,
                     'tanggal_upload' => now()->toDateString(),
+                    'type' => $type,
                 ]);
 
                 if ($response->status() === 422) {
@@ -1734,22 +1780,23 @@ Route::prefix("organisasi")
                 return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
             }
 
-            return redirect()->route('organisasi.create_lpj')->with('success', 'LPJ Kegiatan berhasil diupload.');
+            return redirect()->route('organisasi.create_lpj', ['type' => $type])->with('success', 'LPJ Kegiatan berhasil diupload.');
         })->name("lpj.store");
 
-        Route::get("/lpj/{id}/revisi", function ($id) {
+        Route::get("/lpj/{id}/revisi", function (Illuminate\Http\Request $request, $id) {
             try {
                 $api = \App\Services\ApiService::getClient();
-                $response = $api->get("/proposal/{$id}");
+                $type = $request->input('type');
+                $response = $api->get("/proposal/{$id}", ['type' => $type]);
                 
                 if (!$response->successful()) {
-                    abort(404, 'Proposal tidak ditemukan');
+                    abort($response->status(), $response->json('message') ?? 'Proposal tidak ditemukan');
                 }
                 
                 $proposalData = $response->json('data') ?? [];
 
                 // Fetch LPJs
-                $lpjResponse = $api->get('/lpj');
+                $lpjResponse = $api->get('/lpj', ['type' => $type]);
                 $lpjKeg = null;
                 if ($lpjResponse->successful()) {
                     $lpjs = $lpjResponse->json('data') ?? [];
@@ -1773,6 +1820,8 @@ Route::prefix("organisasi")
                     'lpj' => collect($lpjKeg ? [$lpjKeg] : [])
                 ];
 
+            } catch (\Symfony\Component\HttpKernel\Exception\HttpException $e) {
+                throw $e;
             } catch (\Throwable $e) {
                 \Log::error('API Error in LPJ revisi view: ' . $e->getMessage());
                 abort(500, 'Gagal mengambil data dari API: ' . $e->getMessage());
@@ -1788,9 +1837,10 @@ Route::prefix("organisasi")
 
             try {
                 $api = \App\Services\ApiService::getClient();
+                $type = $request->input('type');
                 
                 // Fetch LPJs to find the correct id_lpj
-                $lpjResponse = $api->get('/lpj');
+                $lpjResponse = $api->get('/lpj', ['type' => $type]);
                 $idLpj = null;
                 if ($lpjResponse->successful()) {
                     $lpjs = $lpjResponse->json('data') ?? [];
@@ -1813,6 +1863,7 @@ Route::prefix("organisasi")
                     ['Content-Type' => 'application/pdf']
                 )->post("/lpj/{$idLpj}/revisi", [
                     'tanggal_upload' => now()->toDateString(),
+                    'type' => $type,
                 ]);
 
                 if ($response->status() === 422) {
@@ -1828,7 +1879,7 @@ Route::prefix("organisasi")
                 return back()->withErrors(['error' => 'Terjadi kesalahan sistem: ' . $e->getMessage()]);
             }
 
-            return redirect()->route('organisasi.create_lpj')->with('success', 'Revisi LPJ berhasil dikirim.');
+            return redirect()->route('organisasi.create_lpj', ['type' => $type])->with('success', 'Revisi LPJ berhasil dikirim.');
         })->name("lpj.update");
 
         Route::delete(

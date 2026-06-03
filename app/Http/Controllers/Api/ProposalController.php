@@ -40,7 +40,16 @@ class ProposalController
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $modelClass = $user->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : ProposalKegiatan::class;
+        $type = $request->input('type', $request->query('type'));
+
+        if ($type === 'mahasiswa') {
+            $modelClass = \App\Models\ProposalPrestasiMahasiswa::class;
+        } elseif ($type === 'ormawa') {
+            $modelClass = ProposalKegiatan::class;
+        } else {
+            $modelClass = $user->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : ProposalKegiatan::class;
+        }
+
         $query = $modelClass::query();
 
         // Filter berdasarkan role
@@ -119,7 +128,15 @@ class ProposalController
     public function store(StoreProposalRequest $request): JsonResponse
     {
         $filePath = $request->file('file')->store('proposals', 'public');
-        $modelClass = $request->user()->isMahasiswa() ? \App\Models\ProposalPrestasiMahasiswa::class : ProposalKegiatan::class;
+        
+        $user = $request->user();
+        $type = $request->input('type', $request->query('type'));
+        
+        if ($type === 'mahasiswa' || $user->isMahasiswa()) {
+            $modelClass = \App\Models\ProposalPrestasiMahasiswa::class;
+        } else {
+            $modelClass = ProposalKegiatan::class;
+        }
 
         $proposal = $modelClass::create([
             'id_user' => $request->user()->id_user,
@@ -166,7 +183,17 @@ class ProposalController
     private function resolveProposal(Request $request, $id)
     {
         $user = $request->user();
-        if ($user->isMahasiswa()) {
+        $type = $request->input('type', $request->query('type'));
+
+        if ($type === 'mahasiswa') {
+            return \App\Models\ProposalPrestasiMahasiswa::findOrFail($id);
+        }
+
+        if ($type === 'ormawa') {
+            return ProposalKegiatan::findOrFail($id);
+        }
+
+        if ($user && $user->isMahasiswa()) {
             return \App\Models\ProposalPrestasiMahasiswa::findOrFail($id);
         }
         
@@ -210,7 +237,7 @@ class ProposalController
         return response()->json([
             'status' => 'success',
             'message' => 'Detail proposal kegiatan',
-            'data' => new ProposalKegiatanResource($proposal->load('user')),
+            'data' => new ProposalKegiatanResource($proposal->load('user', 'lpj')),
         ], 200);
     }
 
@@ -424,7 +451,7 @@ class ProposalController
         return response()->json([
             'status' => 'success',
             'message' => 'Verifikasi proposal berhasil',
-            'data' => new ProposalKegiatanResource($proposal->load('user')),
+            'data' => new ProposalKegiatanResource($proposal->load('user', 'lpj')),
         ], 200);
     }
 }

@@ -31,6 +31,8 @@ Route::prefix('v1')->group(function () {
     Route::prefix('auth')->group(function () {
         Route::post('login', [AuthController::class, 'login'])->name('auth.login');
         Route::post('register', [AuthController::class, 'register'])->name('auth.register');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('auth.forgot-password');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('auth.reset-password');
     });
 
     // ============================================================
@@ -44,7 +46,7 @@ Route::prefix('v1')->group(function () {
     // ============================================================
     // PROTECTED ROUTES (Require Authentication)
     // ============================================================
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware('auth:api')->group(function () {
 
         // Authentication Routes
         Route::prefix('auth')->group(function () {
@@ -97,6 +99,7 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{prestasi}/dokumen/{dokumen}', [DokumenPrestasiController::class, 'destroy'])->middleware('permission:Delete Prestasi')->name('delete-dokumen')->where(['prestasi' => '[0-9]+', 'dokumen' => '[0-9]+']);
             Route::get('/cetak/transkrip', [CetakPrestasiController::class, 'cetakTranskrip'])->middleware('permission:View Prestasi')->name('cetak.transkrip');
             Route::get('/cetak/kartu/{nim}', [CetakPrestasiController::class, 'cetakKartu'])->name('cetak.kartu');
+            Route::get('/export-pdf', [CetakPrestasiController::class, 'exportPrestasiPdf'])->middleware('permission:View Reports')->name('export.pdf');
         });
 
         // ========================================================
@@ -167,6 +170,8 @@ Route::prefix('v1')->group(function () {
         Route::prefix('monitoring')->name('monitoring.')->middleware('permission:View Reports')->group(function () {
             Route::get('/kegiatan', [MonitoringController::class, 'activities'])->name('activities');
             Route::get('/anggaran', [MonitoringController::class, 'budgetTransparency'])->name('anggaran');
+            Route::get('/anggaran/export-pdf', [MonitoringController::class, 'exportAnggaranPdf'])->name('anggaran.export_pdf');
+            Route::get('/beranda_ormawa/export-pdf', [MonitoringController::class, 'exportBerandaOrmawaPdf'])->name('beranda_ormawa.export_pdf');
             Route::get('/lpj', [MonitoringController::class, 'lpjList'])->name('lpj');
             Route::get('/kegiatan/{proposal}', [MonitoringController::class, 'activityDetail'])->name('activity-detail')->where('proposal', '[0-9]+');
             Route::get('/statistics', [MonitoringController::class, 'statistics'])->name('statistics');

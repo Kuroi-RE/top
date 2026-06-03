@@ -11,9 +11,28 @@ class VerifyProposalRequest extends FormRequest
         return $this->user()->isAdmin();
     }
 
+    protected function prepareForValidation()
+    {
+        if ($this->has('status')) {
+            $statusMap = [
+                'Disetujui' => 'Approved',
+                'Revisi' => 'Revision',
+                'Ditolak' => 'Rejected',
+                'Selesai' => 'Approved',
+                'Approved' => 'Approved',
+                'Revision' => 'Revision',
+                'Rejected' => 'Rejected'
+            ];
+            $this->merge([
+                'status' => $statusMap[$this->status] ?? $this->status
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
+            'type' => 'nullable|string|in:mahasiswa,ormawa',
             'status' => 'required|in:Approved,Revision,Rejected',
             'catatan_admin' => 'nullable|string',
             'anggaran_disetujui' => 'required_if:status,Approved|numeric|min:0',

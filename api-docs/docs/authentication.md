@@ -216,3 +216,89 @@ prodi3 (HIMA MI)  / password123 / himpunan3@top-kema.com
 ```
 
 ---
+
+### 5. Forgot Password (Public Endpoint)
+
+**Endpoint:** `POST /api/v1/auth/forgot-password`
+
+**Deskripsi:** Meminta tautan reset password untuk email yang terdaftar. Sistem akan mengirimkan email berupa link reset password (atau mencatat ke log pada lingkungan pengembangan).
+
+**Request Body:**
+
+```json
+{
+    "email": "mahasiswa@student.telkomuniversity.ac.id"
+}
+```
+
+**Request Parameters:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| email | string | Yes | Email pengguna yang terdaftar |
+
+**Response (Success - 200):**
+
+```json
+{
+    "status": "success",
+    "message": "Link reset password telah dikirim ke email Anda"
+}
+```
+
+**Response (Validation Error - 422):**
+
+```json
+{
+    "message": "Validation failed",
+    "errors": {
+        "email": ["Email tidak terdaftar dalam sistem."]
+    }
+}
+```
+
+---
+
+### 6. Reset Password (Public Endpoint)
+
+**Endpoint:** `POST /api/v1/auth/reset-password`
+
+**Deskripsi:** Melakukan pembaruan password menggunakan token reset password yang valid dari email.
+
+**Request Body:**
+
+```json
+{
+    "token": "token-reset-password-dari-email",
+    "email": "mahasiswa@student.telkomuniversity.ac.id",
+    "password": "passwordbaru123",
+    "password_confirmation": "passwordbaru123"
+}
+```
+
+**Request Parameters:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| token | string | Yes | Token reset password yang diterima dari email |
+| email | string | Yes | Email pengguna |
+| password | string | Yes | Password baru (min 8 karakter) |
+| password_confirmation | string | Yes | Konfirmasi password baru |
+
+**Response (Success - 200):**
+
+```json
+{
+    "status": "success",
+    "message": "Password Anda berhasil diperbarui."
+}
+```
+
+**Response (Validation Error - 422):**
+
+```json
+{
+    "status": "error",
+    "message": "Token reset password tidak valid."
+}
+```
+
+---

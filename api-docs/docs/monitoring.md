@@ -8,6 +8,9 @@ Fitur khusus untuk DPMBEM dan Admin untuk memonitoring kegiatan dan prestasi sel
 - **Detail Kegiatan (termasuk LPJ/Revisi):** `GET /api/v1/monitoring/kegiatan/{id}`
 - **Statistik Sistem:** `GET /api/v1/monitoring/statistics`
 - **Statistik Prestasi Mahasiswa:** `GET /api/v1/monitoring/prestasi` (mendapatkan agregasi data prestasi)
+- **Export PDF Anggaran:** `GET /api/v1/monitoring/anggaran/export-pdf` (mengunduh PDF tabel rekapitulasi anggaran keseluruhan)
+- **Export PDF Beranda Ormawa:** `GET /api/v1/monitoring/beranda_ormawa/export-pdf` (mengunduh PDF daftar semua kegiatan proposal ormawa)
+- **Export PDF Prestasi Mahasiswa/Ormawa:** `GET /api/v1/prestasi/export-pdf` (mendukung query parameter `mewakili_ormawa`, `tingkat`, dan `search`)
 
 ### Filter pada Daftar Kegiatan
 

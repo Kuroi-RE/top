@@ -16,7 +16,12 @@ class User extends Authenticatable
 
     protected $primaryKey = 'id_user';
 
-    protected string $guard_name = 'api';
+    protected string $guard_name = 'web';
+
+    public function guardName(): string
+    {
+        return 'web';
+    }
 
     protected $fillable = [
         'username',

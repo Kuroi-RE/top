@@ -13,7 +13,7 @@
         <!-- Header -->
         <div class="mb-6 flex items-center justify-between">
             <h1 class="text-2xl font-semibold text-gray-800">Upload LPJ Kegiatan</h1>
-            <a href="{{ route('organisasi.create_lpj') }}" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors">
+            <a href="{{ route('organisasi.create_lpj', ['type' => request()->query('type')]) }}" class="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-red-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="h-4 w-4">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
                 </svg>
@@ -21,8 +21,28 @@
             </a>
         </div>
 
-        <form method="POST" action="{{ route('organisasi.lpj.store', $proposal->id_proposal) }}" enctype="multipart/form-data" class="mt-4 space-y-6 sm:mt-6">
+        <form method="POST" action="{{ route('organisasi.lpj.store', [$proposal->id_proposal, 'type' => request()->query('type')]) }}" enctype="multipart/form-data" class="mt-4 space-y-6 sm:mt-6">
             @csrf
+
+            @if ($errors->any())
+                <div class="rounded-xl bg-red-50 p-4 border border-red-200 mb-6">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Terdapat beberapa kesalahan:</h3>
+                            <ul class="mt-2 text-sm text-red-700 list-disc list-inside">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            @endif
 
             @php
                 $lpj = $proposal->lpj->first();

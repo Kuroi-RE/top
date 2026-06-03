@@ -44,6 +44,39 @@
             </div>
         </div>
 
+        <!-- Alert Validation Errors -->
+        @if ($errors->any())
+            <div id="alert-errors" class="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm transition-all duration-300">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.28 7.22a.75.75 0 00-1.06 1.06L8.94 10l-1.72 1.72a.75.75 0 101.06 1.06L10 11.06l1.72 1.72a.75.75 0 101.06-1.06L11.06 10l1.72-1.72a.75.75 0 00-1.06-1.06L10 8.94 8.28 7.22z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3 w-full">
+                        <h3 class="text-sm font-medium text-red-800">Terdapat {{ $errors->count() }} kesalahan:</h3>
+                        <div class="mt-2 text-sm text-red-700">
+                            <ul role="list" class="list-disc space-y-1 pl-5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <div class="-mx-1.5 -my-1.5">
+                            <button type="button" onclick="document.getElementById('alert-errors').style.display='none'" class="inline-flex rounded-md bg-red-50 p-1.5 text-red-500 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-600 focus:ring-offset-2 focus:ring-offset-red-50">
+                                <span class="sr-only">Dismiss</span>
+                                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+
         <!-- Stats -->
         <div class="grid grid-cols-1 gap-6 sm:grid-cols-4">
             <div class="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
@@ -88,8 +121,8 @@
                                     {{ $p->caption }}
                                 </td>
                                 <td class="px-6 py-4 text-center">
-                                    <button onclick="showPoster('{{ asset('storage/' . $p->poster) }}')" class="group relative inline-block h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
-                                        <img src="{{ asset('storage/' . $p->poster) }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" alt="Poster">
+                                    <button onclick="showPoster('{{ $p->poster_url ?? '' }}')" class="group relative inline-block h-12 w-12 overflow-hidden rounded-lg border border-gray-200">
+                                        <img src="{{ $p->poster_url ?? '' }}" class="h-full w-full object-cover transition duration-300 group-hover:scale-110" alt="Poster">
                                         <div class="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 transition group-hover:opacity-100">
                                             <svg class="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />

@@ -40,6 +40,16 @@
                 <h1 class="text-2xl font-semibold text-gray-800">Input Publikasi Kegiatan Ormawa</h1>
             </div>
 
+            @if($errors->any())
+                <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                    <ul class="list-disc pl-5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @php
                 $fields = [
                     ['label' => 'Judul', 'name' => 'judul', 'type' => 'text'],

@@ -13,6 +13,16 @@
                 <a href="{{ route('organisasi.publikasi') }}" class="text-sm font-semibold text-slate-600 hover:text-red-700 transition">Kembali</a>
             </div>
 
+            @if($errors->any())
+                <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                    <ul class="list-disc pl-5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
+
             @if($publikasi->status == 'Revisi' && $publikasi->catatan_admin)
                 <div class="mb-6 p-4 rounded-xl border-l-4 border-amber-500 bg-amber-50">
                     <p class="text-xs font-bold text-amber-700 uppercase tracking-wider">📌 Catatan Revisi Admin:</p>

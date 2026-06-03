@@ -49,6 +49,7 @@ return [
         ],
         'Mahasiswa' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan',
+            'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi',
             'View Template Dokumen'
         ]

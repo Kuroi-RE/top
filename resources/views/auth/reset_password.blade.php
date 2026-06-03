@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>Login &mdash; TOP Telkom Ormawa &amp; Prestasi</title>
+    <title>Reset Password &mdash; TOP Telkom Ormawa &amp; Prestasi</title>
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=poppins:400,500,600,700,800&display=swap" rel="stylesheet"/>
@@ -58,14 +58,6 @@
             display: flex;
             flex-direction: column;
             gap: 1rem;
-        }
-
-        .hero-header {
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
         }
 
         .hero-logo {
@@ -121,7 +113,6 @@
             background: #fff;
         }
 
-        /* ── Illustration two-panel layout ── */
         .hero-illustration-wrap {
             margin-top: 1.2rem;
             border-radius: 22px;
@@ -138,7 +129,6 @@
             height: 160px;
         }
 
-        /* Left: bar chart card */
         .illus-chart-card {
             flex: 1;
             border-radius: 16px;
@@ -154,7 +144,6 @@
             position: relative;
         }
 
-        /* subtle gloss on chart card */
         .illus-chart-card::after {
             content: '';
             position: absolute;
@@ -164,7 +153,6 @@
             pointer-events: none;
         }
 
-        /* baseline grid line */
         .illus-bars-wrap {
             flex: 1;
             display: flex;
@@ -202,7 +190,6 @@
         .illus-bar:nth-child(3) { height: 90%;               animation: bar-grow 0.6s 0.5s  cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
         .illus-bar:nth-child(4) { height: 55%; opacity: 0.85; animation: bar-grow 0.6s 0.65s cubic-bezier(.34,1.5,.64,1) both; transform-origin: bottom; }
 
-        /* Right: trophy panel */
         .illus-trophy-panel {
             width: 102px;
             flex-shrink: 0;
@@ -219,7 +206,6 @@
                 0 8px 24px rgba(80,10,10,0.45);
         }
 
-        /* gloss on trophy panel */
         .illus-trophy-panel::before {
             content: '';
             position: absolute;
@@ -244,7 +230,6 @@
             z-index: 1;
         }
 
-        /* "1st" ribbon badge */
         .illus-badge {
             position: absolute;
             bottom: -6px;
@@ -283,13 +268,10 @@
             animation: bubble-pulse 2.6s 1.3s ease-in-out infinite;
         }
 
-
-        /* ── Hero text fade-in ── */
         .hero-main {
             animation: hero-fadein 0.7s ease both;
         }
 
-        /* ── Keyframes ── */
         @keyframes illus-float {
             0%, 100% { transform: translateY(0px);    }
             50%       { transform: translateY(-7px); }
@@ -319,14 +301,6 @@
             from { opacity: 0; transform: translateX(-8px); }
             to   { opacity: 1; transform: translateX(0); }
         }
-
-        /* ── SVG element animations (unused, keep for compat) ── */
-        .trophy-group { animation: trophy-sway 2.8s 1s ease-in-out infinite; transform-origin: 299px 109px; }
-        .bubble-big   { animation: bubble-pulse 2.6s 0.8s ease-in-out infinite; transform-origin: 318px 36px; }
-        .bubble-small { animation: bubble-pulse 2.6s 1.3s ease-in-out infinite; transform-origin: 335px 44px; }
-        .line-1 { animation: shimmer-in 0.5s 0.8s ease both; }
-        .line-2 { animation: shimmer-in 0.5s 1.0s ease both; }
-        .line-3 { animation: shimmer-in 0.5s 1.2s ease both; }
 
         .hero-tag-row {
             position: relative;
@@ -447,16 +421,13 @@
 
         <section class="login-hero">
             <div class="hero-main">
-
-
                 <div class="mt-6">
-                    <h2 class="text-3xl font-bold leading-tight tracking-tight">Selamat Datang<br>di TOPKEMA</h2>
+                    <h2 class="text-3xl font-bold leading-tight tracking-tight">Atur Ulang<br>Password</h2>
                     <p class="mt-3 max-w-sm text-xs leading-relaxed text-red-50/90">
-                        Kelola kegiatan organisasi, laporan, dan prestasi mahasiswa dari satu dashboard yang terintegrasi
+                        Buatlah password baru yang aman, kuat, dan mudah Anda ingat untuk melindungi akses dashboard TOPKEMA Anda.
                     </p>
 
                     <div class="hero-illustration-wrap">
-
                         <!-- Bar chart panel -->
                         <div class="illus-chart-card">
                             <div class="illus-lines">
@@ -479,27 +450,26 @@
                             <span class="illus-trophy-icon">emoji_events</span>
                             <span class="illus-badge">JUARA</span>
                         </div>
-
                     </div>
                 </div>
             </div>
 
             <div class="hero-tag-row">
-                <span class="credential-tag">UI Modern</span>
-                <span class="credential-tag">Responsif</span>
-                <span class="credential-tag">Akses Cepat</span>
+                <span class="credential-tag">Aman</span>
+                <span class="credential-tag">Kriptografis</span>
+                <span class="credential-tag">Proteksi</span>
             </div>
         </section>
 
-        <section class="login-form-panel" id="login-card">
+        <section class="login-form-panel" id="reset-card">
             <div class="mb-4 flex items-center justify-between lg:hidden">
                 <img src="{{ asset('top_logo.png') }}" alt="TOP Logo" class="w-auto object-contain" style="height: 44px; max-width: 140px;" />
                 <span class="rounded-full bg-red-50 px-3 py-1 text-xs font-semibold text-red-700">TOPKEMA</span>
             </div>
 
             <div class="mb-5">
-                <h1 class="text-[1.75rem] font-extrabold leading-tight text-gray-900">Masuk ke Akun</h1>
-                <p class="mt-1.5 text-sm text-slate-500">Gunakan username dan password yang sudah terdaftar</p>
+                <h1 class="text-[1.75rem] font-extrabold leading-tight text-gray-900">Reset Password</h1>
+                <p class="mt-1.5 text-sm text-slate-500">Masukkan password baru Anda di bawah ini.</p>
             </div>
 
             @if ($errors->any())
@@ -512,67 +482,75 @@
                 </div>
             @endif
 
-            @if (session('error'))
-                <div class="mb-5 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                    {{ session('error') }}
-                </div>
-            @endif
-
-            <form method="POST" action="{{ url('/login') }}" id="login-form" novalidate>
+            <form method="POST" action="{{ route('password.update') }}" id="reset-form" novalidate>
                 @csrf
 
+                <input type="hidden" name="token" value="{{ $token }}">
+                <input type="hidden" name="email" value="{{ $email }}">
+
+                <!-- Disabled Email Display for visual context -->
                 <div class="mb-4">
-                    <label for="username" class="mb-2 block text-sm font-semibold text-slate-700">Username</label>
-                    <div class="relative">
-                        <input
-                            id="username"
-                            name="username"
-                            type="text"
-                            class="input-modern"
-                            placeholder="username / nim"
-                            value="{{ old('username') }}"
-                            autocomplete="username"
-                            autofocus
-                            required
-                        />
-                        <span class="field-icon">
-                            <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                                <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-                            </svg>
-                        </span>
-                    </div>
+                    <label class="mb-2 block text-sm font-semibold text-slate-500">Email Akun</label>
+                    <input
+                        type="text"
+                        class="input-modern bg-slate-50 text-slate-400 cursor-not-allowed border-dashed"
+                        value="{{ $email }}"
+                        disabled
+                    />
                 </div>
 
-                <div class="mb-5">
-                    <div class="flex justify-between items-center mb-2">
-                        <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
-                        <a href="{{ route('password.request') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 transition-colors">Lupa Password?</a>
-                    </div>
+                <div class="mb-4">
+                    <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">Password Baru</label>
                     <div class="relative">
                         <input
                             id="password"
                             name="password"
                             type="password"
                             class="input-modern"
-                            placeholder="Password"
-                            autocomplete="current-password"
+                            placeholder="Minimal 8 karakter"
+                            autocomplete="new-password"
+                            autofocus
                             required
                         />
                         <button
                             type="button"
-                            onclick="togglePasswordVisibility()"
+                            onclick="togglePasswordVisibility('password', 'icon-eye-toggle-1')"
                             class="field-icon bg-transparent border-0 p-0 cursor-pointer hover:text-slate-600 transition-colors focus:outline-none"
                             aria-label="Tampilkan / sembunyikan password"
                             tabindex="-1"
                         >
-                            <span id="icon-eye-toggle" class="material-symbols-rounded" style="font-size:20px;">visibility_off</span>
+                            <span id="icon-eye-toggle-1" class="material-symbols-rounded" style="font-size:20px;">visibility_off</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="mb-5">
+                    <label for="password_confirmation" class="mb-2 block text-sm font-semibold text-slate-700">Konfirmasi Password Baru</label>
+                    <div class="relative">
+                        <input
+                            id="password_confirmation"
+                            name="password_confirmation"
+                            type="password"
+                            class="input-modern"
+                            placeholder="Ulangi password baru"
+                            autocomplete="new-password"
+                            required
+                        />
+                        <button
+                            type="button"
+                            onclick="togglePasswordVisibility('password_confirmation', 'icon-eye-toggle-2')"
+                            class="field-icon bg-transparent border-0 p-0 cursor-pointer hover:text-slate-600 transition-colors focus:outline-none"
+                            aria-label="Tampilkan / sembunyikan password"
+                            tabindex="-1"
+                        >
+                            <span id="icon-eye-toggle-2" class="material-symbols-rounded" style="font-size:20px;">visibility_off</span>
                         </button>
                     </div>
                 </div>
 
                 <button
                     type="submit"
-                    id="login-btn"
+                    id="submit-btn"
                     class="form-action disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                     <svg id="btn-spinner" class="mr-2 h-4 w-4 animate-spin hidden"
@@ -582,22 +560,17 @@
                         <path class="opacity-75" fill="currentColor"
                               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
                     </svg>
-                    <span id="btn-label">Masuk</span>
+                    <span id="btn-label">Simpan Password Baru</span>
                 </button>
-
-                <p class="mt-3 text-center text-xs text-slate-500">
-                    Belum memiliki akun?
-                    <a href="{{ url('/register') }}" class="font-semibold text-red-700 hover:text-red-800 transition-colors">Daftar Sekarang</a>
-                </p>
 
             </form>
         </section>
     </div>
 
     <script>
-        function togglePasswordVisibility() {
-            const input  = document.getElementById('password');
-            const icon   = document.getElementById('icon-eye-toggle');
+        function togglePasswordVisibility(inputId, iconId) {
+            const input  = document.getElementById(inputId);
+            const icon   = document.getElementById(iconId);
 
             if (input.type === 'password') {
                 input.type  = 'text';
@@ -608,28 +581,28 @@
             }
         }
 
-        document.getElementById('login-form').addEventListener('submit', function (e) {
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
+        document.getElementById('reset-form').addEventListener('submit', function (e) {
+            const pwd = document.getElementById('password').value;
+            const pwdConf = document.getElementById('password_confirmation').value;
 
-            if (!username || !password) {
-                const card = document.getElementById('login-card');
+            if (!pwd || !pwdConf) {
+                const card = document.getElementById('reset-card');
                 card.classList.remove('shake');
-                void card.offsetWidth; // force reflow to restart animation
+                void card.offsetWidth; // force reflow
                 card.classList.add('shake');
                 e.preventDefault();
                 return;
             }
 
-            const btn     = document.getElementById('login-btn');
+            const btn     = document.getElementById('submit-btn');
             const spinner = document.getElementById('btn-spinner');
             const label   = document.getElementById('btn-label');
             btn.disabled      = true;
             spinner.classList.remove('hidden');
-            label.textContent = 'Memproses...';
+            label.textContent = 'Menyimpan...';
         });
 
-        document.getElementById('login-card').addEventListener('animationend', function () {
+        document.getElementById('reset-card').addEventListener('animationend', function () {
             this.classList.remove('shake');
         });
     </script>
