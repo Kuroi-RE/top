@@ -971,6 +971,9 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 $deadlineData = $response->json('data');
                 if ($deadlineData) {
                     $deadline = (object) $deadlineData;
+                    if (isset($deadline->deadline_at)) {
+                        $deadline->deadline_at = \Carbon\Carbon::parse($deadline->deadline_at);
+                    }
                 }
             }
             return view("admin.atur_deadline", compact('deadline'));
