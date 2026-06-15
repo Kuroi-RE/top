@@ -127,7 +127,10 @@ Route::middleware("guest")->group(function () {
             'nama_belakang' => $namaBelakang,
             'prodi' => $validated['prodi'],
             'email' => $validated['email'],
-            'password' => $validated['password'],
+            // NEW-WEB-001 FIX: Use Hash::make() explicitly for defense-in-depth.
+            // Although User model has 'hashed' cast, explicit hashing makes intent clear
+            // and prevents regression if cast is ever removed or bypassed.
+            'password' => Hash::make($validated['password']),
             'role' => 'Mahasiswa',
             'is_active' => false,
         ]);
@@ -385,8 +388,10 @@ Route::middleware("guest")->group(function () {
 
         $user = User::where('email', $request->email)->first();
         if ($user) {
+            // NEW-WEB-001 FIX: Hash password explicitly — never store plain text.
+            // Defense-in-depth alongside the 'hashed' model cast.
             $user->update([
-                'password' => $request->password
+                'password' => Hash::make($request->password),
             ]);
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
             return redirect()->route('login')->with('success', 'Password Anda berhasil diperbarui. Silakan login.');
@@ -467,12 +472,13 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
     }]], function () {
         Route::get("/monitoring-anggaran", function () {
             try {
+                $approvedStatuses = ['Approved', 'Cek LPJ', 'Revisi LPJ', 'Selesai'];
                 $totalProposal = \App\Models\ProposalKegiatan::count();
                 $totalDiajukan = \App\Models\ProposalKegiatan::sum('besar_ajuan');
-                $totalDisetujui = \App\Models\ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+                $totalDisetujui = \App\Models\ProposalKegiatan::whereIn('status', $approvedStatuses)->sum('anggaran_disetujui');
                 $totalLpj = \App\Models\LpjKegiatan::count();
-                $lpjDisetujui = \App\Models\LpjKegiatan::where('status_lpj', 'Approved')->count();
-                $lpjRevisi = \App\Models\LpjKegiatan::where('status_lpj', 'Revision')->count();
+                $lpjDisetujui = \App\Models\LpjKegiatan::where('status_lpj', 'Disetujui')->count();
+                $lpjRevisi = \App\Models\LpjKegiatan::where('status_lpj', 'Revisi')->count();
 
                 $proposals = \App\Models\ProposalKegiatan::with('user')
                     ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
@@ -584,7 +590,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                     $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
 
                     // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
-                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Menunggu') {
                         $mappedStatus = 'Cek LPJ';
                     }
 
@@ -594,7 +600,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
                     return [
                         'tw' => $p['ajuan_triwulan'] ?? '-',
-                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
+                        'ormawa' => $p['user']['ormawa_name'] ?? ($p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa'),
                         'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
                         'resiko' => $p['risiko_proposal'] ?? '-',
                         'waktu' => $formattedDate,
@@ -762,8 +768,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 $namaOrmawa = request('nama_ormawa');
                 if ($namaOrmawa) {
                     $proposals = collect($proposals)->filter(function ($p) use ($namaOrmawa) {
-                        $name = strtolower(($p['user']['nama_depan'] ?? '') . ' ' . ($p['user']['nama_belakang'] ?? '') . ' ' . ($p['user']['username'] ?? ''));
-                        return str_contains($name, strtolower($namaOrmawa));
+                        $ormawaName = strtolower($p['user']['ormawa_name'] ?? $p['user']['nama_belakang'] ?? $p['user']['username'] ?? '');
+                        return str_contains($ormawaName, strtolower($namaOrmawa));
                     })->values();
                 }
 
@@ -810,7 +816,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                     $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
 
                     // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
-                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Menunggu') {
                         $mappedStatus = 'Cek LPJ';
                     }
 
@@ -820,7 +826,7 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
                     return [
                         'tw' => $p['ajuan_triwulan'] ?? '-',
-                        'ormawa' => $p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa',
+                        'ormawa' => $p['user']['ormawa_name'] ?? ($p['user']['nama_belakang'] ?? $p['user']['username'] ?? 'Ormawa'),
                         'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
                         'resiko' => $p['risiko_proposal'] ?? '-',
                         'waktu' => $formattedDate,
@@ -1119,7 +1125,7 @@ Route::prefix("organisasi")
                     $lpj = $lpjByProposalId[$p['id_proposal']] ?? null;
 
                     // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
-                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                    if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Menunggu') {
                         $mappedStatus = 'Cek LPJ';
                     }
 
@@ -1193,11 +1199,19 @@ Route::prefix("organisasi")
         })->name('proposal_export');
         Route::get(
             "/create",
-            fn() => view("organisasi.create"),
+            function () {
+                if (!auth()->user()->can('Create Proposal Kegiatan')) {
+                    abort(403, 'Anda tidak memiliki izin untuk membuat proposal kegiatan.');
+                }
+                return view("organisasi.create");
+            },
         )->name("create");
         Route::get(
             "/create_lpj",
             function (Illuminate\Http\Request $request) {
+                if (!auth()->user()->can('Create LPJ Kegiatan')) {
+                    abort(403, 'Anda tidak memiliki izin untuk membuat LPJ kegiatan.');
+                }
                 try {
                     $api = \App\Services\ApiService::getClient();
                     $type = $request->input('type');
@@ -1243,16 +1257,22 @@ Route::prefix("organisasi")
                             $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
 
                             // If proposal is Disetujui and LPJ is Pending, display status as Cek LPJ
-                            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Pending') {
+                            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj['status_lpj'] ?? '') === 'Menunggu') {
                                 $mappedStatus = 'Cek LPJ';
                             }
 
+                            $lpjStatus = $lpj
+                                ? ($statusMap[$lpj['status_lpj']] ?? $lpj['status_lpj'])
+                                : 'Belum Upload';
+
                             return [
-                                'id' => $p['id_proposal'],
-                                'nama_kegiatan' => $p['nama_kegiatan'] ?? '-',
-                                'tw' => $p['ajuan_triwulan'] ?? '-',
-                                'status' => $mappedStatus,
-                                'lpj_status' => $lpj ? ($statusMap[$lpj['status_lpj']] ?? $lpj['status_lpj']) : null,
+                                'id'           => $p['id_proposal'],
+                                'nama_kegiatan'=> $p['nama_kegiatan'] ?? '-',
+                                'tw'           => $p['ajuan_triwulan'] ?? '-',
+                                'status'       => $mappedStatus,
+                                'lpj_status'   => $lpjStatus,
+                                'lpj_file'     => $lpj['file_lpj'] ?? null,
+                                'lpj_notes'    => $lpj['catatan_admin'] ?? null,
                             ];
                         });
 
@@ -1267,6 +1287,9 @@ Route::prefix("organisasi")
         Route::get(
             "/publikasi",
             function () {
+                if (!auth()->user()->can('View Publikasi')) {
+                    abort(403, 'Anda tidak memiliki izin untuk melihat publikasi kegiatan.');
+                }
                 try {
                     $api = \App\Services\ApiService::getClient();
                     $response = $api->get('/publikasi', ['per_page' => 100]);
@@ -1296,7 +1319,6 @@ Route::prefix("organisasi")
                             'id_publikasi' => $p['id_publikasi'],
                             'judul' => $p['judul'],
                             'caption' => $p['caption'],
-                            'link' => $p['link'],
                             'status' => $mappedStatus,
                             'catatan_admin' => $p['catatan_admin'],
                             'poster' => $posterPath,
@@ -1304,12 +1326,21 @@ Route::prefix("organisasi")
                         ]);
                     });
 
+                    // Hitung weekCount konsisten: exclude Ditolak, hitung dari awal minggu ini
+                    $startOfWeek = now()->startOfWeek();
+                    $weekCount = collect($itemsData)->filter(function ($p) use ($startOfWeek) {
+                        if (($p['status'] ?? '') === 'Rejected') return false;
+                        $createdAt = isset($p['created_at']) ? \Carbon\Carbon::parse($p['created_at']) : null;
+                        return $createdAt && $createdAt->greaterThanOrEqualTo($startOfWeek);
+                    })->count();
+
                 } catch (\Throwable $e) {
                     \Log::error('API Error in publikasi list: ' . $e->getMessage());
                     $publikasiItems = collect();
+                    $weekCount = 0;
                 }
 
-                return view("organisasi.publikasi", compact("publikasiItems"));
+                return view("organisasi.publikasi", compact("publikasiItems", "weekCount"));
             }
         )->name("publikasi");
         Route::get(
@@ -1322,6 +1353,9 @@ Route::prefix("organisasi")
         Route::get(
             "/publikasi/create",
             function () {
+                if (!auth()->user()->can('Create Publikasi')) {
+                    abort(403, 'Anda tidak memiliki izin untuk membuat publikasi kegiatan.');
+                }
                 try {
                     $api = \App\Services\ApiService::getClient();
                     $response = $api->get('/publikasi', ['per_page' => 100]);
@@ -1330,9 +1364,12 @@ Route::prefix("organisasi")
                         $itemsData = $response->json('data') ?? [];
                     }
 
-                    $weekCount = collect($itemsData)->filter(function ($p) {
+                    // Konsisten dengan halaman daftar: exclude Rejected, hitung dari awal minggu
+                    $startOfWeek = now()->startOfWeek();
+                    $weekCount = collect($itemsData)->filter(function ($p) use ($startOfWeek) {
+                        if (($p['status'] ?? '') === 'Rejected') return false;
                         $createdAt = isset($p['created_at']) ? \Carbon\Carbon::parse($p['created_at']) : null;
-                        return $createdAt && $createdAt->greaterThanOrEqualTo(now()->startOfWeek());
+                        return $createdAt && $createdAt->greaterThanOrEqualTo($startOfWeek);
                     })->count();
 
                 } catch (\Throwable $e) {
@@ -1340,18 +1377,58 @@ Route::prefix("organisasi")
                     $weekCount = 0;
                 }
 
-                return view("organisasi.publikasi_create", compact("weekCount"));
+                // Blokir akses jika kuota sudah habis
+                if ($weekCount >= 3) {
+                    return redirect()
+                        ->route('organisasi.publikasi')
+                        ->withErrors(['error' => 'Kuota publikasi minggu ini sudah habis (3/3). Silakan coba lagi minggu depan.']);
+                }
+
+                // Auto-fill nama ormawa dari data user yang login
+                $currentUser = auth()->user();
+                $ormawaName = $currentUser?->ormawa_name
+                    ?? $currentUser?->nama_belakang
+                    ?? $currentUser?->username
+                    ?? '';
+
+                return view("organisasi.publikasi_create", compact("weekCount", "ormawaName"));
             }
         )->name("publikasi_create");
         Route::post(
             "/publikasi/create",
             function (Illuminate\Http\Request $request) {
+                // Permission check
+                if (!auth()->user()->can('Create Publikasi')) {
+                    abort(403, 'Anda tidak memiliki izin untuk membuat publikasi kegiatan.');
+                }
+                // Blokir submit jika kuota sudah habis (server-side guard)
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $quotaResponse = $api->get('/publikasi', ['per_page' => 100]);
+                    if ($quotaResponse->successful()) {
+                        $startOfWeek = now()->startOfWeek();
+                        $weekCount = collect($quotaResponse->json('data') ?? [])->filter(function ($p) use ($startOfWeek) {
+                            if (($p['status'] ?? '') === 'Rejected') return false;
+                            $createdAt = isset($p['created_at']) ? \Carbon\Carbon::parse($p['created_at']) : null;
+                            return $createdAt && $createdAt->greaterThanOrEqualTo($startOfWeek);
+                        })->count();
+
+                        if ($weekCount >= 3) {
+                            return redirect()
+                                ->route('organisasi.publikasi')
+                                ->withErrors(['error' => 'Kuota publikasi minggu ini sudah habis (3/3).']);
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    \Log::warning('Could not verify quota before store: ' . $e->getMessage());
+                }
+
                 $request->validate([
-                    'judul' => 'required|string|max:255',
-                    'ormawa' => 'required|string|max:255',
-                    'caption' => 'required|string',
-                    'link' => 'nullable|string',
-                    'poster' => 'required|image|max:5120',
+                    'judul'   => 'required|string|max:255',
+                    'ormawa'  => 'required|string|max:255',
+                    'caption' => 'required|string|max:500',
+                    'content' => 'nullable|string',
+                    'poster'  => 'required|image|max:5120',
                 ]);
 
                 try {
@@ -1363,10 +1440,10 @@ Route::prefix("organisasi")
                         $request->file('poster')->getClientOriginalName(),
                         ['Content-Type' => $request->file('poster')->getMimeType()]
                     )->post('/publikasi', [
-                        'judul' => $request->judul,
-                        'ormawa' => $request->ormawa,
+                        'judul'   => $request->judul,
+                        'ormawa'  => $request->ormawa,
                         'caption' => $request->caption,
-                        'link' => $request->link,
+                        'content' => $request->content ?? '',
                     ]);
 
                     if ($response->status() === 422) {
@@ -1389,6 +1466,9 @@ Route::prefix("organisasi")
         );
 
         Route::get("/publikasi/{id}/edit", function ($id) {
+            if (!auth()->user()->can('Edit Publikasi')) {
+                abort(403, 'Anda tidak memiliki izin untuk mengedit publikasi kegiatan.');
+            }
             try {
                 $api = \App\Services\ApiService::getClient();
                 $response = $api->get("/publikasi/{$id}");
@@ -1424,6 +1504,9 @@ Route::prefix("organisasi")
         })->name("publikasi_edit");
 
         Route::post("/publikasi/{id}/edit", function (Illuminate\Http\Request $request, $id) {
+            if (!auth()->user()->can('Edit Publikasi')) {
+                abort(403, 'Anda tidak memiliki izin untuk mengedit publikasi kegiatan.');
+            }
             $request->validate([
                 'judul' => 'required|string|max:255',
                 'ormawa' => 'required|string|max:255',
@@ -1478,6 +1561,9 @@ Route::prefix("organisasi")
         })->name("publikasi_update");
 
         Route::delete("/publikasi/{id}", function ($id) {
+            if (!auth()->user()->can('Delete Publikasi')) {
+                abort(403, 'Anda tidak memiliki izin untuk menghapus publikasi kegiatan.');
+            }
             try {
                 $api = \App\Services\ApiService::getClient();
                 $response = $api->delete("/publikasi/{$id}");
@@ -1503,8 +1589,10 @@ Route::prefix("organisasi")
         Route::post(
             "/",
             function (Illuminate\Http\Request $request) {
+                if (!auth()->user()->can('Create Proposal Kegiatan')) {
+                    abort(403, 'Anda tidak memiliki izin untuk membuat proposal kegiatan.');
+                }
                 $request->validate([
-                    'ajuan_tw' => 'required|string',
                     'resiko_proposal' => 'required|string',
                     'no_pic' => 'required|string',
                     'nama_kegiatan' => 'required|string|max:255',
@@ -1618,28 +1706,10 @@ Route::prefix("organisasi")
         Route::get(
             "/{id}/edit",
             function ($id) {
+                if (!auth()->user()->can('Edit Proposal Kegiatan')) {
+                    abort(403, 'Anda tidak memiliki izin untuk mengedit proposal kegiatan.');
+                }
                 try {
-                    $api = \App\Services\ApiService::getClient();
-                    $response = $api->get("/proposal/{$id}");
-                    
-                    if (!$response->successful()) {
-                        abort(404, 'Proposal tidak ditemukan');
-                    }
-                    
-                    $proposalData = $response->json('data') ?? [];
-                    
-                    $proposal = (object)[
-                        'id_proposal' => $proposalData['id_proposal'],
-                        'nama_kegiatan' => $proposalData['nama_kegiatan'] ?? '-',
-                        'ajuan_triwulan' => $proposalData['ajuan_triwulan'] ?? '-',
-                        'waktu_kegiatan' => $proposalData['waktu_kegiatan'] ?? null,
-                        'risiko_proposal' => $proposalData['risiko_proposal'] ?? '-',
-                        'besar_ajuan' => (float)($proposalData['besar_ajuan'] ?? 0),
-                        'honor_pelatih' => $proposalData['honor_pelatih'] ?? 'Tidak',
-                        'catatan_admin' => $proposalData['catatan_admin'] ?? null,
-                        'file' => $proposalData['file'] ?? null,
-                        'category' => $proposalData['category'] ?? 'Ormawa',
-                    ];
 
                 } catch (\Throwable $e) {
                     \Log::error('API Error in proposal edit: ' . $e->getMessage());
@@ -1702,6 +1772,9 @@ Route::prefix("organisasi")
             },
         )->name("update");
         Route::get("/{id}/lpj", function (Illuminate\Http\Request $request, $id) {
+            if (!auth()->user()->can('Create LPJ Kegiatan') && !auth()->user()->can('Edit LPJ Kegiatan')) {
+                abort(403, 'Anda tidak memiliki izin untuk mengakses LPJ kegiatan.');
+            }
             try {
                 $api = \App\Services\ApiService::getClient();
                 $type = $request->input('type');
@@ -1888,10 +1961,13 @@ Route::prefix("organisasi")
         Route::delete(
             "/{id}",
             function ($id) {
+                if (!auth()->user()->can('Delete Proposal Kegiatan')) {
+                    abort(403, 'Anda tidak memiliki izin untuk menghapus proposal kegiatan.');
+                }
                 try {
                     $api = \App\Services\ApiService::getClient();
                     $response = $api->delete("/proposal/{$id}");
-                    
+
                     if (!$response->successful()) {
                         return back()->withErrors(['error' => $response->json('message') ?? 'Gagal menghapus proposal via API']);
                     }
@@ -1903,7 +1979,7 @@ Route::prefix("organisasi")
                 return redirect()
                     ->route("organisasi.index")
                     ->with("success", "Kegiatan berhasil dihapus.");
-            }
+            },
         )->name("destroy");
     });
 
@@ -1912,8 +1988,18 @@ Route::prefix("prestasi")
     ->middleware('auth')
     ->name("prestasi.")
     ->group(function () {
-        Route::get("/", fn() => view("prestasi.index"))->name("index");
-        Route::get("/input-proposal", fn() => view("prestasi.input_proposal"))->name("input_proposal");
+        Route::get("/", function () {
+            if (!auth()->user()->can('View Prestasi')) {
+                abort(403, 'Anda tidak memiliki izin untuk melihat data prestasi.');
+            }
+            return view("prestasi.index");
+        })->name("index");
+        Route::get("/input-proposal", function () {
+            if (!auth()->user()->can('Create Prestasi')) {
+                abort(403, 'Anda tidak memiliki izin untuk input prestasi.');
+            }
+            return view("prestasi.input_proposal");
+        })->name("input_proposal");
         Route::get("/upload-lpj", fn() => view("prestasi.upload_lpj"))->name("upload_lpj");
         Route::get("/template-dokumen", fn() => view("prestasi.template_dokumen"))->name("template_dokumen");
         Route::get("/laporan-prestasi", fn() => view("prestasi.laporan_prestasi"))->name("laporan_prestasi");
@@ -2022,4 +2108,3 @@ Route::prefix("prestasi")
                 ->with("success", "Prestasi berhasil dihapus."),
         )->name("destroy");
     });
-

@@ -15,7 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
-use Illuminate\Validation\ValidationException;
 
 /**
  * @group Authentication
@@ -50,16 +49,24 @@ class AuthController
     {
         $user = User::where('username', $request->username)->first();
 
+        // DEF-002 FIX: Return HTTP 401 (not 422) for authentication failures.
+        // 422 is for validation errors (missing/invalid payload fields).
+        // 401 is for valid payload but failed authentication — aligns with HTTP standard and API docs.
+        // Using a generic message prevents user enumeration (same response for wrong username or wrong password).
         if (!$user || !Hash::check($request->password, $user->password)) {
-            throw ValidationException::withMessages([
-                'credentials' => 'Username atau password salah',
-            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Username atau password salah',
+                'errors' => ['credentials' => 'Username atau password salah'],
+            ], 401);
         }
 
         if (!$user->is_active) {
-            throw ValidationException::withMessages([
-                'account' => 'Akun Anda telah dinonaktifkan',
-            ]);
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Akun Anda telah dinonaktifkan',
+                'errors' => ['account' => 'Akun Anda telah dinonaktifkan'],
+            ], 403);
         }
 
         $token = $user->createToken('api-token', ['*'])->plainTextToken;
@@ -383,8 +390,9 @@ class AuthController
 
         $user = User::where('email', $request->email)->first();
         if ($user) {
+            // DEF-001 FIX: Always hash password before storing — never store plain text
             $user->update([
-                'password' => $request->password
+                'password' => Hash::make($request->password),
             ]);
             DB::table('password_reset_tokens')->where('email', $request->email)->delete();
             return response()->json([

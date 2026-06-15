@@ -69,7 +69,11 @@ class User extends Authenticatable
     // Check if user is admin (Kemahasiswaan role)
     public function isAdmin(): bool
     {
-        return $this->hasRole('Admin / Kemahasiswaan') || $this->hasRole('Kemahasiswaan') || $this->role === 'Kemahasiswaan';
+        // SuperAdmin also has admin capabilities
+        return $this->isSuperAdmin()
+            || $this->hasRole('Admin / Kemahasiswaan')
+            || $this->hasRole('Kemahasiswaan')
+            || $this->role === 'Kemahasiswaan';
     }
 
     // Check if user is Super Admin

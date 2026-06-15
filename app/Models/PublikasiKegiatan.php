@@ -18,7 +18,7 @@ class PublikasiKegiatan extends Model
         'judul',
         'ormawa',
         'caption',
-        'link',
+        'content',
         'poster',
         'status',
         'catatan_admin',

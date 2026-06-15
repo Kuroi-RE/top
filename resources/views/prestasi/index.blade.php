@@ -133,6 +133,7 @@
                     />
                 </div>
                 {{-- Tambah Button --}}
+                @can('Create Prestasi')
                 <a
                     href="{{ route('prestasi.laporan_prestasi.biodata') }}"
                     class="inline-flex items-center gap-2 rounded-xl bg-red-700 px-4 py-2
@@ -145,6 +146,7 @@
                     </svg>
                     Tambah
                 </a>
+                @endcan
             </div>
         </div>
 

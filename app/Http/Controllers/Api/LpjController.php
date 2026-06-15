@@ -126,7 +126,7 @@ class LpjController
             ['id_proposal' => $request->id_proposal],
             [
                 'file_lpj' => $filePath,
-                'status_lpj' => 'Pending',
+                'status_lpj' => 'Menunggu',
                 'catatan_admin' => null,
                 'tanggal_upload' => $request->tanggal_upload ?? now()->toDateString(),
             ]
@@ -224,7 +224,7 @@ class LpjController
 
         $lpj->update([
             'file_lpj' => $filePath,
-            'status_lpj' => 'Menunggu',
+            'status_lpj' => 'Menunggu',  // nilai enum yang valid di database
             'tanggal_upload' => $request->tanggal_upload,
         ]);
 

@@ -18,7 +18,7 @@ return [
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
             'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
-            'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
+            'View Publikasi', 'Edit Publikasi', 'Delete Publikasi', 'Approve Publikasi',
         ],
         'Kemahasiswaan' => [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
@@ -26,7 +26,7 @@ return [
             'View LPJ Kegiatan', 'Approve LPJ Kegiatan', 'Reject LPJ Kegiatan',
             'View Prestasi', 'Approve Prestasi', 'Reject Prestasi',
             'View Users', 'Edit Users', 'Manage Template Dokumen', 'View Template Dokumen', 'View Reports', 'Export Reports',
-            'View Publikasi', 'Approve Publikasi', 'Delete Publikasi',
+            'View Publikasi', 'Edit Publikasi', 'Delete Publikasi', 'Approve Publikasi',
         ],
         'DPMBEM' => [
             'View Proposal Kegiatan', 'Approve Proposal Kegiatan', 'Reject Proposal Kegiatan',
@@ -38,14 +38,14 @@ return [
             'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
             'View Template Dokumen',
-            'Create Publikasi', 'View Publikasi', 'Edit Publikasi',
+            'Create Publikasi', 'View Publikasi', 'Edit Publikasi', 'Delete Publikasi',
         ],
         'Ormawa Prodi' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan', 'Edit Proposal Kegiatan',
             'Create LPJ Kegiatan', 'View LPJ Kegiatan', 'Edit LPJ Kegiatan',
             'Create Prestasi', 'View Prestasi', 'Edit Prestasi',
             'View Template Dokumen',
-            'Create Publikasi', 'View Publikasi', 'Edit Publikasi',
+            'Create Publikasi', 'View Publikasi', 'Edit Publikasi', 'Delete Publikasi',
         ],
         'Mahasiswa' => [
             'Create Proposal Kegiatan', 'View Proposal Kegiatan',

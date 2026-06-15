@@ -13,14 +13,20 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('proposal_kegiatan', function (Blueprint $table) {
-            $table->enum('category', ['Ormawa', 'Prestasi'])->default('Ormawa')->after('status');
+            // INFRA-001 FIX: Skip if column already exists (after SQLite table recreate in migration 000005)
+            // Also use string instead of enum to avoid SQLite CHECK constraint issues
+            if (!Schema::hasColumn('proposal_kegiatan', 'category')) {
+                $table->string('category', 20)->default('Ormawa')->nullable()->after('status');
+            }
         });
     }
 
     public function down(): void
     {
         Schema::table('proposal_kegiatan', function (Blueprint $table) {
-            $table->dropColumn('category');
+            if (Schema::hasColumn('proposal_kegiatan', 'category')) {
+                $table->dropColumn('category');
+            }
         });
     }
 };

@@ -219,7 +219,7 @@
                                 <span>Revisi</span>
                             </label>
                             <label class="verify-status-item">
-                                <input type="radio" name="status" value="Disetujui" class="verify-radio" {{ in_array($p->status, ['Disetujui', 'Approved']) ? 'checked' : '' }}>
+                                <input type="radio" name="status" value="Disetujui" class="verify-radio">
                                 <span>Setuju</span>
                             </label>
                             <label class="verify-status-item">

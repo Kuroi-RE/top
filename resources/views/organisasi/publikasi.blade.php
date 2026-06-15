@@ -11,16 +11,37 @@
                 <h1 class="text-2xl font-semibold text-gray-800">Publikasi Kegiatan Ormawa</h1>
                 <p class="text-sm text-gray-500">Kelola publikasi kegiatan dan status tayang.</p>
             </div>
-            <a
-                href="{{ route('organisasi.publikasi_create') }}"
-                class="inline-flex items-center justify-center rounded-full bg-red-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
-            >
-                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                Tambah Publikasi Baru
-            </a>
+            @php $quotaFull = $weekCount >= 3; @endphp
+            @if(auth()->user()->can('Create Publikasi'))
+                @if($quotaFull)
+                    <span
+                        class="inline-flex items-center justify-center rounded-full bg-gray-300 px-5 py-2 text-sm font-semibold text-gray-500 cursor-not-allowed"
+                        title="Kuota minggu ini sudah habis (3/3)"
+                    >
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Publikasi Baru
+                    </span>
+                @else
+                    <a
+                        href="{{ route('organisasi.publikasi_create') }}"
+                        class="inline-flex items-center justify-center rounded-full bg-red-700 px-5 py-2 text-sm font-semibold text-white transition hover:bg-red-800"
+                    >
+                        <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                        </svg>
+                        Tambah Publikasi Baru
+                    </a>
+                @endif
+            @endif
         </div>
+
+        @if($errors->has('error'))
+            <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                {{ $errors->first('error') }}
+            </div>
+        @endif
 
         <!-- Ringkasan Publikasi -->
         <div class="flex flex-wrap gap-6">
@@ -43,7 +64,6 @@
 
         <!-- Kuota Informasi -->
         @php
-            $weekCount = $publikasiItems->where('created_at', '>=', now()->startOfWeek())->count();
             $maxQuota = 3;
             $remaining = max(0, $maxQuota - $weekCount);
         @endphp
@@ -93,7 +113,7 @@
                         <tr class="border-b border-gray-200 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                             <th class="px-4 py-3">Judul</th>
                             <th class="px-4 py-3">Caption</th>
-                            <th class="px-4 py-3">Link</th>
+                            
                             <th class="px-4 py-3 text-center">File</th>
                             <th class="px-4 py-3 text-center">Status</th>
                             <th class="px-4 py-3 text-center">Aksi</th>
@@ -111,7 +131,7 @@
                                     @endif
                                 </td>
                                 <td class="px-4 py-4 text-gray-600 max-w-xs truncate">{{ $item['caption'] ?? '-' }}</td>
-                                <td class="px-4 py-4">
+                                <!-- <td class="px-4 py-4">
                                     @if (!empty($item['link']))
                                         <a href="{{ $item['link'] }}" target="_blank" rel="noopener noreferrer"
                                            class="text-blue-600 hover:underline">
@@ -120,7 +140,7 @@
                                     @else
                                         <span class="text-gray-400">-</span>
                                     @endif
-                                </td>
+                                </td> -->
                                 <td class="px-4 py-4 text-center">
                                     <a href="{{ asset('storage/' . $item->poster) }}" target="_blank" class="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red-600 hover:border-red-100 transition-colors">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -144,9 +164,12 @@
                                 </td>
                                 <td class="px-4 py-4 text-center">
                                     <div class="flex items-center justify-center gap-2">
+                                        @can('Edit Publikasi')
                                         <a href="{{ route('organisasi.publikasi_edit', $item->id_publikasi) }}" class="inline-flex items-center rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 transition-colors">
                                             Edit
                                         </a>
+                                        @endcan
+                                        @can('Delete Publikasi')
                                         <form action="{{ route('organisasi.publikasi_destroy', $item->id_publikasi) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus publikasi ini?');" class="inline-block">
                                             @csrf
                                             @method('DELETE')
@@ -154,6 +177,7 @@
                                                 Hapus
                                             </button>
                                         </form>
+                                        @endcan
                                     </div>
                                 </td>
                             </tr>

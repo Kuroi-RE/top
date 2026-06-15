@@ -16,7 +16,7 @@ class PublikasiKegiatanResource extends JsonResource
             'judul' => $this->judul,
             'ormawa' => $this->ormawa,
             'caption' => $this->caption,
-            'link' => $this->link,
+            'content' => $this->content,
             'poster_url' => $this->poster ? Storage::disk('public')->url($this->poster) : null,
             'status' => $this->status,
             'catatan_admin' => $this->catatan_admin,

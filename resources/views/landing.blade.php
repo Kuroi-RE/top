@@ -115,12 +115,14 @@
         .news-modal-panel {
             width: min(460px, 100%);
             max-height: 88vh;
-            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
             border-radius: 14px;
             background: #ffffff;
             border: 1px solid #e5e7eb;
             box-shadow: 0 28px 72px rgba(2, 6, 23, 0.32);
             animation: fadeInUp 0.25s ease-out;
+            overflow: hidden;
         }
 
         .news-modal-header {
@@ -129,7 +131,12 @@
             justify-content: space-between;
             gap: 1rem;
             border-bottom: 1px solid #e5e7eb;
-            padding: 0.75rem 1rem;
+            padding: 1rem 1.25rem;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            background: #ffffff;
+            flex-shrink: 0;
         }
 
         .news-modal-close {
@@ -139,14 +146,27 @@
             color: #64748b;
             font-size: 1.5rem;
             line-height: 1;
+            flex-shrink: 0;
+            padding: 0;
+            width: 28px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s ease;
         }
 
         .news-modal-close:hover {
             color: #0f172a;
+            background: #f3f4f6;
         }
 
         .news-modal-body {
             padding: 0.9rem 1rem 1rem;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
         }
 
         .news-modal-content {
@@ -195,10 +215,47 @@
                 padding: 0.85rem;
             }
         }
+
+        /* Prose styling for HTML content in modal */
+        #newsModalContent h1 { font-size: 1.5rem; font-weight: 700; margin: 1rem 0 0.5rem; color: #111827; }
+        #newsModalContent h2 { font-size: 1.25rem; font-weight: 700; margin: 0.875rem 0 0.5rem; color: #111827; }
+        #newsModalContent h3 { font-size: 1.1rem; font-weight: 600; margin: 0.75rem 0 0.4rem; color: #1f2937; }
+        #newsModalContent p { margin-bottom: 0.75rem; line-height: 1.7; }
+        #newsModalContent ul, #newsModalContent ol { padding-left: 1.5rem; margin-bottom: 0.75rem; }
+        #newsModalContent ul { list-style-type: disc; }
+        #newsModalContent ol { list-style-type: decimal; }
+        #newsModalContent li { margin-bottom: 0.25rem; line-height: 1.6; }
+        #newsModalContent strong { font-weight: 700; color: #111827; }
+        #newsModalContent em { font-style: italic; }
+        #newsModalContent a { color: #dc2626; text-decoration: underline; }
+        #newsModalContent a:hover { color: #991b1b; }
+        #newsModalContent img { max-width: 100%; border-radius: 8px; margin: 0.5rem 0; }
+        #newsModalContent blockquote { border-left: 3px solid #dc2626; padding-left: 1rem; color: #4b5563; font-style: italic; margin: 0.75rem 0; }
     </style>
 </head>
 
 <body class="bg-white">
+
+    {{-- JSON store untuk konten HTML publikasi (aman dari HTML injection di attributes) --}}
+    @php
+        // Definisikan semua koleksi publikasi lebih awal agar tersedia untuk JSON store
+        $publikasiBesar   = $publikasis->where('placement', 'besar')->values();
+        $publikasiKeduanya = $publikasis->where('placement', 'keduanya')->values();
+        $bannerPublikasis = $publikasiBesar->merge($publikasiKeduanya);
+
+        $publikasiKecil    = $publikasis->where('placement', 'kecil')->values();
+        $publikasiKeduanya2 = $publikasis->where('placement', 'keduanya')->values();
+        $beritaKecil       = $publikasiKecil->merge($publikasiKeduanya2);
+
+        $publikasiContentMap = [];
+        foreach ($beritaKecil as $p) {
+            $publikasiContentMap[(string)$p->id_publikasi] = $p->content ?? '';
+        }
+        foreach ($bannerPublikasis as $pb) {
+            $publikasiContentMap[(string)$pb->id_publikasi] = $pb->content ?? '';
+        }
+    @endphp
+    <script id="publikasi-content-data" type="application/json">{!! json_encode($publikasiContentMap, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) !!}</script>
 
     <nav class="border-b border-gray-200 bg-white shadow-sm">
         <div class="mx-auto max-w-7xl px-4 py-4 sm:px-6 lg:px-8">
@@ -219,46 +276,9 @@
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <div class="carousel-container mb-8">
                 <!-- Default Slides -->
-                <div class="carousel-slide" data-slide="0">
-                    <div class="flex h-full gap-6 bg-gradient-to-r from-yellow-400 to-yellow-200 rounded-lg p-8 items-center">
-                        <div class="flex-1">
-                            <h1 class="text-4xl font-bold text-red-700 mb-3">TRIAL CLASS GRATIS!!</h1>
-                            <p class="text-lg text-gray-800 mb-3 font-semibold">PERIODE MARET - APRIL 2026</p>
-                            <p class="text-gray-700 mb-4">Ikuti kelas percobaan gratis dan daftarkan diri Anda sekarang. Dapatkan sertifikat dan hadiah menarik!</p>
-                            <button class="rounded-full bg-red-700 px-8 py-3 text-white font-medium hover:bg-red-800 transition">Daftar Sekarang</button>
-                        </div>
-                        <div class="placeholder-box flex-1 w-48 h-48"><div class="text-center"><p class="text-sm">QR Code</p><p class="text-xs text-gray-500">Placeholder</p></div></div>
-                    </div>
-                </div>
-                <div class="carousel-slide hidden" data-slide="1">
-                    <div class="flex h-full gap-6 bg-gradient-to-r from-blue-400 to-blue-200 rounded-lg p-8 items-center">
-                        <div class="flex-1">
-                            <h1 class="text-4xl font-bold text-red-700 mb-3">WORKSHOP KEPEMIMPINAN</h1>
-                            <p class="text-lg text-gray-800 mb-3 font-semibold">PERIODE MEI 2026</p>
-                            <p class="text-gray-700 mb-4">Tingkatkan keterampilan kepemimpinan Anda bersama para pembicara profesional. Terbuka untuk semua mahasiswa!</p>
-                            <button class="rounded-full bg-red-700 px-8 py-3 text-white font-medium hover:bg-red-800 transition">Daftar Sekarang</button>
-                        </div>
-                        <div class="placeholder-box flex-1 w-48 h-48"><div class="text-center"><p class="text-sm">Gambar Workshop</p><p class="text-xs text-gray-500">Placeholder</p></div></div>
-                    </div>
-                </div>
-                <div class="carousel-slide hidden" data-slide="2">
-                    <div class="flex h-full gap-6 bg-gradient-to-r from-purple-400 to-purple-200 rounded-lg p-8 items-center">
-                        <div class="flex-1">
-                            <h1 class="text-4xl font-bold text-red-700 mb-3">KOMPETISI INOVASI</h1>
-                            <p class="text-lg text-gray-800 mb-3 font-semibold">PERIODE APRIL - JUNI 2026</p>
-                            <p class="text-gray-700 mb-4">Tunjukkan kreativitas Anda dan berkompetisi untuk hadiah jutaan rupiah. Pendaftaran dibuka mulai sekarang!</p>
-                            <button class="rounded-full bg-red-700 px-8 py-3 text-white font-medium hover:bg-red-800 transition">Daftar Sekarang</button>
-                        </div>
-                        <div class="placeholder-box flex-1 w-48 h-48"><div class="text-center"><p class="text-sm">Gambar Inovasi</p><p class="text-xs text-gray-500">Placeholder</p></div></div>
-                    </div>
-                </div>
+                
 
                 <!-- Dynamic Publikasi Slides (Banner Besar) -->
-                @php
-                    $publikasiBesar = $publikasis->where('placement', 'besar')->values();
-                    $publikasiKeduanya = $publikasis->where('placement', 'keduanya')->values();
-                    $bannerPublikasis = $publikasiBesar->merge($publikasiKeduanya);
-                @endphp
                 @forelse ($bannerPublikasis as $index => $pb)
                     <div class="carousel-slide hidden" data-slide="{{ $index + 3 }}">
                         <div class="flex h-full gap-6 rounded-lg p-8 items-center" style="background: linear-gradient(135deg, rgba(220, 38, 38, 0.8) 0%, rgba(185, 28, 28, 0.8) 100%), url('{{ asset('storage/' . $pb->poster) }}'); background-size: cover; background-position: center;">
@@ -266,8 +286,17 @@
                                 <h1 class="text-4xl font-bold mb-3">{{ $pb->judul }}</h1>
                                 <p class="text-lg mb-3 font-semibold">{{ $pb->ormawa }}</p>
                                 <p class="mb-4 leading-relaxed">{{ Str::limit($pb->caption, 150) }}</p>
-                                @if($pb->link)
-                                    <a href="{{ Str::startsWith($pb->link, 'http') ? $pb->link : 'https://' . $pb->link }}" target="_blank" class="inline-block rounded-full bg-white px-8 py-3 text-red-700 font-medium hover:bg-gray-100 transition">Lihat Selengkapnya</a>
+                                @if($pb->content || $pb->caption)
+                                    <button type="button"
+                                        class="banner-detail-btn inline-block rounded-full bg-white px-8 py-3 text-red-700 font-medium hover:bg-gray-100 transition"
+                                        data-title="{{ e($pb->judul) }}"
+                                        data-organizer="{{ e($pb->ormawa) }}"
+                                        data-date="{{ $pb->created_at->format('d M Y') }}"
+                                        data-description="{{ e($pb->caption) }}"
+                                        data-poster="{{ asset('storage/' . $pb->poster) }}"
+                                        data-content-id="{{ $pb->id_publikasi }}">
+                                        Lihat Selengkapnya
+                                    </button>
                                 @endif
                             </div>
                         </div>
@@ -303,20 +332,14 @@
                 <p class="mt-4 text-xl text-gray-500">Temukan berbagai kegiatan seru dari organisasi mahasiswa kami.</p>
             </div>
             <div class="events-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                @php
-                    // Filter publikasi untuk ditampilkan di berita kecil
-                    $publikasiKecil = $publikasis->where('placement', 'kecil')->values();
-                    $publikasiKeduanya2 = $publikasis->where('placement', 'keduanya')->values();
-                    $beritaKecil = $publikasiKecil->merge($publikasiKeduanya2);
-                @endphp
                 @forelse ($beritaKecil as $index => $p)
                     <div class="event-card rounded-xl bg-white p-5 shadow-md transition-all hover:shadow-xl fade-in" 
                         style="animation-delay: {{ $index * 0.1 }}s;" 
                         data-date="{{ $p->created_at->format('d M Y') }}" 
-                        data-author="Admin TOP" 
-                        data-description="{{ $p->caption }}" 
-                        data-category="KEGIATAN"
-                        data-link="{{ $p->link }}">
+                        data-author="{{ $p->ormawa }}" 
+                        data-description="{{ e($p->caption) }}" 
+                        data-content-id="{{ $p->id_publikasi }}"
+                        data-category="KEGIATAN">
                         <div class="mb-4 h-52 w-full overflow-hidden rounded-lg bg-gray-100">
                             <img src="{{ asset('storage/' . $p->poster) }}" class="h-full w-full object-cover transition duration-500 hover:scale-110" alt="{{ $p->judul }}">
                         </div>
@@ -324,11 +347,6 @@
                         <p class="text-sm text-gray-500 mb-4">{{ $p->ormawa }}</p>
                         <div class="flex items-center justify-between">
                             <button class="read-more-btn text-red-600 font-bold text-xs hover:text-red-800 transition uppercase tracking-wider">Detail Informasi</button>
-                            @if($p->link)
-                                <a href="{{ Str::startsWith($p->link, 'http') ? $p->link : 'https://' . $p->link }}" target="_blank" class="text-gray-400 hover:text-red-600 transition">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-                                </a>
-                            @endif
                         </div>
                     </div>
                 @empty
@@ -344,20 +362,24 @@
     </section>
 
     <div id="newsModal" class="news-modal-backdrop" aria-hidden="true">
-        <div class="news-modal-panel" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle">
+        <div class="news-modal-panel" role="dialog" aria-modal="true" aria-labelledby="newsModalTitle"
+             style="width: min(720px, 96vw); max-height: 92vh;">
             <div class="news-modal-header">
-                <h2 class="text-xl font-semibold text-gray-900">Detail Informasi</h2>
-                <button id="closeNewsModal" type="button" class="news-modal-close" aria-label="Tutup">&times;</button>
+                <h2 id="newsModalTitle" class="text-lg font-bold text-gray-900 truncate pr-4"></h2>
+                <button id="closeNewsModal" type="button" class="news-modal-close flex-shrink-0" aria-label="Tutup">&times;</button>
             </div>
-            <div class="news-modal-body news-modal-content">
-                <div id="newsModalImage" class="placeholder-box h-48 w-full overflow-hidden rounded-md"></div>
-                <div class="news-modal-text-group">
+            <div class="news-modal-body">
+                <div id="newsModalImage" class="h-56 w-full overflow-hidden rounded-xl bg-gray-100 mb-4"></div>
+                <div class="news-modal-text-group mb-4">
                     <p id="newsModalCategory" class="news-modal-category text-xs font-semibold uppercase tracking-[0.16em] text-red-700"></p>
-                    <h3 id="newsModalTitle" class="news-modal-title text-[1.7rem] font-bold text-gray-900"></h3>
-                    <p class="news-modal-organizer text-base text-gray-600"><span id="newsModalOrganizer"></span></p>
-                    <p class="news-modal-meta text-sm font-semibold text-gray-800"><span id="newsModalMeta"></span></p>
+                    <p class="news-modal-organizer text-sm text-gray-500 mt-1">
+                        <span id="newsModalOrganizer"></span>
+                        <span class="mx-1.5 text-gray-300">·</span>
+                        <span id="newsModalMeta" class="text-gray-400"></span>
+                    </p>
                 </div>
-                <p id="newsModalDescription" class="news-modal-description text-sm text-gray-800"></p>
+                <p id="newsModalDescription" class="text-sm text-gray-600 leading-relaxed mb-5 border-b border-gray-100 pb-5"></p>
+                <div id="newsModalContent" class="prose prose-sm max-w-none text-gray-700 leading-relaxed"></div>
             </div>
         </div>
     </div>
@@ -399,6 +421,18 @@
     </a>
 
     <script>
+        // Parse konten HTML dari JSON store (aman dari attribute injection)
+        const publikasiContentStore = (function() {
+            try {
+                const el = document.getElementById('publikasi-content-data');
+                return el ? JSON.parse(el.textContent) : {};
+            } catch(e) { return {}; }
+        })();
+
+        function getPublikasiContent(id) {
+            return publikasiContentStore[String(id)] || '';
+        }
+
         let currentSlide = 0;
         const slides = document.querySelectorAll('[data-slide]');
         const dots = document.querySelectorAll('.dot');
@@ -528,11 +562,11 @@
 
                 const category = card.dataset.category || 'BERITA';
                 const title = card.querySelector('h3')?.textContent?.trim() || 'Judul berita';
-                const organizer = card.querySelector('p')?.textContent?.trim() || '-';
-                const description = card.dataset.description || 'Detail berita belum tersedia.';
+                const organizer = card.dataset.author || '-';
+                const description = card.dataset.description || '';
+                const contentId = card.dataset.contentId || '';
+                const content = getPublikasiContent(contentId);
                 const date = card.dataset.date || '-';
-                const author = card.dataset.author || organizer;
-                const link = card.dataset.link || '';
 
                 const cardImage = card.querySelector('img');
                 if (cardImage && imageEl) {
@@ -541,17 +575,22 @@
                     imageEl.innerHTML = `<div class="flex h-full w-full items-center justify-center bg-gray-100 text-gray-400 font-bold">NO IMAGE</div>`;
                 }
 
+                // Set title in header
+                document.getElementById('newsModalTitle').textContent = title;
                 categoryEl.textContent = category;
-                titleEl.textContent = title;
                 organizerEl.textContent = organizer;
-                
-                let metaText = `${date}, oleh ${author}`;
-                if (link) {
-                    metaText += ` | Link: ${link}`;
-                }
-                metaEl.textContent = metaText;
-                
+                metaEl.textContent = date;
                 descriptionEl.textContent = description;
+
+                // Render HTML content safely
+                const contentEl = document.getElementById('newsModalContent');
+                if (content && content.trim() && content.trim() !== '<p><br></p>') {
+                    contentEl.innerHTML = content;
+                    contentEl.style.display = 'block';
+                } else {
+                    contentEl.innerHTML = '';
+                    contentEl.style.display = 'none';
+                }
 
                 modal.classList.add('is-open');
                 modal.setAttribute('aria-hidden', 'false');
@@ -563,6 +602,44 @@
                     event.preventDefault();
                     const card = button.closest('.event-card');
                     openModal(card);
+                });
+            });
+
+            // Banner "Lihat Selengkapnya" buttons
+            const bannerButtons = document.querySelectorAll('.banner-detail-btn');
+            bannerButtons.forEach((btn) => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const title = btn.dataset.title || '';
+                    const organizer = btn.dataset.organizer || '';
+                    const date = btn.dataset.date || '';
+                    const description = btn.dataset.description || '';
+                    const contentId = btn.dataset.contentId || '';
+                    const content = getPublikasiContent(contentId);
+                    const poster = btn.dataset.poster || '';
+
+                    document.getElementById('newsModalTitle').textContent = title;
+                    categoryEl.textContent = 'KEGIATAN';
+                    organizerEl.textContent = organizer;
+                    metaEl.textContent = date;
+                    descriptionEl.textContent = description;
+
+                    if (poster && imageEl) {
+                        imageEl.innerHTML = `<img src="${poster}" class="h-full w-full object-cover">`;
+                    }
+
+                    const contentEl = document.getElementById('newsModalContent');
+                    if (content && content.trim() && content.trim() !== '<p><br></p>') {
+                        contentEl.innerHTML = content;
+                        contentEl.style.display = 'block';
+                    } else {
+                        contentEl.innerHTML = '';
+                        contentEl.style.display = 'none';
+                    }
+
+                    modal.classList.add('is-open');
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.classList.add('overflow-hidden');
                 });
             });
 

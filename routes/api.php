@@ -29,10 +29,19 @@ Route::prefix('v1')->group(function () {
     // AUTHENTICATION ROUTES (Public)
     // ============================================================
     Route::prefix('auth')->group(function () {
-        Route::post('login', [AuthController::class, 'login'])->name('auth.login');
-        Route::post('register', [AuthController::class, 'register'])->name('auth.register');
-        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])->name('auth.forgot-password');
-        Route::post('reset-password', [AuthController::class, 'resetPassword'])->name('auth.reset-password');
+        // DEF-008 FIX: Rate limiting on auth endpoints to prevent brute force
+        Route::post('login', [AuthController::class, 'login'])
+            ->middleware('throttle:10,1')   // 10 attempts per minute per IP
+            ->name('auth.login');
+        Route::post('register', [AuthController::class, 'register'])
+            ->middleware('throttle:5,1')    // 5 registrations per minute per IP
+            ->name('auth.register');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])
+            ->middleware('throttle:5,1')    // 5 requests per minute per IP
+            ->name('auth.forgot-password');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])
+            ->middleware('throttle:5,1')    // 5 attempts per minute per IP
+            ->name('auth.reset-password');
     });
 
     // ============================================================
@@ -46,7 +55,10 @@ Route::prefix('v1')->group(function () {
     // ============================================================
     // PROTECTED ROUTES (Require Authentication)
     // ============================================================
-    Route::middleware('auth:api')->group(function () {
+    // DEF-003 FIX: Use auth:sanctum (the standard Sanctum guard) instead of auth:api.
+    // While auth:api with sanctum driver works in production, auth:sanctum is the
+    // canonical guard name that Sanctum registers and that Sanctum::actingAs() targets in tests.
+    Route::middleware('auth:sanctum')->group(function () {
 
         // Authentication Routes
         Route::prefix('auth')->group(function () {

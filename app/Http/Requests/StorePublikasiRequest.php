@@ -14,11 +14,11 @@ class StorePublikasiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'judul' => 'required|string|max:255',
-            'ormawa' => 'required|string|max:255',
-            'caption' => 'required|string',
-            'link' => 'nullable|url|max:500',
-            'poster' => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
+            'judul'   => 'required|string|max:255',
+            'ormawa'  => 'required|string|max:255',
+            'caption' => 'required|string|max:500',
+            'content' => 'nullable|string',
+            'poster'  => 'required|image|mimes:jpg,jpeg,png,webp|max:5120',
         ];
     }
 }

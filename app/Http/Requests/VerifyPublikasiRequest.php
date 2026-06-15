@@ -8,7 +8,9 @@ class VerifyPublikasiRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isAdmin() || $this->user()->isSuperAdmin();
+        $user = $this->user();
+        return $user->isAdmin() || $user->isSuperAdmin() || $user->isDpmbem()
+            || $user->hasPermissionTo('Approve Publikasi');
     }
 
     protected function prepareForValidation()

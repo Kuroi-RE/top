@@ -106,8 +106,11 @@ class MonitoringController
         }
 
         // Summary keseluruhan
+        // Status yang sudah disetujui anggaran: Approved, Cek LPJ, Revisi LPJ, Selesai
+        $approvedStatuses = ['Approved', 'Cek LPJ', 'Revisi LPJ', 'Selesai'];
+
         $totalDiajukan = ProposalKegiatan::sum('besar_ajuan');
-        $totalDisetujui = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+        $totalDisetujui = ProposalKegiatan::whereIn('status', $approvedStatuses)->sum('anggaran_disetujui');
         $totalDitolak = ProposalKegiatan::where('status', 'Rejected')->count();
         $totalMenunggu = ProposalKegiatan::where('status', 'Pending')->count();
         $totalRevisi = ProposalKegiatan::where('status', 'Revision')->count();
@@ -118,11 +121,11 @@ class MonitoringController
             $proposals = ProposalKegiatan::where('ajuan_triwulan', $triwulan)->get();
             $byTriwulan[$triwulan] = [
                 'total_diajukan' => $proposals->sum('besar_ajuan'),
-                'total_disetujui' => $proposals->where('status', 'Approved')->sum('anggaran_disetujui'),
+                'total_disetujui' => $proposals->whereIn('status', $approvedStatuses)->sum('anggaran_disetujui'),
                 'total_persentase_persetujuan' => $proposals->count() > 0 ? 
-                    round(($proposals->where('status', 'Approved')->count() / $proposals->count()) * 100, 2) : 0,
+                    round(($proposals->whereIn('status', $approvedStatuses)->count() / $proposals->count()) * 100, 2) : 0,
                 'proposal_count' => $proposals->count(),
-                'approved_count' => $proposals->where('status', 'Approved')->count(),
+                'approved_count' => $proposals->whereIn('status', $approvedStatuses)->count(),
             ];
         }
 
@@ -248,18 +251,19 @@ class MonitoringController
         }
 
         $totalProposal = ProposalKegiatan::count();
-        $disetujui = ProposalKegiatan::where('status', 'Approved')->count();
+        $approvedStatuses = ['Approved', 'Cek LPJ', 'Revisi LPJ', 'Selesai'];
+        $disetujui = ProposalKegiatan::whereIn('status', $approvedStatuses)->count();
         $ditolak = ProposalKegiatan::where('status', 'Rejected')->count();
         $menunggu = ProposalKegiatan::where('status', 'Pending')->count();
         $revisi = ProposalKegiatan::where('status', 'Revision')->count();
 
         $totalLpj = LpjKegiatan::count();
         $lpjDisetujui = LpjKegiatan::where('status_lpj', 'Approved')->count();
-        $lpjMenunggu = LpjKegiatan::where('status_lpj', 'Pending')->count();
+        $lpjMenunggu = LpjKegiatan::where('status_lpj', 'Menunggu')->count();
         $lpjRevisi = LpjKegiatan::where('status_lpj', 'Revision')->count();
 
         $totalAnggaran = ProposalKegiatan::sum('besar_ajuan');
-        $totalDisetujuiAgg = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+        $totalDisetujuiAgg = ProposalKegiatan::whereIn('status', $approvedStatuses)->sum('anggaran_disetujui');
 
         return response()->json([
             'status' => 'success',
@@ -353,12 +357,13 @@ class MonitoringController
             ], 403);
         }
 
+        $approvedStatuses = ['Approved', 'Cek LPJ', 'Revisi LPJ', 'Selesai'];
         $totalProposal  = ProposalKegiatan::count();
         $totalDiajukan  = ProposalKegiatan::sum('besar_ajuan');
-        $totalDisetujui = ProposalKegiatan::where('status', 'Approved')->sum('anggaran_disetujui');
+        $totalDisetujui = ProposalKegiatan::whereIn('status', $approvedStatuses)->sum('anggaran_disetujui');
         $totalLpj       = LpjKegiatan::count();
-        $lpjDisetujui   = LpjKegiatan::where('status_lpj', 'Approved')->count();
-        $lpjRevisi      = LpjKegiatan::where('status_lpj', 'Revision')->count();
+        $lpjDisetujui   = LpjKegiatan::where('status_lpj', 'Disetujui')->count();
+        $lpjRevisi      = LpjKegiatan::where('status_lpj', 'Revisi')->count();
 
         $proposals = ProposalKegiatan::with('user')
             ->select('id_proposal', 'id_user', 'ajuan_triwulan', 'nama_kegiatan', 'besar_ajuan', 'anggaran_disetujui', 'status')
@@ -428,7 +433,7 @@ class MonitoringController
             $mappedStatus = $statusMap[$rawStatus] ?? $rawStatus;
             $lpj = $lpjs->get($p->id_proposal);
 
-            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj->status_lpj ?? '') === 'Pending') {
+            if ($mappedStatus === 'Disetujui' && $lpj && ($lpj->status_lpj ?? '') === 'Menunggu') {
                 $mappedStatus = 'Cek LPJ';
             }
 

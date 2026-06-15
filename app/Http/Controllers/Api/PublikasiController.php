@@ -47,12 +47,12 @@ class PublikasiController
 
         $publikasi = PublikasiKegiatan::create([
             'id_user' => $request->user()->id_user,
-            'judul' => $request->judul,
-            'ormawa' => $request->ormawa,
+            'judul'   => $request->judul,
+            'ormawa'  => $request->ormawa,
             'caption' => $request->caption,
-            'link' => $request->link,
-            'poster' => $posterPath,
-            'status' => 'Pending',
+            'content' => $request->content,
+            'poster'  => $posterPath,
+            'status'  => 'Pending',
         ]);
 
         return response()->json([

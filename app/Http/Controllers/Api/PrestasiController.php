@@ -43,7 +43,8 @@ class PrestasiController
         $user = $request->user();
         $query = Prestasi::query();
 
-        if ($user->isMahasiswa()) {
+        // Mahasiswa dan Ormawa (non-admin) hanya bisa melihat prestasi milik mereka sendiri
+        if ($user->isMahasiswa() || $user->isOrmawa()) {
             $query->where('id_user', $user->id_user);
         }
 

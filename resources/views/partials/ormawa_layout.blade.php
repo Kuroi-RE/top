@@ -939,13 +939,21 @@
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                                 </svg>
                             </button>
-                            <div id="acc-kelola-kegiatan-dpm" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
+                    <div id="acc-kelola-kegiatan-dpm" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
                                 <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
                                 <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
                             </div>
                         </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -974,12 +982,20 @@
                                 </svg>
                             </button>
                             <div id="acc-kelola-kegiatan" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
                                 <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
                                 <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
                             </div>
                         </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -1008,12 +1024,20 @@
                                 </svg>
                             </button>
                             <div id="acc-kelola-kegiatan-prodi" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
                                 <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
                                 <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
                             </div>
                         </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
                     </div>
                 </div>
                 @endif
@@ -1047,21 +1071,29 @@
                             </button>
 
                             <div id="acc-kelola-prestasi" class="acc-panel" style="max-height: {{ $isKelolaPrestasiActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaPrestasiActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Prestasi'))
                                 <a href="{{ route('prestasi.input_proposal') }}" class="sidebar-sublink {{ $isPrestasiProposal ? 'text-red-600 font-semibold' : '' }}">
                                     Ajuan Dana
                                 </a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('prestasi.upload_lpj') }}" class="sidebar-sublink {{ $isPrestasiLpj ? 'text-red-600 font-semibold' : '' }}">
                                     Laporan Kegiatan (LPJ)
                                 </a>
+                                @endif
+                                @if(auth()->user()->can('View Prestasi'))
                                 <a href="{{ route('prestasi.laporan_prestasi.biodata') }}" class="sidebar-sublink {{ $isLaporanPrestasi ? 'text-red-600 font-semibold' : '' }}">
                                     Laporan Prestasi
                                 </a>
+                                @endif
                             </div>
                         </div>
 
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('prestasi.template_dokumen') }}" class="sidebar-link {{ $isPrestasiTemplate ? 'sidebar-link-active' : '' }}">
                             Template Dokumen
                         </a>
+                        @endif
                     </div>
                 </div>
 

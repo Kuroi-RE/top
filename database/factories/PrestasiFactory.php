@@ -19,6 +19,8 @@ class PrestasiFactory extends Factory
             'tingkat' => fake()->randomElement(['Regional', 'Nasional', 'Internasional']),
             'capaian' => fake()->randomElement(['Juara 1', 'Juara 2', 'Juara 3', 'Top 10', 'Finalist']),
             'kategori' => fake()->randomElement(['Individu', 'Kelompok']),
+            // DEF-004 FIX: Canonical English status. Note: controller still stores 'Menunggu'
+            // This factory reflects DB reality — update to 'Pending' once migration normalizes
             'status_verifikasi' => 'Menunggu',
         ];
     }
@@ -33,6 +35,7 @@ class PrestasiFactory extends Factory
     public function invalid(): static
     {
         return $this->state(fn (array $attributes) => [
+            // DEF-004: Keep 'Tidak Valid' for now as prestasi controller still uses this value
             'status_verifikasi' => 'Tidak Valid',
         ]);
     }

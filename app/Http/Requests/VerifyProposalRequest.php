@@ -8,7 +8,8 @@ class VerifyProposalRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isAdmin();
+        $user = $this->user();
+        return $user->isAdmin() || $user->isSuperAdmin() || $user->isDpmbem();
     }
 
     protected function prepareForValidation()
@@ -36,7 +37,7 @@ class VerifyProposalRequest extends FormRequest
             'status' => 'required|in:Approved,Revision,Rejected',
             'catatan_admin' => 'nullable|string',
             'anggaran_disetujui' => 'required_if:status,Approved|numeric|min:0',
-            'file_lpj_keuangan' => 'nullable|file|mimes:pdf|max:10240',
+            'file_lpj_keuangan' => 'nullable|file|mimes:pdf,jpg,jpeg,png,webp|max:10240',
         ];
     }
 
@@ -49,6 +50,8 @@ class VerifyProposalRequest extends FormRequest
             'anggaran_disetujui.required_if' => 'Anggaran Disetujui wajib diisi jika status Approved',
             'anggaran_disetujui.numeric' => 'Anggaran Disetujui harus berupa angka',
             'anggaran_disetujui.min' => 'Anggaran Disetujui minimal 0',
+            'file_lpj_keuangan.mimes' => 'File bukti pencairan harus berformat PDF, JPG, PNG, atau WEBP',
+            'file_lpj_keuangan.max' => 'Ukuran file maksimal 10MB',
         ];
     }
 }

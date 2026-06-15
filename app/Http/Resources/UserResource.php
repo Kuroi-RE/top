@@ -18,6 +18,8 @@ class UserResource extends JsonResource
             'nama_belakang' => $this->nama_belakang,
             'prodi' => $this->prodi,
             'role' => $this->role,
+            'ormawa_name' => $this->ormawa_name,
+            'ormawa_type' => $this->ormawa_type,
             'is_active' => $this->is_active,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
