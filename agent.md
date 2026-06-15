@@ -54,6 +54,14 @@ Platform manajemen kegiatan organisasi mahasiswa (Ormawa) dan prestasi mahasiswa
 10. Upload LPJ mahasiswa gagal load proposal → fixed: JS pakai status=Approved (bukan Disetujui) karena API hanya terima enum English
 11. Template dokumen tidak bisa di-download/dimuat → fixed: web route proxy via ApiService (token server-side) + server-side rendering, hindari race condition token client-side axios
 12. Verifikasi ajuan dana gagal saat upload bukti ("Status wajib diisi") → fixed: PHP tidak parse multipart pada PATCH; saat ada file gunakan POST + _method=PATCH (method spoofing)
+13. CORS middleware crash pada download ("undefined method StreamedResponse::header()") → fixed: pakai $response->headers->set() bukan $response->header()
+14. Lapor prestasi gagal ("Data truncated status_verifikasi") → fixed: migration normalize enum prestasi.status_verifikasi ke Indonesia ('Menunggu','Valid','Tidak Valid','Revisi') agar cocok dengan kode aplikasi
+
+## Status Enum per Tabel (PENTING — jangan campur English/Indonesia)
+- `proposal_kegiatan.status` & `proposal_prestasi_mahasiswa.status`: ENGLISH → `Pending, Revision, Approved, Rejected` (+ Cek LPJ, Revisi LPJ, Selesai untuk fase LPJ). Frontend map ke Indonesia untuk tampilan.
+- `lpj_kegiatan.status_lpj`: INDONESIA → `Menunggu, Revisi, Disetujui`
+- `prestasi.status_verifikasi`: INDONESIA → `Menunggu, Valid, Tidak Valid, Revisi`
+- Saat insert/verify, selalu cek enum kolom target di migration sebelum pakai nilai status.
 
 ## Pola Penting: Download File & Auth Token
 - API routes pakai `auth:sanctum` (Bearer token). Link `<a href>` browser TIDAK membawa token → gagal auth.
