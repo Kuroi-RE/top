@@ -34,14 +34,15 @@ class CorsMiddleware
             $response = $next($request);
         }
 
-        // Add CORS headers
+        // Add CORS headers — gunakan headers->set() agar kompatibel dengan
+        // semua tipe Response (termasuk StreamedResponse/BinaryFileResponse dari Storage::download)
         if (in_array($origin, $allowedOrigins) || !$origin) {
-            $response->header('Access-Control-Allow-Origin', $origin ?? '*');
-            $response->header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-            $response->header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
-            $response->header('Access-Control-Allow-Credentials', 'true');
-            $response->header('Access-Control-Expose-Headers', 'Authorization, X-Total-Count');
-            $response->header('Access-Control-Max-Age', '86400');
+            $response->headers->set('Access-Control-Allow-Origin', $origin ?? '*');
+            $response->headers->set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+            $response->headers->set('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+            $response->headers->set('Access-Control-Allow-Credentials', 'true');
+            $response->headers->set('Access-Control-Expose-Headers', 'Authorization, X-Total-Count');
+            $response->headers->set('Access-Control-Max-Age', '86400');
         }
 
         // Handle preflight requests

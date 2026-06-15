@@ -267,7 +267,7 @@
             }
 
             tableBody.innerHTML = items.map(function (template) {
-                const downloadUrl = `/api/v1/template/${template.id_template}/download`;
+                const downloadUrl = `/admin/template_proposal/${template.id_template}/download`;
                 const name = escapeHtml(template.nama_template || '-');
                 const type = escapeHtml(template.jenis_template || '-');
 

@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // ================= LOAD APPROVED PROPOSALS =================
     async function loadApprovedProposals() {
         try {
-            const res = await window.axios.get('proposal?status=Disetujui');
+            const res = await window.axios.get('proposal?status=Approved');
             let proposals = res.data?.data || [];
 
             // Filter only user's own approved proposals

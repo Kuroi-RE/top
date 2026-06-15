@@ -51,6 +51,14 @@ Platform manajemen kegiatan organisasi mahasiswa (Ormawa) dan prestasi mahasiswa
 7. HTML content publikasi tampil sebagai teks → fixed: JSON store di script tag
 8. Tombol hapus publikasi 403 → fixed: tambah Delete Publikasi ke config permissions Ormawa
 9. Ormawa lihat semua prestasi → fixed: PrestasiController::index() filter isOrmawa() sama seperti isMahasiswa()
+10. Upload LPJ mahasiswa gagal load proposal → fixed: JS pakai status=Approved (bukan Disetujui) karena API hanya terima enum English
+11. Template dokumen tidak bisa di-download/dimuat → fixed: web route proxy via ApiService (token server-side) + server-side rendering, hindari race condition token client-side axios
+12. Verifikasi ajuan dana gagal saat upload bukti ("Status wajib diisi") → fixed: PHP tidak parse multipart pada PATCH; saat ada file gunakan POST + _method=PATCH (method spoofing)
+
+## Pola Penting: Download File & Auth Token
+- API routes pakai `auth:sanctum` (Bearer token). Link `<a href>` browser TIDAK membawa token → gagal auth.
+- SOLUSI: untuk download/list yang butuh data API dari halaman Blade, buat WEB ROUTE yang pakai ApiService (token di-attach server-side via session), bukan akses `/api/v1/...` langsung dari frontend.
+- Untuk upload file ke endpoint PATCH/PUT via HTTP client: PHP tidak parse multipart pada PATCH/PUT. Gunakan POST + `_method=PATCH/PUT` (method spoofing) agar field & file terbaca.
 
 ## File Penting
 - `config/permissions.php` - default permissions per role
