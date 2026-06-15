@@ -529,7 +529,7 @@
                             name="username"
                             type="text"
                             class="input-modern"
-                            placeholder="manggala"
+                            placeholder="username / nim"
                             value="{{ old('username') }}"
                             autocomplete="username"
                             autofocus
@@ -544,7 +544,10 @@
                 </div>
 
                 <div class="mb-5">
-                    <label for="password" class="mb-2 block text-sm font-semibold text-slate-700">Password</label>
+                    <div class="flex justify-between items-center mb-2">
+                        <label for="password" class="block text-sm font-semibold text-slate-700">Password</label>
+                        <a href="{{ route('password.request') }}" class="text-xs font-semibold text-red-700 hover:text-red-800 transition-colors">Lupa Password?</a>
+                    </div>
                     <div class="relative">
                         <input
                             id="password"
@@ -583,7 +586,7 @@
                 </button>
 
                 <p class="mt-3 text-center text-xs text-slate-500">
-                    Bukan ormawa?
+                    Belum memiliki akun?
                     <a href="{{ url('/register') }}" class="font-semibold text-red-700 hover:text-red-800 transition-colors">Daftar Sekarang</a>
                 </p>
 

@@ -11,10 +11,27 @@ class VerifyLpjRequest extends FormRequest
         return $this->user()->isAdmin();
     }
 
+    protected function prepareForValidation()
+    {
+        if ($this->has('status') && !$this->has('status_lpj')) {
+            $statusMap = [
+                'Selesai' => 'Approved',
+                'Disetujui' => 'Approved',
+                'Revisi' => 'Revision',
+                'Approved' => 'Approved',
+                'Revision' => 'Revision'
+            ];
+            $this->merge([
+                'status_lpj' => $statusMap[$this->status] ?? $this->status
+            ]);
+        }
+    }
+
     public function rules(): array
     {
         return [
             'status_lpj' => 'required|in:Approved,Revision',
+            'catatan_admin' => 'nullable|string',
         ];
     }
 

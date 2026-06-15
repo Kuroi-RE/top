@@ -8,7 +8,22 @@ class ReviseLpjRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $lpj = $this->route('lpj');
+        $id = $this->route('lpj');
+        $type = $this->input('type', $this->query('type'));
+        
+        if ($type === 'mahasiswa' || ($this->user() && $this->user()->isMahasiswa())) {
+            $lpj = \App\Models\LpjPrestasiMahasiswa::find($id);
+        } else {
+            $lpj = \App\Models\LpjKegiatan::find($id);
+            if (!$lpj) {
+                $lpj = \App\Models\LpjPrestasiMahasiswa::find($id);
+            }
+        }
+
+        if (!$lpj) {
+            return false;
+        }
+
         return $this->user()->id_user === $lpj->proposal->id_user;
     }
 

@@ -72,7 +72,7 @@ class RolePermissionController
         return response()->json([
             'status' => 'success',
             'message' => 'Permissions User',
-            'data' => $user->permissions->pluck('name')
+            'data' => $user->getAllPermissions()->pluck('name')
         ], 200);
     }
 

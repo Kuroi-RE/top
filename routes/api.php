@@ -3,7 +3,6 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
-use App\Http\Controllers\Api\EmailVerificationController;
 use App\Http\Controllers\Api\ProposalController;
 use App\Http\Controllers\Api\LpjController;
 use App\Http\Controllers\Api\PrestasiController;
@@ -11,6 +10,10 @@ use App\Http\Controllers\Api\TemplateController;
 use App\Http\Controllers\Api\InformasiController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\MonitoringController;
+use App\Http\Controllers\Api\DokumenPrestasiController;
+use App\Http\Controllers\Api\CetakPrestasiController;
+use App\Http\Controllers\Api\DeadlineController;
+use App\Http\Controllers\Api\PublikasiController;
 
 /**
  * TOP KEMA Telkom - Organisasi dan Prestasi Kemahasiswaan
@@ -26,10 +29,19 @@ Route::prefix('v1')->group(function () {
     // AUTHENTICATION ROUTES (Public)
     // ============================================================
     Route::prefix('auth')->group(function () {
-        Route::post('login', [AuthController::class, 'login'])->name('auth.login');
-        Route::post('register', [AuthController::class, 'register'])->name('auth.register');
-        Route::post('verify-email', [EmailVerificationController::class, 'verify'])->name('auth.verify-email');
-        Route::post('resend-verification', [EmailVerificationController::class, 'resend'])->name('auth.resend-verification');
+        // DEF-008 FIX: Rate limiting on auth endpoints to prevent brute force
+        Route::post('login', [AuthController::class, 'login'])
+            ->middleware('throttle:10,1')   // 10 attempts per minute per IP
+            ->name('auth.login');
+        Route::post('register', [AuthController::class, 'register'])
+            ->middleware('throttle:5,1')    // 5 registrations per minute per IP
+            ->name('auth.register');
+        Route::post('forgot-password', [AuthController::class, 'forgotPassword'])
+            ->middleware('throttle:5,1')    // 5 requests per minute per IP
+            ->name('auth.forgot-password');
+        Route::post('reset-password', [AuthController::class, 'resetPassword'])
+            ->middleware('throttle:5,1')    // 5 attempts per minute per IP
+            ->name('auth.reset-password');
     });
 
     // ============================================================
@@ -43,6 +55,9 @@ Route::prefix('v1')->group(function () {
     // ============================================================
     // PROTECTED ROUTES (Require Authentication)
     // ============================================================
+    // DEF-003 FIX: Use auth:sanctum (the standard Sanctum guard) instead of auth:api.
+    // While auth:api with sanctum driver works in production, auth:sanctum is the
+    // canonical guard name that Sanctum registers and that Sanctum::actingAs() targets in tests.
     Route::middleware('auth:sanctum')->group(function () {
 
         // Authentication Routes
@@ -56,25 +71,25 @@ Route::prefix('v1')->group(function () {
         // PROPOSAL KEGIATAN ROUTES
         // ========================================================
         Route::prefix('proposal')->name('proposal.')->group(function () {
-            Route::get('/', [ProposalController::class, 'index'])->middleware('permission:View Proposal')->name('index');
-            Route::post('/', [ProposalController::class, 'store'])->middleware('permission:Create Proposal')->name('store');
-            Route::get('/{proposal}', [ProposalController::class, 'show'])->middleware('permission:View Proposal')->name('show')->where('proposal', '[0-9]+');
-            Route::put('/{proposal}', [ProposalController::class, 'update'])->middleware('permission:Edit Proposal')->name('update')->where('proposal', '[0-9]+');
-            Route::delete('/{proposal}', [ProposalController::class, 'destroy'])->middleware('permission:Delete Proposal')->name('destroy')->where('proposal', '[0-9]+');
-            Route::get('/{proposal}/status', [ProposalController::class, 'checkStatus'])->middleware('permission:View Proposal')->name('status')->where('proposal', '[0-9]+');
-            Route::post('/{proposal}/revisi', [ProposalController::class, 'submitRevision'])->middleware('permission:Create Proposal|Edit Proposal')->name('revisi')->where('proposal', '[0-9]+');
-            Route::patch('/{proposal}/verifikasi', [ProposalController::class, 'verify'])->middleware('permission:Approve Proposal|Reject Proposal')->name('verify')->where('proposal', '[0-9]+');
+            Route::get('/', [ProposalController::class, 'index'])->middleware('permission:View Proposal Kegiatan')->name('index');
+            Route::post('/', [ProposalController::class, 'store'])->middleware('permission:Create Proposal Kegiatan')->name('store');
+            Route::get('/{proposal}', [ProposalController::class, 'show'])->middleware('permission:View Proposal Kegiatan')->name('show')->where('proposal', '[0-9]+');
+            Route::put('/{proposal}', [ProposalController::class, 'update'])->middleware('permission:Edit Proposal Kegiatan')->name('update')->where('proposal', '[0-9]+');
+            Route::delete('/{proposal}', [ProposalController::class, 'destroy'])->middleware('permission:Delete Proposal Kegiatan')->name('destroy')->where('proposal', '[0-9]+');
+            Route::get('/{proposal}/status', [ProposalController::class, 'checkStatus'])->middleware('permission:View Proposal Kegiatan')->name('status')->where('proposal', '[0-9]+');
+            Route::post('/{proposal}/revisi', [ProposalController::class, 'submitRevision'])->middleware('permission:Create Proposal Kegiatan|Edit Proposal Kegiatan')->name('revisi')->where('proposal', '[0-9]+');
+            Route::patch('/{proposal}/verifikasi', [ProposalController::class, 'verify'])->middleware('permission:Approve Proposal Kegiatan|Reject Proposal Kegiatan')->name('verify')->where('proposal', '[0-9]+');
         });
 
         // ========================================================
         // LPJ KEGIATAN ROUTES
         // ========================================================
         Route::prefix('lpj')->name('lpj.')->group(function () {
-            Route::get('/', [LpjController::class, 'index'])->middleware('permission:View LPJ')->name('index');
-            Route::post('/', [LpjController::class, 'store'])->middleware('permission:Create LPJ')->name('store');
-            Route::get('/{lpj}', [LpjController::class, 'show'])->middleware('permission:View LPJ')->name('show')->where('lpj', '[0-9]+');
-            Route::post('/{lpj}/revisi', [LpjController::class, 'submitRevision'])->middleware('permission:Create LPJ|Edit LPJ')->name('revisi')->where('lpj', '[0-9]+');
-            Route::patch('/{lpj}/verifikasi', [LpjController::class, 'verify'])->middleware('permission:Approve LPJ|Reject LPJ')->name('verify')->where('lpj', '[0-9]+');
+            Route::get('/', [LpjController::class, 'index'])->middleware('permission:View LPJ Kegiatan')->name('index');
+            Route::post('/', [LpjController::class, 'store'])->middleware('permission:Create LPJ Kegiatan')->name('store');
+            Route::get('/{lpj}', [LpjController::class, 'show'])->middleware('permission:View LPJ Kegiatan')->name('show')->where('lpj', '[0-9]+');
+            Route::post('/{lpj}/revisi', [LpjController::class, 'submitRevision'])->middleware('permission:Create LPJ Kegiatan|Edit LPJ Kegiatan')->name('revisi')->where('lpj', '[0-9]+');
+            Route::patch('/{lpj}/verifikasi', [LpjController::class, 'verify'])->middleware('permission:Approve LPJ Kegiatan|Reject LPJ Kegiatan')->name('verify')->where('lpj', '[0-9]+');
         });
 
         // ========================================================
@@ -92,18 +107,23 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{prestasi}', [PrestasiController::class, 'destroy'])->middleware('permission:Delete Prestasi')->name('destroy')->where('prestasi', '[0-9]+');
             Route::delete('/{prestasi}/anggota/{anggota}', [PrestasiController::class, 'deleteAnggota'])->middleware('permission:Delete Prestasi')->name('delete-anggota')->where(['prestasi' => '[0-9]+', 'anggota' => '[0-9]+']);
             Route::delete('/{prestasi}/dosen/{dosen}', [PrestasiController::class, 'deleteDosen'])->middleware('permission:Delete Prestasi')->name('delete-dosen')->where(['prestasi' => '[0-9]+', 'dosen' => '[0-9]+']);
+            Route::post('/{prestasi}/dokumen', [DokumenPrestasiController::class, 'store'])->middleware('permission:Create Prestasi')->name('add-dokumen')->where('prestasi', '[0-9]+');
+            Route::delete('/{prestasi}/dokumen/{dokumen}', [DokumenPrestasiController::class, 'destroy'])->middleware('permission:Delete Prestasi')->name('delete-dokumen')->where(['prestasi' => '[0-9]+', 'dokumen' => '[0-9]+']);
+            Route::get('/cetak/transkrip', [CetakPrestasiController::class, 'cetakTranskrip'])->middleware('permission:View Prestasi')->name('cetak.transkrip');
+            Route::get('/cetak/kartu/{nim}', [CetakPrestasiController::class, 'cetakKartu'])->name('cetak.kartu');
+            Route::get('/export-pdf', [CetakPrestasiController::class, 'exportPrestasiPdf'])->middleware('permission:View Reports')->name('export.pdf');
         });
 
         // ========================================================
         // TEMPLATE DOKUMEN ROUTES
         // ========================================================
         Route::prefix('template')->name('template.')->group(function () {
-            Route::get('/', [TemplateController::class, 'index'])->middleware('permission:View Template Documents')->name('index');
-            Route::post('/', [TemplateController::class, 'store'])->middleware('permission:Manage Template Documents')->name('store');
-            Route::get('/{template}', [TemplateController::class, 'show'])->middleware('permission:View Template Documents')->name('show')->where('template', '[0-9]+');
-            Route::put('/{template}', [TemplateController::class, 'update'])->middleware('permission:Manage Template Documents')->name('update')->where('template', '[0-9]+');
-            Route::delete('/{template}', [TemplateController::class, 'destroy'])->middleware('permission:Manage Template Documents')->name('destroy')->where('template', '[0-9]+');
-            Route::get('/{template}/download', [TemplateController::class, 'download'])->middleware('permission:View Template Documents')->name('download')->where('template', '[0-9]+');
+            Route::get('/', [TemplateController::class, 'index'])->middleware('permission:View Template Dokumen')->name('index');
+            Route::post('/', [TemplateController::class, 'store'])->middleware('permission:Manage Template Dokumen')->name('store');
+            Route::get('/{template}', [TemplateController::class, 'show'])->middleware('permission:View Template Dokumen')->name('show')->where('template', '[0-9]+');
+            Route::put('/{template}', [TemplateController::class, 'update'])->middleware('permission:Manage Template Dokumen')->name('update')->where('template', '[0-9]+');
+            Route::delete('/{template}', [TemplateController::class, 'destroy'])->middleware('permission:Manage Template Dokumen')->name('destroy')->where('template', '[0-9]+');
+            Route::get('/{template}/download', [TemplateController::class, 'download'])->middleware('permission:View Template Dokumen')->name('download')->where('template', '[0-9]+');
         });
 
         // ========================================================
@@ -135,14 +155,39 @@ Route::prefix('v1')->group(function () {
         });
 
         // ========================================================
+        // PUBLIKASI KEGIATAN ROUTES
+        // ========================================================
+        Route::prefix('publikasi')->name('publikasi.')->group(function () {
+            Route::get('/', [PublikasiController::class, 'index'])->middleware('permission:View Publikasi')->name('index');
+            Route::post('/', [PublikasiController::class, 'store'])->middleware('permission:Create Publikasi')->name('store');
+            Route::get('/{publikasi}', [PublikasiController::class, 'show'])->middleware('permission:View Publikasi')->name('show')->where('publikasi', '[0-9]+');
+            Route::post('/{publikasi}', [PublikasiController::class, 'update'])->middleware('permission:Edit Publikasi')->name('update')->where('publikasi', '[0-9]+');
+            Route::delete('/{publikasi}', [PublikasiController::class, 'destroy'])->middleware('permission:Delete Publikasi')->name('destroy')->where('publikasi', '[0-9]+');
+            Route::patch('/{publikasi}/verifikasi', [PublikasiController::class, 'verify'])->middleware('permission:Approve Publikasi')->name('verify')->where('publikasi', '[0-9]+');
+        });
+
+        // ========================================================
+        // DEADLINE ROUTES
+        // ========================================================
+        Route::prefix('deadline')->name('deadline.')->group(function () {
+            Route::get('/', [DeadlineController::class, 'index'])->name('index');
+            Route::get('/all', [DeadlineController::class, 'all'])->name('all');
+            Route::post('/', [DeadlineController::class, 'store'])->name('store');
+            Route::delete('/{deadline}', [DeadlineController::class, 'destroy'])->name('destroy')->where('deadline', '[0-9]+');
+        });
+
+        // ========================================================
         // MONITORING ROUTES (Super Admin + DPMBEM + Kemahasiswaan only)
         // ========================================================
         Route::prefix('monitoring')->name('monitoring.')->middleware('permission:View Reports')->group(function () {
             Route::get('/kegiatan', [MonitoringController::class, 'activities'])->name('activities');
             Route::get('/anggaran', [MonitoringController::class, 'budgetTransparency'])->name('anggaran');
+            Route::get('/anggaran/export-pdf', [MonitoringController::class, 'exportAnggaranPdf'])->name('anggaran.export_pdf');
+            Route::get('/beranda_ormawa/export-pdf', [MonitoringController::class, 'exportBerandaOrmawaPdf'])->name('beranda_ormawa.export_pdf');
             Route::get('/lpj', [MonitoringController::class, 'lpjList'])->name('lpj');
             Route::get('/kegiatan/{proposal}', [MonitoringController::class, 'activityDetail'])->name('activity-detail')->where('proposal', '[0-9]+');
             Route::get('/statistics', [MonitoringController::class, 'statistics'])->name('statistics');
+            Route::get('/prestasi', [MonitoringController::class, 'prestasiStats'])->name('prestasi');
         });
 
     });

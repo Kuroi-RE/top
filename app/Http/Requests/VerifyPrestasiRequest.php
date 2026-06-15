@@ -14,7 +14,8 @@ class VerifyPrestasiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status_verifikasi' => 'required|in:Valid,Invalid,Revision',
+            'status_verifikasi' => 'required|in:Valid,Tidak Valid,Revisi',
+            'catatan_admin' => 'nullable|string',
         ];
     }
 
@@ -23,6 +24,7 @@ class VerifyPrestasiRequest extends FormRequest
         return [
             'status_verifikasi.required' => 'Status Verifikasi wajib diisi',
             'status_verifikasi.in' => 'Status Verifikasi yang dipilih tidak valid',
+            'catatan_admin.string' => 'Catatan Admin harus berupa teks',
         ];
     }
 }

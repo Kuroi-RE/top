@@ -4,9 +4,15 @@
 
 @section('content')
 
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+
 <div class="min-h-screen bg-gray-100 flex justify-center px-4 py-8">
     <div class="w-full max-w-5xl space-y-6">
         <!-- Kuota Informasi -->
+        @php
+            $maxQuota = 3;
+            $remaining = max(0, $maxQuota - $weekCount);
+        @endphp
         <div class="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
             <div class="flex items-start justify-between gap-4">
                 <div>
@@ -14,59 +20,93 @@
                     <p class="mt-1 text-sm text-gray-500">Kegiatan Mingguan</p>
                 </div>
                 <div class="text-base font-semibold text-red-600">
-                    <span id="quota-used">0</span>/<span id="quota-total">3</span>
+                    <span>{{ $weekCount }}</span>/<span>{{ $maxQuota }}</span>
                 </div>
             </div>
             <div class="mt-3">
                 <div class="h-2 w-full rounded-full bg-gray-200">
-                    <div id="quota-bar" class="h-2 rounded-full bg-red-600" style="width: 0%"></div>
+                    <div class="h-2 rounded-full bg-red-600" style="width: {{ ($weekCount / $maxQuota) * 100 }}%"></div>
                 </div>
-                <p id="quota-desc" class="mt-3 text-xs text-gray-500">Tersisa 3 slot pengunggahan poster kegiatan minggu ini.</p>
-                <p id="quota-warn" class="mt-1 text-xs font-semibold text-red-600 hidden">Kuota minggu ini sudah habis.</p>
+                <p class="mt-3 text-xs text-gray-500">
+                    {{ $remaining > 0 ? "Tersisa $remaining slot pengunggahan poster kegiatan minggu ini." : "Kuota minggu ini sudah habis." }}
+                </p>
+                @if($remaining <= 0)
+                    <p class="mt-1 text-xs font-semibold text-red-600">Kuota minggu ini sudah habis.</p>
+                @endif
             </div>
         </div>
 
         <div class="rounded-2xl bg-white p-6 shadow-lg sm:p-8 lg:p-10">
-            <!-- Header -->
             <div class="mb-5">
                 <h1 class="text-2xl font-semibold text-gray-800">Input Publikasi Kegiatan Ormawa</h1>
             </div>
 
-            @php
-                $fields = [
-                    ['label' => 'Judul', 'name' => 'judul', 'type' => 'text'],
-                    ['label' => 'Ormawa', 'name' => 'ormawa', 'type' => 'text'],
-                    ['label' => 'Caption', 'name' => 'caption', 'type' => 'text'],
-                    ['label' => 'Link', 'name' => 'link', 'type' => 'url'],
-                ];
-            @endphp
+            @if($errors->any())
+                <div class="mb-5 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+                    <ul class="list-disc pl-5">
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            @endif
 
             <form id="publikasi-form" method="POST" enctype="multipart/form-data" class="mt-4 space-y-6 sm:mt-6">
                 @csrf
 
-                <!-- Input Fields -->
-                @foreach ($fields as $field)
-                    <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-center gap-3 md:gap-6">
-                        <label for="{{ $field['name'] }}" class="text-sm font-medium text-gray-700">
-                            {{ $field['label'] }}
-                        </label>
+                {{-- Judul --}}
+                <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-center gap-3 md:gap-6">
+                    <label for="judul" class="text-sm font-medium text-gray-700">Judul</label>
+                    <input id="judul" type="text" name="judul" value="{{ old('judul') }}"
+                        class="w-full h-10 md:h-11 rounded-full border border-gray-400 bg-white px-4 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                </div>
 
-                        <input
-                            id="{{ $field['name'] }}"
-                            type="{{ $field['type'] }}"
-                            name="{{ $field['name'] }}"
-                            class="w-full h-10 md:h-11 rounded-full border border-gray-400 bg-white px-4 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200">
+                {{-- Ormawa --}}
+                <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-center gap-3 md:gap-6">
+                    <label for="ormawa" class="text-sm font-medium text-gray-700">Ormawa</label>
+                    <div class="relative">
+                        <input id="ormawa" type="text" name="ormawa"
+                            value="{{ old('ormawa', $ormawaName) }}"
+                            readonly
+                            class="w-full h-10 md:h-11 rounded-full border border-gray-300 bg-gray-50 px-4 text-sm text-gray-600 outline-none cursor-not-allowed select-none">
+                        <span class="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2">
+                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </span>
                     </div>
-                @endforeach
+                </div>
 
-                <!-- Upload Poster/Gambar -->
+                {{-- Caption --}}
+                <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-3 md:gap-6">
+                    <label for="caption" class="pt-2 text-sm font-medium text-gray-700">
+                        Caption
+                        <span class="block text-xs text-gray-400 font-normal mt-0.5">Deskripsi singkat</span>
+                    </label>
+                    <textarea id="caption" name="caption" rows="3"
+                        class="w-full rounded-2xl border border-gray-400 bg-white px-4 py-3 text-sm text-gray-700 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-200 resize-none"
+                        placeholder="Tulis deskripsi singkat kegiatan...">{{ old('caption') }}</textarea>
+                </div>
+
+                {{-- Content (Quill editor) --}}
+                <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-3 md:gap-6">
+                    <label class="pt-2 text-sm font-medium text-gray-700">
+                        Konten Artikel
+                        <span class="block text-xs text-gray-400 font-normal mt-0.5">Detail lengkap kegiatan</span>
+                    </label>
+                    <div>
+                        <div id="content-editor" class="rounded-2xl border border-gray-400 bg-white" style="min-height: 220px;"></div>
+                        <input type="hidden" name="content" id="content-input">
+                        <p class="mt-1.5 text-xs text-gray-400">Gunakan toolbar untuk memformat teks, tambah gambar, atau buat daftar.</p>
+                    </div>
+                </div>
+
+                {{-- Poster --}}
                 <div class="grid grid-cols-1 md:grid-cols-[150px_1fr] items-start gap-3 md:gap-6">
                     <label class="pt-3 text-sm font-medium text-gray-700">Poster/Gambar Pendukung</label>
-
                     <label class="block w-full cursor-pointer rounded-xl border border-gray-400 bg-white p-2 hover:bg-gray-50 transition group">
                         <input id="publikasi-poster" type="file" name="poster" class="hidden" accept="image/*">
-
-                        <div class="flex flex-col items-center justify-center bg-[#fcfcfc] min-h-[84px] p-2.5 gap-1 text-center box-border transition group-hover:border-red-500" style="border: 1px dashed #9ca3af; border-radius: 12px;">
+                        <div class="flex flex-col items-center justify-center bg-[#fcfcfc] min-h-[84px] p-2.5 gap-1 text-center transition group-hover:border-red-500" style="border: 1px dashed #9ca3af; border-radius: 12px;">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-gray-400 transition group-hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V8.25m0 0l-3 3m3-3l3 3M3 16.5v.75A2.25 2.25 0 005.25 19.5h13.5A2.25 2.25 0 0021 17.25v-.75" />
                             </svg>
@@ -75,7 +115,7 @@
                     </label>
                 </div>
 
-                <!-- Button -->
+                {{-- Submit --}}
                 <div class="flex justify-end pt-4">
                     <button id="publikasi-submit" type="submit"
                         class="inline-flex min-w-[140px] items-center justify-center rounded-full bg-red-700 px-6 py-2 text-sm font-medium text-white transition-all duration-300 hover:bg-red-800 hover:-translate-y-1 hover:shadow-lg hover:shadow-red-200 focus:ring-2 focus:ring-red-200">
@@ -92,114 +132,63 @@
 @endsection
 
 @push('scripts')
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
-    (function () {
-        const MAX = 3;
-        const key = 'publikasi_quota_v1';
-        const statusKey = 'publikasi_status_counts_v1';
-        const form = document.getElementById('publikasi-form');
-        const submitBtn = document.getElementById('publikasi-submit');
-        const posterInput = document.getElementById('publikasi-poster');
-        const usedEl = document.getElementById('quota-used');
-        const totalEl = document.getElementById('quota-total');
-        const barEl = document.getElementById('quota-bar');
-        const descEl = document.getElementById('quota-desc');
-        const warnEl = document.getElementById('quota-warn');
-
-        function getWeekKey(date) {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            const week = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-            return `${d.getUTCFullYear()}-W${String(week).padStart(2, '0')}`;
+(function () {
+    // Quill editor init
+    const quill = new Quill('#content-editor', {
+        theme: 'snow',
+        placeholder: 'Tulis konten artikel kegiatan di sini...',
+        modules: {
+            toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ color: [] }, { background: [] }],
+                [{ list: 'ordered' }, { list: 'bullet' }],
+                [{ align: [] }],
+                ['link', 'image'],
+                ['clean']
+            ]
         }
+    });
 
-        const weekKey = getWeekKey(new Date());
+    // Sync quill content to hidden input before submit
+    const form = document.getElementById('publikasi-form');
+    const contentInput = document.getElementById('content-input');
+    const submitBtn = document.getElementById('publikasi-submit');
+    const posterInput = document.getElementById('publikasi-poster');
 
-        function getStore(storeKey) {
-            try {
-                return JSON.parse(localStorage.getItem(storeKey) || '{}');
-            } catch (e) {
-                return {};
+    // Restore old content if validation failed
+    const oldContent = @json(old('content'));
+    if (oldContent) {
+        quill.root.innerHTML = oldContent;
+    }
+
+    if (posterInput) {
+        posterInput.addEventListener('change', function() {
+            const file = this.files[0];
+            const container = this.nextElementSibling;
+            const textSpan = container.querySelector('span');
+            const svgIcon = container.querySelector('svg');
+            if (file) {
+                textSpan.textContent = 'Terpilih: ' + file.name;
+                container.style.borderColor = '#c1121f';
+                container.style.backgroundColor = '#fef2f2';
+                if (svgIcon) svgIcon.classList.add('text-red-500');
+                textSpan.classList.add('text-red-600', 'font-bold');
             }
-        }
+        });
+    }
 
-        function setStore(storeKey, value) {
-            localStorage.setItem(storeKey, JSON.stringify(value));
-        }
-
-        function getCount() {
-            const store = getStore(key);
-            return Number(store[weekKey] || 0);
-        }
-
-        function setCount(count) {
-            const store = getStore(key);
-            store[weekKey] = count;
-            setStore(key, store);
-        }
-
-        function getStatusCounts() {
-            const store = getStore(statusKey);
-            return {
-                published: Number(store.published || 0),
-                pending: Number(store.pending || 0),
-                rejected: Number(store.rejected || 0),
-            };
-        }
-
-        function setStatusCounts(counts) {
-            setStore(statusKey, {
-                published: counts.published || 0,
-                pending: counts.pending || 0,
-                rejected: counts.rejected || 0,
-            });
-        }
-
-        function updateUI(count) {
-            const used = Math.min(count, MAX);
-            const remaining = Math.max(0, MAX - used);
-            if (usedEl) usedEl.textContent = used;
-            if (totalEl) totalEl.textContent = MAX;
-            if (barEl) barEl.style.width = `${(used / MAX) * 100}%`;
-            if (descEl) {
-                descEl.textContent = remaining > 0
-                    ? `Tersisa ${remaining} slot pengunggahan poster kegiatan minggu ini.`
-                    : 'Kuota minggu ini sudah habis.';
-            }
-            if (warnEl) warnEl.classList.toggle('hidden', remaining > 0);
-
-            const blocked = used >= MAX;
+    if (form) {
+        form.addEventListener('submit', function (e) {
+            contentInput.value = quill.root.innerHTML;
             if (submitBtn) {
-                submitBtn.disabled = blocked;
-                submitBtn.classList.toggle('opacity-60', blocked);
-                submitBtn.classList.toggle('cursor-not-allowed', blocked);
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = `<svg class="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Mengirim...`;
             }
-            if (posterInput) {
-                posterInput.disabled = blocked;
-            }
-        }
-
-        updateUI(getCount());
-
-        if (form) {
-            form.addEventListener('submit', function (e) {
-                const current = getCount();
-                if (current >= MAX) {
-                    e.preventDefault();
-                    updateUI(current);
-                    return;
-                }
-
-                setCount(current + 1);
-                updateUI(current + 1);
-
-                const statusCounts = getStatusCounts();
-                statusCounts.pending += 1;
-                setStatusCounts(statusCounts);
-            });
-        }
-    })();
+        });
+    }
+})();
 </script>
 @endpush

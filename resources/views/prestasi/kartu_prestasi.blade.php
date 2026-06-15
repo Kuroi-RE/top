@@ -272,6 +272,12 @@
 <body>
     <main class="card">
         <section class="card-top">
+            <a href="{{ route('prestasi.kartu_prestasi.download_pdf', ['nim' => $user->nim]) }}" target="_blank" class="print:hidden" style="position: absolute; top: 30px; right: 32px; color: rgba(255,255,255,0.7); hover:color: #fff; text-decoration: none; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: bold; background: rgba(255,255,255,0.12); padding: 8px 16px; border-radius: 999px; transition: all 0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'; this.style.color='#fff';" onmouseout="this.style.background='rgba(255,255,255,0.12)'; this.style.color='rgba(255,255,255,0.7)';">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor" style="width: 16px; height: 16px;">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                </svg>
+                Unduh PDF
+            </a>
             <div class="badge">Kartu Verifikasi Prestasi</div>
             <h1 class="title">{{ $namaLengkap }}</h1>
             <p class="subtitle">

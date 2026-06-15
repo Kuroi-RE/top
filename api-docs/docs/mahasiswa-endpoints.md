@@ -14,8 +14,6 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
 
 **Headers:** Tidak perlu token
 
-> **Catatan:** Hanya email dengan domain `telkomuniversity.ac.id` atau `ittelkom-pwt.ac.id` yang diterima.
-
 **Request Body:**
 
 ```json
@@ -24,7 +22,7 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
     "nama_depan": "John",
     "nama_belakang": "Doe",
     "prodi": "Teknik Informatika",
-    "email": "john123@telkomuniversity.ac.id",
+    "email": "john123@example.com",
     "password": "password123",
     "password_confirmation": "password123"
 }
@@ -35,7 +33,7 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
 ```json
 {
     "status": "success",
-    "message": "Registrasi berhasil. Silakan cek email Anda untuk verifikasi akun.",
+    "message": "Registrasi berhasil",
     "data": {
         "user": {
             "id_user": 21,
@@ -44,64 +42,13 @@ Role Mahasiswa adalah role default untuk user baru yang mendaftar. Berikut adala
             "nama_depan": "John",
             "nama_belakang": "Doe",
             "prodi": "Teknik Informatika",
-            "email": "john123@telkomuniversity.ac.id",
+            "email": "john123@example.com",
             "role": "Mahasiswa",
-            "is_active": false,
+            "is_active": true,
             "created_at": "2024-01-01T00:00:00.000000Z"
-        }
+        },
+        "token": "1|eyJ0eXAiOiJKV1QiLCJhbGc..."
     }
-}
-```
-
-> Akun dibuat dengan `is_active: false`. User harus verifikasi email sebelum bisa login. Token tidak diberikan di sini.
-
----
-
-#### Verifikasi Email
-
-**Endpoint:** `POST /api/v1/auth/verify-email`
-
-**Headers:** Tidak perlu token
-
-**Request Body:**
-
-```json
-{
-    "token": "a3f8c2d1e4b5..."
-}
-```
-
-**Response (Success - 200):**
-
-```json
-{
-    "status": "success",
-    "message": "Email berhasil diverifikasi."
-}
-```
-
----
-
-#### Kirim Ulang Email Verifikasi
-
-**Endpoint:** `POST /api/v1/auth/resend-verification`
-
-**Headers:** Tidak perlu token
-
-**Request Body:**
-
-```json
-{
-    "email": "john123@telkomuniversity.ac.id"
-}
-```
-
-**Response (Success - 200):**
-
-```json
-{
-    "status": "success",
-    "message": "Email verifikasi telah dikirim ulang."
 }
 ```
 
@@ -202,7 +149,11 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Query Parameters:**
 
-- `status_verifikasi`: Filter berdasarkan status (`Pending`, `Revision`, `Valid`, `Invalid`)
+- `status_verifikasi`: Filter berdasarkan status (Menunggu, Revisi, Valid, Tidak Valid)
+- `mewakili_ormawa`: Filter berdasarkan partisipasi ormawa (ya/tidak)
+- `tingkat`: Filter berdasarkan level kompetisi (Regional, Nasional, Internasional)
+- `klaster`: Filter berdasarkan klaster kompetisi
+- `search`: Keyword pencarian (nama kompetisi, penyelenggara, capaian, nama mahasiswa, NIM)
 - `per_page`: Jumlah data per halaman (default: 15)
 
 **Deskripsi:** Mahasiswa hanya bisa melihat prestasi milik mereka sendiri. Admin (Kemahasiswaan) dapat melihat semua prestasi.
@@ -274,24 +225,34 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
     "tingkat": "Nasional",
     "capaian": "Juara 1",
     "kategori": "Kelompok",
+    "mewakili_ormawa": "tidak",
+    "pelaksanaan": "Luring",
+    "waktu_kompetisi": "2024-01-10",
+    "tanggal_pengumuman": "2024-01-15",
+    "klaster": "Klaster A",
+    "jumlah_negara": 1,
     "dokumen[0][jenis_dokumen]": "Sertifikat",
-    "dokumen[0][file]": "file.pdf",
-    "dokumen[1][jenis_dokumen]": "Piala",
-    "dokumen[1][file]": "piala.jpg"
+    "dokumen[0][file]": "file.pdf"
 }
 ```
 
 **Request Parameters:**
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| nama_kompetisi | string | Yes | Nama kompetisi (max 255) |
-| penyelenggara | string | Yes | Organisasi penyelenggara (max 255) |
+| nama_kompetisi | string | Yes | Nama kompetisi (max 150) |
+| penyelenggara | string | Yes | Organisasi penyelenggara (max 150) |
 | tingkat | string | Yes | Level kompetisi: Regional, Nasional, Internasional |
-| capaian | string | Yes | Pencapaian/juara, misal: Juara 1, Juara 2, Top 10 |
+| capaian | string | Yes | Pencapaian/juara, misal: Juara 1, Juara 2, Top 10 (max 100) |
 | kategori | string | Yes | Tipe: Individu atau Kelompok |
+| mewakili_ormawa | string | Yes | Mewakili Ormawa atau tidak: `ya` atau `tidak` |
+| pelaksanaan | string | No | Model pelaksanaan: `Luring` atau `Daring` (max 50) |
+| waktu_kompetisi | date | No | Tanggal dilaksanakannya kompetisi (YYYY-MM-DD) |
+| tanggal_pengumuman | date | No | Tanggal pengumuman juara (YYYY-MM-DD) |
+| klaster | string | No | Pengelompokan klaster prestasi (max 100) |
+| jumlah_negara | integer | No | Jumlah negara peserta untuk tingkat Internasional (min 1) |
 | dokumen | array | Yes | Minimal 1 dokumen |
-| dokumen[*][jenis_dokumen] | string | Yes | Jenis dokumen (Sertifikat, Piala, dll) |
-| dokumen[*][file] | file | Yes | File dokumen (PDF/JPG/PNG, maksimal 5MB) |
+| dokumen[*][jenis_dokumen] | string | Yes | Jenis dokumen (Sertifikat, Piala, dll) (max 100) |
+| dokumen[*][file] | file | Yes | File dokumen (PDF/JPG/PNG/DOC/DOCX, maksimal 10MB) |
 
 **Response (Success - 201):**
 
@@ -306,7 +267,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
         "tingkat": "Nasional",
         "capaian": "Juara 1",
         "kategori": "Kelompok",
-        "status_verifikasi": "Pending",
+        "status_verifikasi": "Menunggu",
         "user": {
             "id_user": 21,
             "username": "john123"
@@ -416,7 +377,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Auth Required:** Yes (Mahasiswa - hanya pemilik)
 
-**Deskripsi:** Mahasiswa hanya bisa update jika status masih `Pending` atau `Revision`.
+**Deskripsi:** Mahasiswa hanya bisa update jika status masih "Menunggu" atau "Revisi".
 
 **Request Body:**
 
@@ -443,7 +404,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
         "tingkat": "Internasional",
         "capaian": "Juara 2",
         "kategori": "Kelompok",
-        "status_verifikasi": "Pending",
+        "status_verifikasi": "Menunggu",
         "updated_at": "2024-01-05T00:00:00.000000Z"
     }
 }
@@ -577,6 +538,52 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 ---
 
+#### Tambah Dokumen Pendukung
+
+**Endpoint:** `POST /api/v1/prestasi/{id}/dokumen`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**Auth Required:** Yes (Mahasiswa - hanya pemilik)
+
+**Request Body (multipart/form-data):**
+- `jenis_dokumen`: Jenis dokumen (max 100)
+- `file`: File lampiran pendukung (PDF/JPG/PNG/DOC/DOCX, maksimal 10MB)
+
+**Response (Success - 201):**
+```json
+{
+    "status": "success",
+    "message": "Dokumen berhasil ditambahkan",
+    "data": {
+        "id_dokumen": 5,
+        "id_prestasi": 10,
+        "jenis_dokumen": "Surat Tugas",
+        "file": "/storage/prestasi/..."
+    }
+}
+```
+
+---
+
+#### Hapus Dokumen Pendukung
+
+**Endpoint:** `DELETE /api/v1/prestasi/{id}/dokumen/{dokumen_id}`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**Auth Required:** Yes (Mahasiswa - hanya pemilik)
+
+**Response (Success - 200):**
+```json
+{
+    "status": "success",
+    "message": "Dokumen berhasil dihapus"
+}
+```
+
+---
+
 #### Hapus Prestasi
 
 **Endpoint:** `DELETE /api/v1/prestasi/{id}`
@@ -585,7 +592,7 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
 
 **Auth Required:** Yes (Mahasiswa - hanya pemilik)
 
-**Deskripsi:** Mahasiswa hanya bisa hapus jika status prestasi masih `Pending`. File dokumen akan otomatis dihapus dari storage.
+**Deskripsi:** Mahasiswa hanya bisa hapus jika status prestasi masih "Menunggu". File dokumen akan otomatis dihapus dari storage.
 
 **Response (Success - 200):**
 
@@ -604,6 +611,31 @@ Mahasiswa dapat mengelola prestasi (penghargaan, kompetisi) mereka.
     "message": "Prestasi yang sudah diverifikasi tidak dapat dihapus"
 }
 ```
+
+---
+
+#### Cetak Transkrip Prestasi PDF
+
+**Endpoint:** `GET /api/v1/prestasi/cetak/transkrip`
+
+**Headers:** `Authorization: Bearer {token}`
+
+**Auth Required:** Yes (Mahasiswa/Admin)
+
+**Response:** File stream PDF (Unduhan langsung)
+
+---
+
+#### Cetak Kartu Verifikasi PDF
+
+**Endpoint:** `GET /api/v1/prestasi/cetak/kartu/{nim}`
+
+**Headers:** Tidak perlu token (Public jika diakses via QR Code)
+
+**URL Parameters:**
+- `nim`: NIM mahasiswa yang bersangkutan (path parameter)
+
+**Response:** File stream PDF (Unduhan langsung)
 
 ---
 

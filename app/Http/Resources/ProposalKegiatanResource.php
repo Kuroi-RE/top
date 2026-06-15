@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class ProposalKegiatanResource extends JsonResource
 {
@@ -13,6 +14,7 @@ class ProposalKegiatanResource extends JsonResource
             'id_proposal' => $this->id_proposal,
             'id_user' => $this->id_user,
             'user' => new UserResource($this->whenLoaded('user')),
+            'lpj' => LpjKegiatanResource::collection($this->whenLoaded('lpj')),
             'ajuan_triwulan' => $this->ajuan_triwulan,
             'risiko_proposal' => $this->risiko_proposal,
             'no_telepon' => $this->no_telepon,
@@ -28,6 +30,9 @@ class ProposalKegiatanResource extends JsonResource
             'status' => $this->status,
             'anggaran_disetujui' => $this->anggaran_disetujui ? (float) $this->anggaran_disetujui : null,
             'catatan_admin' => $this->catatan_admin,
+            'file_lpj_keuangan_url' => $this->file_lpj_keuangan
+                ? Storage::disk('public')->url($this->file_lpj_keuangan)
+                : null,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
         ];

@@ -16,7 +16,12 @@ class User extends Authenticatable
 
     protected $primaryKey = 'id_user';
 
-    protected string $guard_name = 'api';
+    protected string $guard_name = 'web';
+
+    public function guardName(): string
+    {
+        return 'web';
+    }
 
     protected $fillable = [
         'username',
@@ -64,7 +69,11 @@ class User extends Authenticatable
     // Check if user is admin (Kemahasiswaan role)
     public function isAdmin(): bool
     {
-        return $this->hasRole('Admin / Kemahasiswaan') || $this->hasRole('Kemahasiswaan') || $this->role === 'Kemahasiswaan';
+        // SuperAdmin also has admin capabilities
+        return $this->isSuperAdmin()
+            || $this->hasRole('Admin / Kemahasiswaan')
+            || $this->hasRole('Kemahasiswaan')
+            || $this->role === 'Kemahasiswaan';
     }
 
     // Check if user is Super Admin
@@ -82,19 +91,23 @@ class User extends Authenticatable
     // Check if user is Ormawa
     public function isOrmawa(): bool
     {
-        return $this->hasRole('Ormawa') || $this->role === 'Ormawa';
+        return $this->hasRole('Ormawa') || $this->role === 'Ormawa' 
+            || $this->hasRole('Ormawa Institusi') || $this->role === 'Ormawa Institusi'
+            || $this->hasRole('Ormawa Prodi') || $this->role === 'Ormawa Prodi';
     }
 
     // Check if user is Ormawa Institusi (UKM)
     public function isOrmawaInstitusi(): bool
     {
-        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'institusi';
+        return $this->hasRole('Ormawa Institusi') || $this->role === 'Ormawa Institusi'
+            || (($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'institusi');
     }
 
     // Check if user is Ormawa Prodi (Himpunan)
     public function isOrmawaProdi(): bool
     {
-        return ($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'prodi';
+        return $this->hasRole('Ormawa Prodi') || $this->role === 'Ormawa Prodi'
+            || (($this->hasRole('Ormawa') || $this->role === 'Ormawa') && $this->ormawa_type === 'prodi');
     }
 
     // Check if user is Mahasiswa

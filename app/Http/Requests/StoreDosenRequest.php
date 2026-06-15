@@ -16,10 +16,10 @@ class StoreDosenRequest extends FormRequest
     {
         return [
             'nama' => 'required|string|max:150',
-            'nip' => 'nullable|string|digits:18',
-            'nidn' => 'nullable|string|digits:10',
+            'nip' => 'nullable|string|max:18',
+            'nidn' => 'nullable|string|max:10',
             'prodi' => 'required|string|max:100',
-            'surat_tugas' => 'nullable|file|mimes:pdf|max:5120',
+            'surat_tugas' => 'nullable|file|mimes:pdf,doc,docx|max:10240',
         ];
     }
 
@@ -37,8 +37,8 @@ class StoreDosenRequest extends FormRequest
             'prodi.string' => 'Prodi harus berupa teks',
             'prodi.max' => 'Prodi maksimal 100 karakter',
             'surat_tugas.file' => 'Surat Tugas harus berupa file',
-            'surat_tugas.mimes' => 'Format Surat Tugas harus berupa pdf',
-            'surat_tugas.max' => 'Surat Tugas maksimal 5120 KB',
+            'surat_tugas.mimes' => 'Format Surat Tugas harus berupa pdf, doc, atau docx',
+            'surat_tugas.max' => 'Surat Tugas maksimal 10 MB',
         ];
     }
 }

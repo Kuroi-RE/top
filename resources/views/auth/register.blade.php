@@ -474,6 +474,11 @@
                             </svg>
                         </span>
                     </div>
+                    @if(isset($require_telkom) ? $require_telkom : (env('REQUIRE_TELKOM_EMAIL', true)))
+                        <p id="email-telkom-warning" class="mt-2 hidden text-xs font-medium text-red-600">
+                            Email harus dari @student.telkomuniversity.ac.id atau @telkomuniversity.ac.id.
+                        </p>
+                    @endif
                 </div>
 
                 {{-- Password --}}
@@ -537,6 +542,33 @@
                 icon.textContent = 'visibility_off';
             }
         }
+
+        const requireTelkom = @json(isset($require_telkom) ? $require_telkom : env('REQUIRE_TELKOM_EMAIL', true));
+
+        function updateEmailWarning() {
+            const emailInput = document.getElementById('email');
+            const warning = document.getElementById('email-telkom-warning');
+            if (!warning) return; // nothing to do when warning isn't rendered
+
+            if (!requireTelkom) {
+                warning.classList.add('hidden');
+                return;
+            }
+
+            const value = emailInput.value.trim().toLowerCase();
+            const isValidTelkomEmail = value.endsWith('@student.telkomuniversity.ac.id')
+                || value.endsWith('@telkomuniversity.ac.id');
+
+            if (value && !isValidTelkomEmail) {
+                warning.classList.remove('hidden');
+            } else {
+                warning.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('email').addEventListener('input', updateEmailWarning);
+        document.getElementById('email').addEventListener('blur', updateEmailWarning);
+        updateEmailWarning();
 
         document.getElementById('register-form').addEventListener('submit', function (e) {
             const name  = document.getElementById('name').value.trim();

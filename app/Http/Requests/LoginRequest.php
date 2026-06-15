@@ -14,7 +14,9 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'username' => 'required|string|exists:users,username',
+            // DEF-002 FIX: Remove 'exists:users,username' to prevent user enumeration.
+            // Username existence is checked in the controller — all auth failures return 401.
+            'username' => 'required|string',
             'password' => 'required|string|min:6',
         ];
     }

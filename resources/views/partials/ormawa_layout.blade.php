@@ -868,17 +868,22 @@
     <div class="flex flex-1 overflow-hidden">
 
         @php
-            $userRole = session('dummy_user.role', 'ormawa');
+            $currentUser = auth()->user();
+            $userRole = $currentUser?->role ?? '';
+            $isMahasiswaRole = $currentUser?->isMahasiswa();
+            $isOrmawaInstitusi = $currentUser?->isOrmawaInstitusi();
+            $isOrmawaProdi = $currentUser?->isOrmawaProdi();
+            $isDpmbem = $currentUser?->isDpmbem();
             
-            // Ormawa Institusi & Prodi (same links for demo)
+            // Shared active states
             $isOrganisasiIndex = Request::is('organisasi') || Request::is('organisasi/');
             $isOrganisasiCreate = Request::is('organisasi/create');
-            $isOrganisasiLpj = Request::is('organisasi/create_lpj');
+            $isOrganisasiLpj = Request::is('organisasi/create_lpj') || Request::is('organisasi/*/lpj');
             $isOrganisasiPublikasi = Request::is('organisasi/publikasi');
             $isOrganisasiTemplate = Request::is('organisasi/template-dokumen');
             
             $isKelolaKegiatanActive = $isOrganisasiCreate || $isOrganisasiLpj || $isOrganisasiPublikasi;
-            $isOrmawaInstitusiActive = $isOrganisasiIndex || $isKelolaKegiatanActive || $isOrganisasiTemplate;
+            $isOrmawaActive = $isOrganisasiIndex || $isKelolaKegiatanActive || $isOrganisasiTemplate;
 
             // Prestasi Mahasiswa
             $isBerandaMahasiswa = Request::is('organisasi/beranda-mahasiswa');
@@ -889,8 +894,6 @@
             
             $isKelolaPrestasiActive = $isPrestasiProposal || $isPrestasiLpj || $isLaporanPrestasi;
             $isPrestasiMahasiswaActive = $isBerandaMahasiswa || $isKelolaPrestasiActive || $isPrestasiTemplate;
-
-            $isMonitoringAnggaran = Request::is('admin/monitoring-anggaran');
         @endphp
 
         <aside id="sidebar" class="flex-shrink-0 flex flex-col shadow-md z-30">
@@ -904,20 +907,72 @@
                     </a>
                 </div>
 
+                @if ($isDpmbem)
+                <div class="sidebar-block">
+                    <button
+                        onclick="toggleAcc('acc-dpm-bem')"
+                        class="sidebar-head {{ $isOrmawaActive ? 'text-red-600' : '' }}"
+                    >
+                        <svg class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L1 7l11 5 11-5-11-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+                        </svg>
+                        <span class="flex-1 whitespace-nowrap text-left">DPM / BEM</span>
+                        <svg id="chevron-acc-dpm-bem" class="h-4 w-4 flex-shrink-0 transition-transform duration-200 {{ $isOrmawaActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+                    <div id="acc-dpm-bem" class="acc-panel" style="max-height: {{ $isOrmawaActive ? '1000px' : '0' }}; overflow: hidden;" data-open="{{ $isOrmawaActive ? 'true' : 'false' }}">
+                        <a href="{{ route('organisasi.index') }}" class="sidebar-link {{ $isOrganisasiIndex ? 'sidebar-link-active' : '' }}">Dashboard</a>
+                        
+                        <!-- Monitoring Anggaran khusus DPMBEM -->
+                        <a href="{{ route('admin.monitoring_anggaran') }}" class="sidebar-link {{ Request::is('admin/monitoring-anggaran*') ? 'sidebar-link-active' : '' }}">
+                            <div class="flex items-center gap-1">
+                                <span>Monitoring Anggaran</span>
+                                <span class="px-1.5 py-0.5 rounded text-[10px] bg-red-100 text-red-600 font-bold uppercase">Pro</span>
+                            </div>
+                        </a>
+
+                        <div>
+                            <button onclick="toggleAcc('acc-kelola-kegiatan-dpm')" class="sidebar-subtoggle {{ $isKelolaKegiatanActive ? 'text-red-600' : '' }}">
+                                <span class="flex-1 whitespace-nowrap text-left">Kelola Kegiatan</span>
+                                <svg id="chevron-acc-kelola-kegiatan-dpm" class="h-3.5 w-3.5 flex-shrink-0 transition-transform duration-200 {{ $isKelolaKegiatanActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                                </svg>
+                            </button>
+                    <div id="acc-kelola-kegiatan-dpm" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
+                                <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
+                                <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
+                                <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
+                            </div>
+                        </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
+                        <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
+                    </div>
+                </div>
+                @endif
+
+                @if ($isOrmawaInstitusi)
                 <div class="sidebar-block">
                     <button
                         onclick="toggleAcc('acc-ormawa-institusi')"
-                        class="sidebar-head {{ $isOrmawaInstitusiActive ? 'text-red-600' : '' }}"
+                        class="sidebar-head {{ $isOrmawaActive ? 'text-red-600' : '' }}"
                     >
                         <svg class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                         </svg>
                         <span class="flex-1 whitespace-nowrap text-left">Ormawa Institusi</span>
-                        <svg id="chevron-acc-ormawa-institusi" class="h-4 w-4 flex-shrink-0 transition-transform duration-200 {{ $isOrmawaInstitusiActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="chevron-acc-ormawa-institusi" class="h-4 w-4 flex-shrink-0 transition-transform duration-200 {{ $isOrmawaActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <div id="acc-ormawa-institusi" class="acc-panel" style="max-height: {{ $isOrmawaInstitusiActive ? '1000px' : '0' }}; overflow: hidden;" data-open="{{ $isOrmawaInstitusiActive ? 'true' : 'false' }}">
+                    <div id="acc-ormawa-institusi" class="acc-panel" style="max-height: {{ $isOrmawaActive ? '1000px' : '0' }}; overflow: hidden;" data-open="{{ $isOrmawaActive ? 'true' : 'false' }}">
                         <a href="{{ route('organisasi.index') }}" class="sidebar-link {{ $isOrganisasiIndex ? 'sidebar-link-active' : '' }}">Dashboard</a>
                         <div>
                             <button onclick="toggleAcc('acc-kelola-kegiatan')" class="sidebar-subtoggle {{ $isKelolaKegiatanActive ? 'text-red-600' : '' }}">
@@ -927,29 +982,39 @@
                                 </svg>
                             </button>
                             <div id="acc-kelola-kegiatan" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
-                                <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Proposal Kegiatan</a>
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
+                                <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
                                 <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
                             </div>
                         </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
+                @if ($isOrmawaProdi)
                 <div class="sidebar-block mt-2 border-t border-slate-300 pt-2">
                     <button
                         onclick="toggleAcc('acc-ormawa-prodi')"
-                        class="sidebar-head {{ $isOrmawaInstitusiActive ? 'text-red-600' : '' }}"
+                        class="sidebar-head {{ $isOrmawaActive ? 'text-red-600' : '' }}"
                     >
                         <svg class="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                         </svg>
                         <span class="flex-1 whitespace-nowrap text-left">Ormawa Prodi</span>
-                        <svg id="chevron-acc-ormawa-prodi" class="h-4 w-4 flex-shrink-0 transition-transform duration-200 {{ $isOrmawaInstitusiActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg id="chevron-acc-ormawa-prodi" class="h-4 w-4 flex-shrink-0 transition-transform duration-200 {{ $isOrmawaActive ? 'chev-rot' : '' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </button>
-                    <div id="acc-ormawa-prodi" class="acc-panel" style="max-height: {{ $isOrmawaInstitusiActive ? '1000px' : '0' }}; overflow: hidden;" data-open="{{ $isOrmawaInstitusiActive ? 'true' : 'false' }}">
+                    <div id="acc-ormawa-prodi" class="acc-panel" style="max-height: {{ $isOrmawaActive ? '1000px' : '0' }}; overflow: hidden;" data-open="{{ $isOrmawaActive ? 'true' : 'false' }}">
                         <a href="{{ route('organisasi.index') }}" class="sidebar-link {{ $isOrganisasiIndex ? 'sidebar-link-active' : '' }}">Dashboard</a>
                         <div>
                             <button onclick="toggleAcc('acc-kelola-kegiatan-prodi')" class="sidebar-subtoggle {{ $isKelolaKegiatanActive ? 'text-red-600' : '' }}">
@@ -959,14 +1024,23 @@
                                 </svg>
                             </button>
                             <div id="acc-kelola-kegiatan-prodi" class="acc-panel" style="max-height: {{ $isKelolaKegiatanActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaKegiatanActive ? 'true' : 'false' }}">
-                                <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Proposal Kegiatan</a>
+                                @if(auth()->user()->can('Create Proposal Kegiatan'))
+                                <a href="{{ route('organisasi.create') }}" class="sidebar-sublink {{ $isOrganisasiCreate ? 'text-red-600 font-semibold' : '' }}">Ajuan Dana</a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('organisasi.create_lpj') }}" class="sidebar-sublink {{ $isOrganisasiLpj ? 'text-red-600 font-semibold' : '' }}">Laporan Kegiatan (LPJ)</a>
+                                @endif
+                                @if(auth()->user()->can('View Publikasi'))
                                 <a href="{{ route('organisasi.publikasi') }}" class="sidebar-sublink {{ $isOrganisasiPublikasi ? 'text-red-600 font-semibold' : '' }}">Publikasi Kegiatan</a>
+                                @endif
                             </div>
                         </div>
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('organisasi.template_dokumen') }}" class="sidebar-link {{ $isOrganisasiTemplate ? 'sidebar-link-active' : '' }}">Template Dokumen</a>
+                        @endif
                     </div>
                 </div>
+                @endif
 
                 <div class="sidebar-block mt-2 border-t border-slate-300 pt-2">
                     <button
@@ -997,36 +1071,33 @@
                             </button>
 
                             <div id="acc-kelola-prestasi" class="acc-panel" style="max-height: {{ $isKelolaPrestasiActive ? '500px' : '0' }}; overflow: hidden;" data-open="{{ $isKelolaPrestasiActive ? 'true' : 'false' }}">
+                                @if(auth()->user()->can('Create Prestasi'))
                                 <a href="{{ route('prestasi.input_proposal') }}" class="sidebar-sublink {{ $isPrestasiProposal ? 'text-red-600 font-semibold' : '' }}">
-                                    Proposal Kegiatan
+                                    Ajuan Dana
                                 </a>
+                                @endif
+                                @if(auth()->user()->can('Create LPJ Kegiatan') || auth()->user()->can('View LPJ Kegiatan'))
                                 <a href="{{ route('prestasi.upload_lpj') }}" class="sidebar-sublink {{ $isPrestasiLpj ? 'text-red-600 font-semibold' : '' }}">
                                     Laporan Kegiatan (LPJ)
                                 </a>
+                                @endif
+                                @if(auth()->user()->can('View Prestasi'))
                                 <a href="{{ route('prestasi.laporan_prestasi.biodata') }}" class="sidebar-sublink {{ $isLaporanPrestasi ? 'text-red-600 font-semibold' : '' }}">
                                     Laporan Prestasi
                                 </a>
+                                @endif
                             </div>
                         </div>
 
+                        @if(auth()->user()->can('View Template Dokumen'))
                         <a href="{{ route('prestasi.template_dokumen') }}" class="sidebar-link {{ $isPrestasiTemplate ? 'sidebar-link-active' : '' }}">
                             Template Dokumen
                         </a>
+                        @endif
                     </div>
                 </div>
 
-                @if(in_array(session('dummy_user.role', ''), ['kemahasiswaan', 'DPMBEM'], true))
-                    <div class="sidebar-block mt-2 border-t border-slate-300 pt-2">
-                        <a href="{{ route('admin.monitoring_anggaran') }}" class="sidebar-link {{ $isMonitoringAnggaran ? 'sidebar-link-active' : '' }}">
-                            <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7.5A2.5 2.5 0 015.5 5h10A2.5 2.5 0 0118 7.5V8h1.5A1.5 1.5 0 0121 9.5v7A1.5 1.5 0 0119.5 18H5.5A2.5 2.5 0 013 15.5v-8z"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 10h1.5A1.5 1.5 0 0120 11.5v4A1.5 1.5 0 0118.5 17H17"/>
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9.5h6"/>
-                            </svg>
-                            <span class="flex-1 whitespace-nowrap text-left">Monitoring Anggaran</span>
-                        </a>
-                    </div>
-                @endif
+
 
             </nav>
         </aside>
@@ -1051,6 +1122,62 @@
             </button>
 
             <main class="flex-1 overflow-y-auto overflow-x-hidden px-5 pb-5 pt-12 sm:px-6 sm:pt-12" id="main-content">
+
+                @if (session('success'))
+                    <div id="toast-success" class="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-white border border-green-100 px-6 py-4 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-green-50 text-green-600">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">Berhasil!</p>
+                            <p class="text-xs text-gray-500">{{ session('success') }}</p>
+                        </div>
+                        <button type="button" onclick="this.closest('#toast-success').remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Tutup">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            const toast = document.getElementById('toast-success');
+                            if (toast) {
+                                toast.classList.add('animate-out', 'fade-out', 'slide-out-to-top-4', 'duration-500');
+                                setTimeout(() => toast.remove(), 500);
+                            }
+                        }, 5000);
+                    </script>
+                @endif
+
+                @if (session('error'))
+                    <div id="toast-error" class="fixed top-8 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 bg-white border border-red-100 px-6 py-4 rounded-2xl shadow-2xl animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-full bg-red-50 text-red-600">
+                            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-sm font-bold text-gray-800">Terjadi Kesalahan!</p>
+                            <p class="text-xs text-gray-500">{{ session('error') }}</p>
+                        </div>
+                        <button type="button" onclick="this.closest('#toast-error').remove()" class="ml-4 text-gray-400 hover:text-gray-600 transition-colors" aria-label="Tutup">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+                    <script>
+                        setTimeout(() => {
+                            const toast = document.getElementById('toast-error');
+                            if (toast) {
+                                toast.classList.add('animate-out', 'fade-out', 'slide-out-to-top-4', 'duration-500');
+                                setTimeout(() => toast.remove(), 500);
+                            }
+                        }, 7000);
+                    </script>
+                @endif
 
                 @yield('content')
 
@@ -1245,6 +1372,52 @@
 </script>
 
 @stack('scripts')
+
+<script>
+/**
+ * TOPKEMA API Token Initializer (Ormawa Layout)
+ * Otomatis mengambil Sanctum token dari server berdasarkan session web aktif
+ * dan menyimpannya ke localStorage agar bisa digunakan oleh AJAX calls.
+ */
+(function () {
+    'use strict';
+
+    const TOKEN_KEY = 'topkema_api_token';
+
+    function initApiToken() {
+        fetch('/api/token', {
+            method: 'GET',
+            credentials: 'same-origin',
+            headers: {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+            },
+        })
+        .then(function (res) {
+            if (!res.ok) throw new Error('Token fetch failed: ' + res.status);
+            return res.json();
+        })
+        .then(function (data) {
+            if (data && data.token) {
+                localStorage.setItem(TOKEN_KEY, data.token);
+                if (window.axios) {
+                    window.axios.defaults.headers.common['Authorization'] = 'Bearer ' + data.token;
+                }
+            }
+        })
+        .catch(function (err) {
+            console.warn('[TOPKEMA] Gagal memperbarui API token:', err.message);
+        });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initApiToken);
+    } else {
+        initApiToken();
+    }
+})();
+</script>
 
 </body>
 </html>

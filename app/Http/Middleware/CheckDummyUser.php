@@ -10,8 +10,7 @@ class CheckDummyUser
 {
     public function handle(Request $request, Closure $next): Response
     {
-        // Check if user is authenticated via Laravel auth or session dummy_user
-        if (!auth()->check() && !session('dummy_user')) {
+        if (!auth()->check()) {
             return redirect()->route('login');
         }
 

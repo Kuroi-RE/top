@@ -22,7 +22,14 @@ class Prestasi extends Model
         'tingkat',
         'capaian',
         'kategori',
+        'mewakili_ormawa',
         'status_verifikasi',
+        'catatan_admin',
+        'pelaksanaan',
+        'waktu_kompetisi',
+        'tanggal_pengumuman',
+        'klaster',
+        'jumlah_negara',
     ];
 
     // Relationships

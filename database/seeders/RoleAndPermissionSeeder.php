@@ -24,68 +24,28 @@ class RoleAndPermissionSeeder extends Seeder
             'kemahasiswaan' => 'Kemahasiswaan',
             'dpmbem' => 'DPMBEM',
             'ormawa' => 'Ormawa',
+            'ormawa_institusi' => 'Ormawa Institusi',
+            'ormawa_prodi' => 'Ormawa Prodi',
             'mahasiswa' => 'Mahasiswa',
         ];
 
         // Create roles
         foreach ($roles as $slug => $name) {
             Role::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'api'],
-                ['name' => $name, 'guard_name' => 'api']
+                ['name' => $name, 'guard_name' => 'web'],
+                ['name' => $name, 'guard_name' => 'web']
             );
         }
 
-        // Define permissions
-        $permissions = [
-            // Proposal permissions
-            'create-proposal' => 'Create Proposal',
-            'view-proposal' => 'View Proposal',
-            'edit-proposal' => 'Edit Proposal',
-            'delete-proposal' => 'Delete Proposal',
-            'approve-proposal' => 'Approve Proposal',
-            'reject-proposal' => 'Reject Proposal',
-
-            // Revision Proposal permissions
-            'view-revisi-proposal' => 'View Revision Proposal',
-            'edit-revisi-proposal' => 'Edit Revision Proposal',
-            'approve-revisi-proposal' => 'Approve Revision Proposal',
-
-            // LPJ permissions
-            'create-lpj' => 'Create LPJ',
-            'view-lpj' => 'View LPJ',
-            'edit-lpj' => 'Edit LPJ',
-            'delete-lpj' => 'Delete LPJ',
-            'approve-lpj' => 'Approve LPJ',
-            'reject-lpj' => 'Reject LPJ',
-
-            // Prestasi permissions
-            'create-prestasi' => 'Create Prestasi',
-            'view-prestasi' => 'View Prestasi',
-            'edit-prestasi' => 'Edit Prestasi',
-            'delete-prestasi' => 'Delete Prestasi',
-            'approve-prestasi' => 'Approve Prestasi',
-            'reject-prestasi' => 'Reject Prestasi',
-
-            // User Management permissions
-            'view-users' => 'View Users',
-            'create-users' => 'Create Users',
-            'edit-users' => 'Edit Users',
-            'delete-users' => 'Delete Users',
-
-            // Template Document permissions
-            'manage-templates' => 'Manage Template Documents',
-            'view-templates' => 'View Template Documents',
-
-            // Reports
-            'view-reports' => 'View Reports',
-            'export-reports' => 'Export Reports',
-        ];
+        // Dynamically gather all unique permissions from config/permissions.php
+        $roleDefaults = config('permissions.role_defaults', []);
+        $allPermissions = collect($roleDefaults)->flatten()->unique()->values();
 
         // Create permissions
-        foreach ($permissions as $slug => $name) {
+        foreach ($allPermissions as $name) {
             Permission::firstOrCreate(
-                ['name' => $name, 'guard_name' => 'api'],
-                ['name' => $name, 'guard_name' => 'api']
+                ['name' => $name, 'guard_name' => 'web'],
+                ['name' => $name, 'guard_name' => 'web']
             );
         }
 
@@ -113,16 +73,28 @@ class RoleAndPermissionSeeder extends Seeder
 
         foreach ($users as $user) {
             $roleName = null;
+            $configKey = null;
             if ($user->role === 'Super Admin') {
                 $roleName = 'Super Admin';
+                $configKey = 'Super Admin';
             } elseif ($user->role === 'Kemahasiswaan') {
                 $roleName = 'Admin / Kemahasiswaan';
+                $configKey = 'Admin / Kemahasiswaan';
             } elseif ($user->role === 'DPMBEM') {
                 $roleName = 'DPMBEM';
+                $configKey = 'DPMBEM';
             } elseif ($user->role === 'Ormawa') {
                 $roleName = 'Ormawa';
+                $configKey = 'Ormawa Institusi';
+            } elseif ($user->role === 'Ormawa Institusi') {
+                $roleName = 'Ormawa Institusi';
+                $configKey = 'Ormawa Institusi';
+            } elseif ($user->role === 'Ormawa Prodi') {
+                $roleName = 'Ormawa Prodi';
+                $configKey = 'Ormawa Prodi';
             } elseif ($user->role === 'Mahasiswa') {
                 $roleName = 'Mahasiswa';
+                $configKey = 'Mahasiswa';
             }
 
             if ($roleName) {
@@ -130,7 +102,7 @@ class RoleAndPermissionSeeder extends Seeder
                 $user->assignRole($roleName);
 
                 // Assign direct permissions berdasarkan config
-                $defaultPerms = config('permissions.role_defaults.' . $roleName, []);
+                $defaultPerms = config('permissions.role_defaults.' . $configKey, []);
                 $user->syncPermissions($defaultPerms);
             }
         }

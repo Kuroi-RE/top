@@ -3,8 +3,8 @@ site_description: REST API Documentation for TOP KEMA Telkom
 theme:
   name: material
   palette:
-    primary: indigo
-    accent: blue
+    primary: red
+    accent: red
 nav:
   - Home & Setup: index.md
   - Authentication: authentication.md
@@ -13,5 +13,8 @@ nav:
   - Mahasiswa Endpoints: mahasiswa-endpoints.md
   - Proposal Kegiatan: proposal.md
   - LPJ Kegiatan: lpj.md
+  - Publikasi Kegiatan: publikasi.md
+  - Deadline: deadline.md
   - Monitoring Anggaran: monitoring.md
+  - Monitoring & DPMBEM Flow: dpmbem.md
   - Error Handling & Schema: error-handling.md

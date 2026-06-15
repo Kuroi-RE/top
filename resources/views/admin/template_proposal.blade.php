@@ -137,6 +137,15 @@
     
     .btn-delete { color: #c1121f; background: #fff1f2; }
     .btn-delete:hover { background: #fee2e2; border-color: #fecaca; }
+
+    .state-card {
+        border: 1px dashed rgba(2, 6, 23, 0.12);
+        background: linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+        color: #64748b;
+        border-radius: 18px;
+        padding: 28px;
+        text-align: center;
+    }
 </style>
 
 <div class="template-shell">
@@ -158,7 +167,7 @@
         <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-3">
                 <span class="text-sm font-bold text-slate-500">Show</span>
-                <select class="form-input-premium pr-8">
+                <select id="template-page-size" class="form-input-premium pr-8">
                     <option>10</option>
                     <option>25</option>
                     <option>50</option>
@@ -167,7 +176,7 @@
             </div>
             
             <div class="input-container w-full md:w-80">
-                <input type="text" placeholder="Cari nama dokumen..." class="form-input-premium has-icon-left">
+                <input id="template-search" type="text" placeholder="Cari nama dokumen..." class="form-input-premium has-icon-left">
                 <div class="icon-left">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -176,15 +185,6 @@
             </div>
         </div>
     </div>
-
-    @php
-        $templates = [
-            ['name' => 'Panduan Pengajuan Proposal Triwulan', 'updated' => '2 hari yang lalu', 'type' => 'PDF'],
-            ['name' => 'Formulir Laporan Pertanggungjawaban (LPJ)', 'updated' => '1 minggu yang lalu', 'type' => 'DOCX'],
-            ['name' => 'Template Poster & Media Publikasi', 'updated' => '2 minggu yang lalu', 'type' => 'ZIP'],
-            ['name' => 'Surat Keterangan Kepengurusan Ormawa', 'updated' => '1 bulan yang lalu', 'type' => 'DOCX'],
-        ];
-    @endphp
 
     <!-- Table -->
     <div class="premium-card">
@@ -197,45 +197,20 @@
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
-                <tbody>
-                    @foreach ($templates as $template)
-                        <tr>
-                            <td>
-                                <div class="flex flex-col">
-                                    <span class="text-slate-900 font-bold text-base">{{ $template['name'] }}</span>
-                                    <span class="text-slate-500 text-xs font-normal mt-1">Terakhir diperbarui: {{ $template['updated'] }}</span>
-                                </div>
-                            </td>
-                            <td class="text-center">
-                                <span class="doc-badge">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                                    </svg>
-                                    {{ $template['type'] }}
-                                </span>
-                            </td>
-                            <td class="text-center">
-                                <div class="flex items-center justify-center gap-2">
-                                    <button class="action-btn-circle btn-edit" title="Edit">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                                        </svg>
-                                    </button>
-                                    <button class="action-btn-circle btn-delete" title="Hapus">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                        </svg>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
+                <tbody id="template-table-body">
+                    <tr>
+                        <td colspan="3">
+                            <div class="state-card">
+                                Memuat template dokumen...
+                            </div>
+                        </td>
+                    </tr>
                 </tbody>
             </table>
         </div>
         <div class="p-6 bg-slate-50/50 border-t border-slate-100">
             <div class="flex justify-between items-center text-sm font-medium text-slate-500">
-                <span>Showing 1 to {{ count($templates) }} of {{ count($templates) }} entries</span>
+                <span id="template-pagination-info">Showing 0 entries</span>
                 <div class="flex gap-2">
                     <button class="px-3 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50" disabled>Previous</button>
                     <button class="px-3 py-1 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 disabled:opacity-50" disabled>Next</button>
@@ -244,4 +219,191 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tableBody = document.getElementById('template-table-body');
+        const searchInput = document.getElementById('template-search');
+        const pageSizeSelect = document.getElementById('template-page-size');
+        const paginationInfo = document.getElementById('template-pagination-info');
+
+        let templates = [];
+
+        function formatDate(value) {
+            if (!value) return '-';
+            const date = new Date(value);
+            if (Number.isNaN(date.getTime())) return '-';
+            return new Intl.DateTimeFormat('id-ID', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+            }).format(date);
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function renderEmpty(message) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="3">
+                        <div class="state-card">${message}</div>
+                    </td>
+                </tr>
+            `;
+            paginationInfo.textContent = 'Showing 0 entries';
+        }
+
+        function renderRows(items) {
+            if (!items.length) {
+                renderEmpty('Tidak ada template dokumen yang cocok.');
+                return;
+            }
+
+            tableBody.innerHTML = items.map(function (template) {
+                const downloadUrl = `/api/v1/template/${template.id_template}/download`;
+                const name = escapeHtml(template.nama_template || '-');
+                const type = escapeHtml(template.jenis_template || '-');
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="flex flex-col">
+                                <span class="text-slate-900 font-bold text-base">${name}</span>
+                                <span class="text-slate-500 text-xs font-normal mt-1">Terakhir diperbarui: ${formatDate(template.updated_at)}</span>
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="doc-badge">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                </svg>
+                                ${type}
+                            </span>
+                        </td>
+                        <td class="text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <a href="${downloadUrl}" class="action-btn-circle btn-edit" title="Download" aria-label="Download ${name}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v12m0 0l-4-4m4 4l4-4m-8 4h8" />
+                                    </svg>
+                                </a>
+                                <button type="button" class="action-btn-circle btn-delete" data-template-id="${template.id_template}" title="Hapus" aria-label="Hapus ${name}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const firstIndex = 1;
+            const lastIndex = items.length;
+            paginationInfo.textContent = `Showing ${firstIndex} to ${lastIndex} of ${templates.length} entries`;
+        }
+
+        function applyFilters() {
+            const query = (searchInput?.value || '').trim().toLowerCase();
+            const pageSize = Number(pageSizeSelect?.value || 10);
+            const filtered = templates.filter(function (template) {
+                return (template.nama_template || '').toLowerCase().includes(query)
+                    || (template.jenis_template || '').toLowerCase().includes(query);
+            });
+
+            renderRows(filtered.slice(0, pageSize));
+        }
+
+        async function deleteTemplate(templateId) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            const token = localStorage.getItem('topkema_api_token');
+            const headers = {
+                'Accept': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            };
+            if (csrfToken) {
+                headers['X-CSRF-TOKEN'] = csrfToken;
+            }
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(`/api/v1/template/${templateId}`, {
+                method: 'DELETE',
+                headers: headers,
+                credentials: 'same-origin',
+            });
+
+            const payload = await response.json().catch(() => ({}));
+
+            if (!response.ok) {
+                throw new Error(payload.message || 'Gagal menghapus template dokumen.');
+            }
+
+            templates = templates.filter(function (template) {
+                return String(template.id_template) !== String(templateId);
+            });
+
+            applyFilters();
+        }
+
+        async function loadTemplates() {
+            try {
+                const token = localStorage.getItem('topkema_api_token');
+                const headers = { 'Accept': 'application/json' };
+                if (token) {
+                    headers['Authorization'] = `Bearer ${token}`;
+                }
+
+                const response = await fetch('/api/v1/template?per_page=100', {
+                    headers: headers,
+                    credentials: 'same-origin',
+                });
+
+                const payload = await response.json().catch(() => ({}));
+
+                if (!response.ok) {
+                    throw new Error(payload.message || 'Gagal memuat template dokumen.');
+                }
+
+                templates = Array.isArray(payload.data) ? payload.data : (payload.data?.data || []);
+                applyFilters();
+            } catch (error) {
+                renderEmpty(error.message || 'Gagal memuat template dokumen.');
+            }
+        }
+
+        searchInput?.addEventListener('input', applyFilters);
+        pageSizeSelect?.addEventListener('change', applyFilters);
+
+        tableBody.addEventListener('click', async function (event) {
+            const button = event.target.closest('button[data-template-id]');
+            if (!button) return;
+
+            const templateId = button.dataset.templateId;
+            if (!templateId) return;
+
+            if (!window.confirm('Hapus template dokumen ini?')) return;
+
+            button.disabled = true;
+
+            try {
+                await deleteTemplate(templateId);
+            } catch (error) {
+                alert(error.message || 'Gagal menghapus template dokumen.');
+            } finally {
+                button.disabled = false;
+            }
+        });
+
+        loadTemplates();
+    });
+</script>
 @endsection

@@ -19,14 +19,17 @@ class UpdatePrestasiRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'nama_kompetisi'         => 'sometimes|required|string|max:150',
-            'penyelenggara'          => 'sometimes|required|string|max:150',
-            'tingkat'                => 'sometimes|required|in:Regional,Nasional,Internasional',
-            'capaian'                => 'sometimes|required|string|max:100',
-            'kategori'               => 'sometimes|required|in:Individu,Kelompok',
-            'dokumen'                => 'sometimes|array|min:1',
-            'dokumen.*.jenis_dokumen' => 'required_with:dokumen|string|max:100',
-            'dokumen.*.file'         => ['required_with:dokumen', 'file', 'mimes:pdf,jpg,jpeg,png', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
+            'nama_kompetisi' => 'sometimes|required|string|max:150',
+            'penyelenggara'  => 'sometimes|required|string|max:150',
+            'tingkat'        => 'sometimes|required|in:Regional,Nasional,Internasional',
+            'capaian'        => 'sometimes|required|string|max:100',
+            'kategori'       => 'sometimes|required|in:Individu,Kelompok',
+            'mewakili_ormawa' => 'sometimes|required|in:ya,tidak',
+            'pelaksanaan' => 'sometimes|nullable|string|max:50',
+            'waktu_kompetisi' => 'sometimes|nullable|date',
+            'tanggal_pengumuman' => 'sometimes|nullable|date',
+            'klaster' => 'sometimes|nullable|string|max:100',
+            'jumlah_negara' => 'sometimes|nullable|integer|min:1',
         ];
     }
 
@@ -46,16 +49,6 @@ class UpdatePrestasiRequest extends FormRequest
             'capaian.max' => 'Capaian maksimal 100 karakter',
             'kategori.required' => 'Kategori wajib diisi',
             'kategori.in' => 'Kategori yang dipilih tidak valid',
-            'dokumen.array' => 'Dokumen harus berupa array',
-            'dokumen.min' => 'Dokumen minimal 1',
-            'dokumen.*.jenis_dokumen.required_with' => 'Jenis Dokumen wajib diisi',
-            'dokumen.*.jenis_dokumen.string' => 'Jenis Dokumen harus berupa teks',
-            'dokumen.*.jenis_dokumen.max' => 'Jenis Dokumen maksimal 100 karakter',
-            'dokumen.*.file.required_with' => 'File wajib diisi',
-            'dokumen.*.file.file' => 'File harus berupa file',
-            'dokumen.*.file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png',
-            'dokumen.*.file.min' => 'File tidak boleh kosong (0 bytes)',
-            'dokumen.*.file.max' => 'File maksimal 5120 KB',
         ];
     }
 }

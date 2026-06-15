@@ -7,47 +7,24 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,600,0,0');
 
+@php
+    $currentUser = auth()->user();
+    $displayName = trim(($currentUser?->nama_depan ?? '') . ' ' . ($currentUser?->nama_belakang ?? ''));
+    $displayName = $displayName !== '' ? $displayName : ($currentUser?->username ?? 'teman');
+
+    $summaryCards = [
+        ['title' => 'Proposal Kegiatan', 'count' => $total ?? 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+        ['title' => 'LPJ Kegiatan', 'count' => $lpjCount ?? 0, 'icon' => 'M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5A3.375 3.375 0 0010.125 2.25H8.25m0 12.75h7.5m-7.5 3h4.5M5.625 2.25h5.603c.895 0 1.754.356 2.386.988l4.773 4.773c.632.632.988 1.49.988 2.386v8.853a2.25 2.25 0 01-2.25 2.25H5.625a2.25 2.25 0 01-2.25-2.25V4.5a2.25 2.25 0 012.25-2.25z'],
+        ['title' => 'Publikasi Kegiatan', 'count' => $publikasiCount ?? 0, 'icon' => 'M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c2.485 0 4.5-4.03 4.5-9S14.485 3 12 3m0 18c-2.485 0-4.5-4.03-4.5-9S9.515 3 12 3m0 0a8.997 8.997 0 017.843 4.582M12 3a8.997 8.997 0 00-7.843 4.582m15.686 0A11.953 11.953 0 0112 10.5c-2.998 0-5.74-1.1-7.843-2.918m15.686 0A8.959 8.959 0 0121 12c0 .778-.099 1.533-.284 2.253m0 0A17.919 17.919 0 0112 16.5c-3.162 0-6.133-.815-8.716-2.247m0 0A9.015 9.015 0 013 12c0-.778.099-1.533.284-2.253'],
+    ];
+@endphp
+
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,600,0,0');
+
     .greeting-hero {
         position: relative;
         display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 12px 16px;
-        border-radius: 14px;
-        border: 1px solid #fde68a;
-        background: linear-gradient(135deg, #fff7ed 0%, #ffffff 65%);
-        box-shadow: 0 10px 24px rgba(251, 191, 36, 0.1);
-        overflow: hidden;
-    }
-
-    .greeting-wave {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #f97316;
-        animation: greeting-pop 0.6s ease-out both;
-        flex-shrink: 0;
-    }
-
-    .greeting-wave-icon {
-        font-family: 'Material Symbols Rounded';
-        font-size: 34px;
-        line-height: 1;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        text-shadow: 0 6px 12px rgba(249, 115, 22, 0.18);
-        font-variation-settings: 'FILL' 0, 'wght' 600, 'GRAD' 0, 'opsz' 48;
-        transform-origin: 50% 80%;
-        animation: greeting-wiggle 2.2s ease-in-out infinite;
-    }
-
-    .greeting-title {
-        font-size: 0.98rem;
-        font-weight: 700;
-        color: #7c2d12;
         opacity: 0;
         transform: translateY(8px) scale(0.98);
         animation: greeting-pop 0.55s ease-out 0.08s forwards;
@@ -111,27 +88,17 @@
 </style>
 
 @php
-// Dummy data — ganti dengan query Eloquent: ProposalKegiatan::paginate($perPage)
-$displayName = session('dummy_user.display_name') ?? session('dummy_user.username', 'teman');
-$kegiatans = collect([
-    ['no' => 1,  'tw' => 'I',   'nama_kegiatan' => 'Upgrading',              'pelaksanaan' => '17/01/2026', 'ajuan_dana' => 'Rp 200.000', 'anggaran' => 'Rp 200.000', 'status' => 'Selesai',   'lpj_keuangan' => true,  'lpj_kegiatan' => true],
-    ['no' => 2,  'tw' => 'I',   'nama_kegiatan' => 'LDK',                    'pelaksanaan' => '17/02/2026', 'ajuan_dana' => 'Rp 200.000', 'anggaran' => 'Rp 200.000', 'status' => 'Pencairan', 'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 3,  'tw' => 'I',   'nama_kegiatan' => 'Pematerian',              'pelaksanaan' => '20/02/2026', 'ajuan_dana' => 'Rp 200.000', 'anggaran' => 'Rp 200.000', 'status' => 'Acc',       'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 4,  'tw' => 'I',   'nama_kegiatan' => 'Buka bersama Manggala',  'pelaksanaan' => '27/03/2026', 'ajuan_dana' => 'Rp 200.000', 'anggaran' => 'Rp 200.000', 'status' => 'Revisi',    'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 5,  'tw' => 'II',  'nama_kegiatan' => 'Seminar Nasional',        'pelaksanaan' => '10/04/2026', 'ajuan_dana' => 'Rp 500.000', 'anggaran' => 'Rp 450.000', 'status' => 'Acc',       'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 6,  'tw' => 'II',  'nama_kegiatan' => 'Pelatihan Leadership',    'pelaksanaan' => '24/04/2026', 'ajuan_dana' => 'Rp 350.000', 'anggaran' => 'Rp 350.000', 'status' => 'Pencairan', 'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 7,  'tw' => 'II',  'nama_kegiatan' => 'Musyawarah Kerja',        'pelaksanaan' => '05/05/2026', 'ajuan_dana' => 'Rp 150.000', 'anggaran' => 'Rp 150.000', 'status' => 'Revisi',    'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 8,  'tw' => 'III', 'nama_kegiatan' => 'Bakti Sosial',            'pelaksanaan' => '20/07/2026', 'ajuan_dana' => 'Rp 700.000', 'anggaran' => 'Rp 700.000', 'status' => 'Selesai',   'lpj_keuangan' => true,  'lpj_kegiatan' => true],
-    ['no' => 9,  'tw' => 'III', 'nama_kegiatan' => 'Olimpiade Mahasiswa',     'pelaksanaan' => '15/08/2026', 'ajuan_dana' => 'Rp 600.000', 'anggaran' => 'Rp 580.000', 'status' => 'Acc',       'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-    ['no' => 10, 'tw' => 'IV',  'nama_kegiatan' => 'Malam Keakraban',         'pelaksanaan' => '12/11/2026', 'ajuan_dana' => 'Rp 400.000', 'anggaran' => 'Rp 400.000', 'status' => 'Pencairan', 'lpj_keuangan' => false, 'lpj_kegiatan' => false],
-]);
+    $statusConfig = [
+        'Selesai'   => ['bg' => 'bg-green-50',  'text' => 'text-green-700'],
+        'Pencairan' => ['bg' => 'bg-blue-100',  'text' => 'text-blue-700'],
+        'Acc'       => ['bg' => 'bg-purple-100','text' => 'text-purple-700'],
+        'Menunggu'  => ['bg' => 'bg-blue-50',   'text' => 'text-blue-700'],
+        'Revisi'    => ['bg' => 'bg-red-50',    'text' => 'text-red-700'],
+        'Disetujui' => ['bg' => 'bg-green-50',  'text' => 'text-green-700'],
+        'Ditolak'   => ['bg' => 'bg-slate-100', 'text' => 'text-slate-700'],
+    ];
 
-$statusConfig = [
-    'Selesai'   => ['bg' => 'bg-green-50',  'text' => 'text-green-700'],
-    'Pencairan' => ['bg' => 'bg-blue-100',  'text' => 'text-blue-700'],
-    'Acc'       => ['bg' => 'bg-purple-100','text' => 'text-purple-700'],
-    'Revisi'    => ['bg' => 'bg-red-50',    'text' => 'text-red-700'],
-];
+    $kegiatans = $activities ?? collect();
 @endphp
 
 <div class="mb-6">
@@ -293,6 +260,9 @@ $statusConfig = [
                     <th class="whitespace-nowrap px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
                         LPJ Kegiatan
                     </th>
+                    <th class="whitespace-nowrap px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        Aksi
+                    </th>
                 </tr>
             </thead>
 
@@ -317,27 +287,35 @@ $statusConfig = [
                         <span class="font-semibold text-gray-700">{{ $item['tw'] }}</span>
                     </td>
                     <td class="px-4 py-3 font-medium text-gray-800">
-                        <a href="{{ url('/organisasi/' . $item['no'] . '/edit') }}" class="transition-colors hover:text-blue-600 hover:underline" title="Klik untuk revisi kegiatan">
+                        <a href="{{ $item['status'] == 'Revisi' ? route('organisasi.edit', $item['id']) : route('organisasi.show', $item['id']) }}" class="transition-colors hover:text-blue-600 hover:underline" title="{{ $item['status'] == 'Revisi' ? 'Klik untuk revisi kegiatan' : 'Lihat detail kegiatan' }}">
                             {{ $item['nama_kegiatan'] }}
                         </a>
+                        @if($item['status'] == 'Revisi' && $item['catatan_admin'])
+                            <p class="mt-1 text-xs font-bold text-red-600 italic">
+                                *Rev: {{ \Illuminate\Support\Str::limit($item['catatan_admin'], 50) }}
+                            </p>
+                        @elseif(isset($item['lpj_kegiatan_status']) && $item['lpj_kegiatan_status'] == 'Revisi' && isset($item['lpj_kegiatan_notes']))
+                            <p class="mt-1 text-xs font-bold text-red-600 italic">
+                                *Rev LPJ: {{ \Illuminate\Support\Str::limit($item['lpj_kegiatan_notes'], 50) }}
+                            </p>
+                        @endif
                     </td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['pelaksanaan'] }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['ajuan_dana'] }}</td>
                     <td class="px-4 py-3 text-gray-600">{{ $item['anggaran'] }}</td>
 
-                    <td class="px-4 py-3">
-                        <span class="inline-flex items-center rounded-full px-3 py-1
-                                     text-xs font-semibold leading-none
-                                     {{ $cfg['bg'] }} {{ $cfg['text'] }}">
+                    <td class="px-4 py-3 text-center">
+                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
+                            {{ $item['status'] == 'Disetujui' ? 'bg-green-100 text-green-800' : ($item['status'] == 'Revisi' || $item['status'] == 'Revisi LPJ' ? 'bg-red-100 text-red-800' : ($item['status'] == 'Selesai' ? 'bg-blue-100 text-blue-800' : ($item['status'] == 'Cek LPJ' ? 'bg-purple-100 text-purple-800' : 'bg-yellow-100 text-yellow-800'))) }}">
                             {{ $item['status'] }}
                         </span>
                     </td>
 
                     <td class="px-4 py-3 text-center">
                         @if ($item['lpj_keuangan'])
-                            <a href="#" title="Lihat LPJ Keuangan"
+                            <a href="{{ asset('storage/' . $item['lpj_keuangan']) }}" target="_blank" title="Lihat LPJ Keuangan"
                                class="inline-flex items-center justify-center rounded-lg p-1.5
-                                      text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                      text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
@@ -350,14 +328,38 @@ $statusConfig = [
                     </td>
 
                     <td class="px-4 py-3 text-center">
-                        @if ($item['lpj_kegiatan'])
-                            <a href="#" title="Lihat LPJ Kegiatan"
+                        @if ($item['status'] == 'Selesai' && isset($item['lpj_kegiatan_file']) && $item['lpj_kegiatan_file'])
+                            <a href="{{ asset('storage/' . $item['lpj_kegiatan_file']->file_lpj) }}" target="_blank" title="Lihat LPJ Kegiatan"
                                class="inline-flex items-center justify-center rounded-lg p-1.5
-                                      text-gray-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                      text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                           d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0
                                              01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                            </a>
+                        @else
+                            <span class="text-gray-300">&mdash;</span>
+                        @endif
+                    </td>
+
+                    <td class="px-4 py-3 text-center">
+                        @if ($item['status'] == 'Revisi')
+                            <a href="{{ route('organisasi.edit', $item['id']) }}" title="Edit Revisi"
+                               class="inline-flex items-center justify-center rounded-lg p-1.5
+                                      text-blue-500 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </a>
+                        @elseif(isset($item['lpj_kegiatan_status']) && $item['lpj_kegiatan_status'] == 'Revisi')
+                            <a href="{{ route('organisasi.lpj.revisi', $item['id']) }}" title="Revisi LPJ"
+                               class="inline-flex items-center justify-center rounded-lg p-1.5
+                                      text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.995-1.465"/>
                                 </svg>
                             </a>
                         @else

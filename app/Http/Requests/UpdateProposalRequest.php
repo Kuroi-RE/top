@@ -8,14 +8,36 @@ class UpdateProposalRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        $proposal = $this->route('proposal');
+        $proposalId = $this->route('proposal');
+        $type = $this->input('type', $this->query('type'));
+        $user = $this->user();
+
+        if ($type === 'mahasiswa') {
+            $proposal = \App\Models\ProposalPrestasiMahasiswa::find($proposalId);
+        } elseif ($type === 'ormawa') {
+            $proposal = \App\Models\ProposalKegiatan::find($proposalId);
+        } else {
+            if ($user && $user->isMahasiswa()) {
+                $proposal = \App\Models\ProposalPrestasiMahasiswa::find($proposalId);
+            } else {
+                $proposal = \App\Models\ProposalKegiatan::find($proposalId);
+                if (!$proposal) {
+                    $proposal = \App\Models\ProposalPrestasiMahasiswa::find($proposalId);
+                }
+            }
+        }
+
+        if (!$proposal) {
+            return false;
+        }
         return $this->user()->id_user === $proposal->id_user && 
-               ($proposal->status === 'Menunggu' || $proposal->status === 'Revisi');
+               ($proposal->status === 'Pending' || $proposal->status === 'Revision' || $proposal->status === 'Menunggu' || $proposal->status === 'Revisi');
     }
 
     public function rules(): array
     {
         return [
+            'type' => 'nullable|string|in:mahasiswa,ormawa',
             'ajuan_triwulan' => 'sometimes|in:I,II,III,IV',
             'risiko_proposal' => 'sometimes|in:Rendah,Sedang,Tinggi',
             'no_telepon' => 'sometimes|string|max:15',

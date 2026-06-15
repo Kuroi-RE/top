@@ -26,14 +26,16 @@ class ProposalKegiatanFactory extends Factory
             'nama_bank' => fake()->randomElement(['Bank BCA', 'Bank Mandiri', 'Bank BNI', 'Bank BTN']),
             'honor_pelatih' => fake()->randomElement(['Ya', 'Tidak']),
             'file' => 'proposals/sample-proposal.pdf',
-            'status' => 'Menunggu',
+            // DEF-004 FIX: Use canonical English status values consistent with controllers
+            'status' => 'Pending',
         ];
     }
 
     public function approved(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'Disetujui',
+            // DEF-004 FIX: English status values
+            'status' => 'Approved',
             'anggaran_disetujui' => $attributes['besar_ajuan'] * fake()->randomFloat(2, 0.5, 1.0),
         ]);
     }
@@ -41,7 +43,8 @@ class ProposalKegiatanFactory extends Factory
     public function rejected(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'Ditolak',
+            // DEF-004 FIX: English status values
+            'status' => 'Rejected',
             'catatan_admin' => 'Proposal ditolak karena tidak memenuhi kriteria',
         ]);
     }
@@ -49,7 +52,8 @@ class ProposalKegiatanFactory extends Factory
     public function needsRevision(): static
     {
         return $this->state(fn (array $attributes) => [
-            'status' => 'Revisi',
+            // DEF-004 FIX: English status values
+            'status' => 'Revision',
             'catatan_admin' => 'Silakan lakukan revisi sesuai catatan',
         ]);
     }

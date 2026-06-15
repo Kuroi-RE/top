@@ -292,12 +292,12 @@
     
     <!-- Top Right Action Bar -->
     <div id="download-btn-container" class="max-w-[900px] mx-auto mb-2 flex justify-end print:hidden">
-        <button onclick="window.print()" class="relative text-gray-400 hover:text-gray-600 p-2 transition-all group" title="Download PDF">
+        <a href="{{ route('prestasi.transkrip_prestasi.download_pdf') }}" target="_blank" class="relative text-gray-400 hover:text-gray-600 p-2 transition-all group" title="Download PDF">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
             </svg>
             <span class="absolute right-full mr-2 top-1/2 -translate-y-1/2 bg-gray-700 text-white text-[11px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Download PDF</span>
-        </button>
+        </a>
     </div>
 
 
@@ -345,14 +345,14 @@
                 </div>
                 <div class="info-row">
                     <div class="info-item">
-                        <span class="info-label">Tanggal lulus/Date of completion</span>
+                        <span class="info-label">Tanggal Cetak/Date of Print</span>
                         <span class="info-separator">:</span>
                         <span class="info-value">{{ now()->format('d-m-Y') }}</span>
                     </div>
                     <div class="info-item">
                         <span class="info-label">Jenjang Pendidikan/Level of Education</span>
                         <span class="info-separator">:</span>
-                        <span class="info-value">TINGKAT 2</span>
+                        <span class="info-value">S1 (Strata 1)</span>
                     </div>
                 </div>
             </div>

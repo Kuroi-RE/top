@@ -8,7 +8,7 @@ class StorePrestasiRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return $this->user()->isMahasiswa();
+        return $this->user()->hasPermissionTo('Create Prestasi') || $this->user()->isMahasiswa();
     }
 
     public function rules(): array
@@ -19,9 +19,15 @@ class StorePrestasiRequest extends FormRequest
             'tingkat' => 'required|in:Regional,Nasional,Internasional',
             'capaian' => 'required|string|max:100',
             'kategori' => 'required|in:Individu,Kelompok',
+            'mewakili_ormawa' => 'required|in:ya,tidak',
+            'pelaksanaan' => 'nullable|string|max:50',
+            'waktu_kompetisi' => 'nullable|date',
+            'tanggal_pengumuman' => 'nullable|date',
+            'klaster' => 'nullable|string|max:100',
+            'jumlah_negara' => 'nullable|integer|min:1',
             'dokumen' => 'required|array|min:1',
             'dokumen.*.jenis_dokumen' => 'required|string|max:100',
-            'dokumen.*.file' => ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
+            'dokumen.*.file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:10240',
         ];
     }
 
@@ -49,9 +55,8 @@ class StorePrestasiRequest extends FormRequest
             'dokumen.*.jenis_dokumen.max' => 'Jenis Dokumen maksimal 100 karakter',
             'dokumen.*.file.required' => 'File wajib diisi',
             'dokumen.*.file.file' => 'File harus berupa file',
-            'dokumen.*.file.mimes' => 'Format File harus berupa pdf,jpg,jpeg,png',
-            'dokumen.*.file.min' => 'File tidak boleh kosong (0 bytes)',
-            'dokumen.*.file.max' => 'File maksimal 5120 KB',
+            'dokumen.*.file.mimes' => 'Format File harus berupa pdf, jpg, jpeg, png, doc, atau docx',
+            'dokumen.*.file.max' => 'File maksimal 10 MB',
         ];
     }
 }
