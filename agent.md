@@ -56,9 +56,11 @@ Platform manajemen kegiatan organisasi mahasiswa (Ormawa) dan prestasi mahasiswa
 12. Verifikasi ajuan dana gagal saat upload bukti ("Status wajib diisi") → fixed: PHP tidak parse multipart pada PATCH; saat ada file gunakan POST + _method=PATCH (method spoofing)
 13. CORS middleware crash pada download ("undefined method StreamedResponse::header()") → fixed: pakai $response->headers->set() bukan $response->header()
 14. Lapor prestasi gagal ("Data truncated status_verifikasi") → fixed: migration normalize enum prestasi.status_verifikasi ke Indonesia ('Menunggu','Valid','Tidak Valid','Revisi') agar cocok dengan kode aplikasi
+15. Migrasi gagal ("There is no active transaction") → fixed: DDL (ALTER TABLE) MySQL auto-commit, tidak boleh dibungkus `DB::transaction()`. Migration `2026_05_10_000002_migrate_status_to_english` diubah jalankan statement sekuensial (pola widen→update→narrow yang idempotent), bukan dalam transaksi.
+16. `migrate_status_to_english` merusak `proposal_kegiatan.status` → fixed: kolom ini sudah jadi varchar(50) sejak `2026_05_13_000005` dan mendukung nilai 'Selesai','Cek LPJ','Revisi LPJ'. Blok ALTER...MODIFY ENUM untuk proposal_kegiatan DIHAPUS dari migration (hanya sisakan UPDATE normalisasi data) agar nilai-nilai tsb tidak terpotong/hilang. Ditambah migration `2026_06_16_000002_normalize_lpj_status_to_indonesian` untuk mengembalikan lpj_kegiatan.status_lpj ke Indonesia. Verified: full chain 5 migration jalan tanpa error; state akhir proposal=varchar(Pending/Selesai), lpj=enum Indonesia, prestasi=enum Indonesia.
 
 ## Status Enum per Tabel (PENTING — jangan campur English/Indonesia)
-- `proposal_kegiatan.status` & `proposal_prestasi_mahasiswa.status`: ENGLISH → `Pending, Revision, Approved, Rejected` (+ Cek LPJ, Revisi LPJ, Selesai untuk fase LPJ). Frontend map ke Indonesia untuk tampilan.
+- `proposal_kegiatan.status` & `proposal_prestasi_mahasiswa.status`: kolom **varchar(50)** (BUKAN enum, sejak migration `2026_05_13_000005`). Nilai ENGLISH → `Pending, Revision, Approved, Rejected` (+ `Cek LPJ`, `Revisi LPJ`, `Selesai` untuk fase LPJ). Frontend map ke Indonesia untuk tampilan. JANGAN ubah kolom ini jadi ENUM — akan memotong/menghapus nilai 'Selesai'/'Cek LPJ'/'Revisi LPJ'.
 - `lpj_kegiatan.status_lpj`: INDONESIA → `Menunggu, Revisi, Disetujui`
 - `prestasi.status_verifikasi`: INDONESIA → `Menunggu, Valid, Tidak Valid, Revisi`
 - Saat insert/verify, selalu cek enum kolom target di migration sebelum pakai nilai status.
