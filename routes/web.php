@@ -668,7 +668,8 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
 
             // Setup multipart if file exists
             $apiReq = $api;
-            if ($request->hasFile('lpj_keuangan')) {
+            $hasFile = $request->hasFile('lpj_keuangan');
+            if ($hasFile) {
                 $file = $request->file('lpj_keuangan');
                 $apiReq = $apiReq->attach(
                     'file_lpj_keuangan',
@@ -691,12 +692,22 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
                 if ($isLpjPhase) {
                     $lpjId = $data['lpj'][0]['id_lpj'] ?? null;
                     if ($lpjId) {
-                        $res = $apiReq->patch("/lpj/{$lpjId}/verifikasi", $payload);
+                        // PHP tidak mem-parse multipart pada PATCH; saat ada file gunakan POST + method spoofing
+                        if ($hasFile) {
+                            $res = $apiReq->post("/lpj/{$lpjId}/verifikasi", array_merge($payload, ['_method' => 'PATCH']));
+                        } else {
+                            $res = $apiReq->patch("/lpj/{$lpjId}/verifikasi", $payload);
+                        }
                     } else {
                         return back()->withErrors(['message' => 'LPJ tidak ditemukan.'])->withInput();
                     }
                 } else {
-                    $res = $apiReq->patch("/proposal/{$id}/verifikasi", $payload);
+                    // PHP tidak mem-parse multipart pada PATCH; saat ada file gunakan POST + method spoofing
+                    if ($hasFile) {
+                        $res = $apiReq->post("/proposal/{$id}/verifikasi", array_merge($payload, ['_method' => 'PATCH']));
+                    } else {
+                        $res = $apiReq->patch("/proposal/{$id}/verifikasi", $payload);
+                    }
                 }
                 
                 if (isset($res) && $res->successful()) {
@@ -731,6 +742,19 @@ Route::middleware(['auth'])->prefix('admin')->group(function () {
         Route::get("/template_proposal", function () {
             return view("admin.template_proposal");
         })->name("admin.template_proposal");
+
+        Route::get("/template_proposal/{id}/download", function ($id) {
+            $template = \App\Models\TemplateDokumen::find($id);
+            if (!$template || !$template->file) {
+                abort(404, 'Template tidak ditemukan.');
+            }
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($template->file)) {
+                abort(404, 'File template tidak ditemukan di server.');
+            }
+            $ext = pathinfo($template->file, PATHINFO_EXTENSION) ?: 'pdf';
+            $downloadName = \Illuminate\Support\Str::slug($template->nama_template ?: 'template') . '.' . $ext;
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($template->file, $downloadName);
+        })->name("admin.template_proposal.download");
 
         Route::get("/kontrol_akun", function () {
             return view("admin.kontrol_akun");
@@ -1584,8 +1608,32 @@ Route::prefix("organisasi")
 
         Route::get(
             "/template-dokumen",
-            fn() => view("organisasi.template_dokumen"),
+            function () {
+                $templates = collect();
+                try {
+                    $api = \App\Services\ApiService::getClient();
+                    $response = $api->get('/template', ['per_page' => 100]);
+                    if ($response->successful()) {
+                        $templates = collect($response->json('data') ?? []);
+                    }
+                } catch (\Throwable $e) {
+                    \Log::error('Template list error (organisasi): ' . $e->getMessage());
+                }
+                return view("organisasi.template_dokumen", compact('templates'));
+            },
         )->name("template_dokumen");
+        Route::get("/template-dokumen/{id}/download", function ($id) {
+            $template = \App\Models\TemplateDokumen::find($id);
+            if (!$template || !$template->file) {
+                abort(404, 'Template tidak ditemukan.');
+            }
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($template->file)) {
+                abort(404, 'File template tidak ditemukan di server.');
+            }
+            $ext = pathinfo($template->file, PATHINFO_EXTENSION) ?: 'pdf';
+            $downloadName = \Illuminate\Support\Str::slug($template->nama_template ?: 'template') . '.' . $ext;
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($template->file, $downloadName);
+        })->name("template_download");
         Route::post(
             "/",
             function (Illuminate\Http\Request $request) {
@@ -2001,7 +2049,31 @@ Route::prefix("prestasi")
             return view("prestasi.input_proposal");
         })->name("input_proposal");
         Route::get("/upload-lpj", fn() => view("prestasi.upload_lpj"))->name("upload_lpj");
-        Route::get("/template-dokumen", fn() => view("prestasi.template_dokumen"))->name("template_dokumen");
+        Route::get("/template-dokumen", function () {
+            $templates = collect();
+            try {
+                $api = \App\Services\ApiService::getClient();
+                $response = $api->get('/template', ['per_page' => 100]);
+                if ($response->successful()) {
+                    $templates = collect($response->json('data') ?? []);
+                }
+            } catch (\Throwable $e) {
+                \Log::error('Template list error (prestasi): ' . $e->getMessage());
+            }
+            return view("prestasi.template_dokumen", compact('templates'));
+        })->name("template_dokumen");
+        Route::get("/template-dokumen/{id}/download", function ($id) {
+            $template = \App\Models\TemplateDokumen::find($id);
+            if (!$template || !$template->file) {
+                abort(404, 'Template tidak ditemukan.');
+            }
+            if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($template->file)) {
+                abort(404, 'File template tidak ditemukan di server.');
+            }
+            $ext = pathinfo($template->file, PATHINFO_EXTENSION) ?: 'pdf';
+            $downloadName = \Illuminate\Support\Str::slug($template->nama_template ?: 'template') . '.' . $ext;
+            return \Illuminate\Support\Facades\Storage::disk('public')->download($template->file, $downloadName);
+        })->name("template_download");
         Route::get("/laporan-prestasi", fn() => view("prestasi.laporan_prestasi"))->name("laporan_prestasi");
         Route::get("/laporan-prestasi/biodata", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.biodata");
         Route::get("/laporan-prestasi/detail-kompetisi", fn() => redirect()->route("prestasi.laporan_prestasi"))->name("laporan_prestasi.detail_kompetisi");
