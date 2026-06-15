@@ -26,20 +26,19 @@ return new class extends Migration
     {
         $isMysql = DB::getDriverName() === 'mysql';
 
-        DB::transaction(function () use ($isMysql) {
+        // CATATAN: ALTER TABLE (DDL) pada MySQL memicu implicit commit,
+        // sehingga membungkusnya dalam DB::transaction() menyebabkan error
+        // "There is no active transaction". Statement dijalankan sekuensial.
+        // Pola widen -> update -> narrow bersifat idempotent.
+        if (true) {
             // ── proposal_kegiatan.status ──────────────────────────────────────
-
-            if ($isMysql) {
-                // Step 1: Widen enum to include both old (Indonesian) and new (English) values
-                DB::statement("
-                    ALTER TABLE proposal_kegiatan
-                    MODIFY COLUMN status
-                    ENUM('Menunggu','Revisi','Disetujui','Ditolak','Pending','Revision','Approved','Rejected')
-                    NOT NULL DEFAULT 'Pending'
-                ");
-            }
-
-            // Step 2: Migrate existing data to English values
+            // PENTING: kolom proposal_kegiatan.status sudah diubah menjadi
+            // varchar(50) oleh migration 2026_05_13_000005 dan kini mendukung
+            // nilai tambahan di luar 4 status dasar, yaitu 'Selesai', 'Cek LPJ',
+            // dan 'Revisi LPJ' (lihat MonitoringController). JANGAN mengubah kolom
+            // ini kembali menjadi ENUM karena nilai-nilai tersebut akan terpotong
+            // (data truncated) dan hilang. Cukup normalisasi data lama dari
+            // Indonesia -> English secara idempotent (nilai lain dipertahankan).
             DB::statement("
                 UPDATE proposal_kegiatan SET status = CASE status
                     WHEN 'Menunggu'  THEN 'Pending'
@@ -49,16 +48,6 @@ return new class extends Migration
                     ELSE status
                 END
             ");
-
-            if ($isMysql) {
-                // Step 3: Narrow enum to English-only values
-                DB::statement("
-                    ALTER TABLE proposal_kegiatan
-                    MODIFY COLUMN status
-                    ENUM('Pending','Revision','Approved','Rejected')
-                    NOT NULL DEFAULT 'Pending'
-                ");
-            }
 
             // ── lpj_kegiatan.status_lpj ───────────────────────────────────────
 
@@ -123,7 +112,7 @@ return new class extends Migration
                     NOT NULL DEFAULT 'Pending'
                 ");
             }
-        });
+        }
     }
 
     /**
@@ -135,20 +124,11 @@ return new class extends Migration
     {
         $isMysql = DB::getDriverName() === 'mysql';
 
-        DB::transaction(function () use ($isMysql) {
+        // DDL auto-commit pada MySQL — tanpa DB::transaction (lihat catatan di up()).
+        if (true) {
             // ── proposal_kegiatan.status ──────────────────────────────────────
-
-            if ($isMysql) {
-                // Step 1: Widen enum to include both English and Indonesian values
-                DB::statement("
-                    ALTER TABLE proposal_kegiatan
-                    MODIFY COLUMN status
-                    ENUM('Pending','Revision','Approved','Rejected','Menunggu','Revisi','Disetujui','Ditolak')
-                    NOT NULL DEFAULT 'Menunggu'
-                ");
-            }
-
-            // Step 2: Revert data to Indonesian values
+            // Kolom ini adalah varchar(50) (lihat catatan di up()); tidak diubah
+            // menjadi ENUM. Hanya kembalikan data ke nilai Indonesia.
             DB::statement("
                 UPDATE proposal_kegiatan SET status = CASE status
                     WHEN 'Pending'  THEN 'Menunggu'
@@ -158,16 +138,6 @@ return new class extends Migration
                     ELSE status
                 END
             ");
-
-            if ($isMysql) {
-                // Step 3: Narrow enum to Indonesian-only values
-                DB::statement("
-                    ALTER TABLE proposal_kegiatan
-                    MODIFY COLUMN status
-                    ENUM('Menunggu','Revisi','Disetujui','Ditolak')
-                    NOT NULL DEFAULT 'Menunggu'
-                ");
-            }
 
             // ── lpj_kegiatan.status_lpj ───────────────────────────────────────
 
@@ -232,6 +202,6 @@ return new class extends Migration
                     NOT NULL DEFAULT 'Menunggu'
                 ");
             }
-        });
+        }
     }
 };
