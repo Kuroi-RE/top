@@ -16,7 +16,7 @@ class StoreTemplateRequest extends FormRequest
         return [
             'nama_template' => 'required|string|max:100|unique:template_dokumen',
             'jenis_template' => 'required|string|max:50',
-            'file' => 'required|file|mimes:pdf|max:5120',
+            'file' => ['required', 'file', 'mimes:pdf', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
         ];
     }
 
@@ -33,6 +33,7 @@ class StoreTemplateRequest extends FormRequest
             'file.required' => 'File wajib diisi',
             'file.file' => 'File harus berupa file',
             'file.mimes' => 'Format File harus berupa pdf',
+            'file.min' => 'File tidak boleh kosong (0 bytes)',
             'file.max' => 'File maksimal 5120 KB',
         ];
     }

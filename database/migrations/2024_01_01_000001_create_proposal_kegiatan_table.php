@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('nama_bank', 100);
             $table->enum('honor_pelatih', ['Ya', 'Tidak'])->default('Tidak');
             $table->string('file'); // path file PDF
-            $table->enum('status', ['Menunggu', 'Revisi', 'Disetujui', 'Ditolak'])->default('Menunggu');
+            $table->enum('status', ['Pending', 'Revision', 'Approved', 'Rejected'])->default('Pending');
             $table->decimal('anggaran_disetujui', 12, 2)->nullable();
             $table->text('catatan_admin')->nullable();
             $table->timestamps();

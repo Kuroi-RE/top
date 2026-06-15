@@ -28,6 +28,15 @@ class FileHelper
             throw new \Exception('Ukuran file terlalu besar');
         }
 
+        // Defence-in-depth: validasi magic bytes PDF (%PDF)
+        $handle = fopen($file->getRealPath(), 'rb');
+        $header = fread($handle, 4);
+        fclose($handle);
+
+        if ($header !== '%PDF') {
+            throw new \InvalidArgumentException('The file content does not match the expected PDF format.');
+        }
+
         return $file->store($path, 'public');
     }
 

@@ -202,11 +202,11 @@ Endpoint untuk mengelola daftar roles dan permissions secara dinamis dari databa
     "data": [
         {
             "id": 1,
-            "name": "verifikasi proposal"
+            "name": "Create Proposal"
         },
         {
             "id": 2,
-            "name": "tambah dosen"
+            "name": "View Proposal"
         }
     ]
 }
@@ -229,8 +229,10 @@ Endpoint untuk mengelola daftar roles dan permissions secara dinamis dari databa
     "status": "success",
     "message": "Permissions User",
     "data": [
-        "tambah dosen",
-        "verifikasi proposal"
+        "Create Proposal",
+        "View Proposal",
+        "Create LPJ",
+        "View LPJ"
     ]
 }
 ```
@@ -251,7 +253,7 @@ Menyinkronkan ulang seluruh permissions spesifik yang dimiliki oleh user (di lua
 
 ```json
 {
-    "permissions": ["verifikasi proposal", "tambah dosen"]
+    "permissions": ["Create Proposal", "View Proposal", "Create LPJ", "View LPJ"]
 }
 ```
 
@@ -262,8 +264,10 @@ Menyinkronkan ulang seluruh permissions spesifik yang dimiliki oleh user (di lua
     "status": "success",
     "message": "Permissions berhasil diperbarui",
     "data": [
-        "verifikasi proposal",
-        "tambah dosen"
+        "Create Proposal",
+        "View Proposal",
+        "Create LPJ",
+        "View LPJ"
     ]
 }
 ```

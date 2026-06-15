@@ -43,7 +43,7 @@ class ReviseProposalRequest extends FormRequest
             'waktu_kegiatan' => 'required|date',
             'besar_ajuan' => 'required|numeric|min:100000',
             'catatan_revisi' => 'required|string',
-            'file' => 'required|file|mimes:pdf|max:5120',
+            'file' => ['required', 'file', 'mimes:pdf', 'min:1', 'max:5120', new \App\Rules\PdfMagicBytes()],
         ];
     }
 
@@ -67,6 +67,7 @@ class ReviseProposalRequest extends FormRequest
             'file.required' => 'File wajib diisi',
             'file.file' => 'File harus berupa file',
             'file.mimes' => 'Format File harus berupa pdf',
+            'file.min' => 'File tidak boleh kosong (0 bytes)',
             'file.max' => 'File maksimal 5120 KB',
         ];
     }
